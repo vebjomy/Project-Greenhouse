@@ -1,6 +1,6 @@
 package ui;
 
 /**
- * Placeholder for client javafx application.
+ * Placeholder.
  */
 public class ClientApp {}

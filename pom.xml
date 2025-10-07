@@ -11,7 +11,7 @@
 
 
     <modules>
-        <module>Server</module>
+        <module>SensorNode</module>
         <module>Client</module>
     </modules>
 
