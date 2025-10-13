@@ -3,4 +3,6 @@ package entity;
 /**
  * Placeholder.
  */
-public class SensorNode {}
+public class SensorNode {
+
+}
