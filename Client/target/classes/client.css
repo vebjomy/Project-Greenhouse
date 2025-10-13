@@ -5,8 +5,8 @@
 
 .splash-title {
     -fx-font-family: 'Kaisei Decol';
-    -fx-font-size: 150px;
-    -fx-text-fill: #5a8e6e;
+    -fx-font-size: 190px;
+    -fx-text-fill: #67a282;
 }
 
 .login-title-subtitle {
@@ -69,4 +69,12 @@
 .login-button:pressed {
     -fx-background-color: #388E3C;
     -fx-translate-y: 1px;
+}
+
+.title-dash{
+    -fx-font-family: 'Kaisei Decol';
+    -fx-font-size: 30px;
+    -fx-fill: #4e865f;
+    -fx-text-fill: #095f85;
+    -fx-font-weight: bold;
 }

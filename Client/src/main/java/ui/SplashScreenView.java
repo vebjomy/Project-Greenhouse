@@ -19,7 +19,7 @@ public class SplashScreenView {
 
   public SplashScreenView(MainApp mainApp) {
     root = new BorderPane();
-    root.setStyle("-fx-background-color: #ffffff;"); //
+    root.setStyle("-fx-background-color: #ffffff;");
 
     root.getStylesheets().add(getClass().getResource("/client.css").toExternalForm());
     Button goButton = new Button("Log In");
@@ -37,8 +37,8 @@ public class SplashScreenView {
 
 
     ImageView imageView = new ImageView(new Image(getClass().getResourceAsStream("/images/Farm house.png")));
-    imageView.setFitWidth(900);
-    imageView.setFitHeight(550);
+    imageView.setFitWidth(1000);
+    imageView.setFitHeight(650);
     imageView.setPreserveRatio(true);
 
 

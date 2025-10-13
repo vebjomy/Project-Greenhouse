@@ -1,8 +1,6 @@
 model\HumiditySensor.class
-ui\DashboardView.class
 controller\Sensordata.class
 model\TemperatureSensor.class
-model\Actuator.class
 App\MainApp.class
 controller\DashboardController.class
 model\Fan$Speed.class
@@ -14,3 +12,5 @@ controller\NodeController.class
 ui\LoginScreenView.class
 ui\ClientApp.class
 model\Fan.class
+ui\DashboardView.class
+model\Actuator.class
