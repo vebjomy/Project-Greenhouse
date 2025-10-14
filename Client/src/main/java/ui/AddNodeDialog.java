@@ -65,7 +65,6 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
         createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png"),
         createComponentToggle("Light Sensor", "/icons/light_sensor.png"),
         createComponentToggle("Humidity Sensor", "/icons/humidity_sensor.png"),
-        createComponentToggle("Fan", "/icons/fan.png"),
         createComponentToggle("Ph Sernor", "/icons/Ph.png"),
         createComponentToggle("Fan", "/icons/fan.png"),
         createComponentToggle("Waterpump", "/icons/waterpump.png"),
