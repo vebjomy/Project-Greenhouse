@@ -5,15 +5,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Simulates the environment in a greenhouse.
- * Information about the environment can be retrieved by sensors.
- * The environment can be influenced by actuators.
+ * Simulates the environment in a greenhouse. Information about the environment can be retrieved by
+ * sensors. The environment can be influenced by actuators.
  *
  * <p>A 24-hour cycle is represented by a 120-second cycle in the simulator. Each second in the
  * simulator thus represents 12 minutes in real life.
  *
  * <p>The temperature is represented in degrees Celsius. It follows a simple model where the
  * temperature increases during the day and decreases at night.
+ *
+ * <p>Humidity is represented by a percentage. It follows a faster cycle than temperature and light
+ * level.
  */
 public class EnvironmentSimulator {
   private int temperature; // Current temperature in Celsius
@@ -59,7 +61,8 @@ public class EnvironmentSimulator {
    */
   public void setTemperature(int temperature) {
     if (temperature < -273) {
-      throw new IllegalArgumentException("Error: Physically impossible. Temperature must be > -273");
+      throw new IllegalArgumentException(
+          "Error: Physically impossible. Temperature must be > -273");
     }
     this.temperature = temperature;
   }
@@ -110,8 +113,7 @@ public class EnvironmentSimulator {
   }
 
   /**
-   * Set the cycle second to a specified value.
-   * The second must be a value between 0 and 120
+   * Set the cycle second to a specified value. The second must be a value between 0 and 120
    *
    * @param second The second to set the clock to.
    */
