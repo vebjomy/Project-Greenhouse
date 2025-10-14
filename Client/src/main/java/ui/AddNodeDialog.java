@@ -20,16 +20,20 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
 
   private final TextField nameField = new TextField();
   private final TextField locationField = new TextField();
+  private final TextField ipField = new TextField();
   private final List<String> selectedComponents = new ArrayList<>();
 
   public static class NodeCreationResult {
     public final String name;
     public final String location;
+    public final String ip;
     public final List<String> components;
 
-    public NodeCreationResult(String name, String location, List<String> components) {
+    public NodeCreationResult(String name, String location, String ip, List<String> components) {
       this.name = name;
       this.location = location;
+      this.ip = ip;
+
       this.components = components;
     }
   }
@@ -50,6 +54,10 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
     grid.add(new Label("Location:"), 0, 1);
     grid.add(locationField, 1, 1);
     locationField.setPromptText("e.g., North-West Corner");
+    grid.add( new Label("IP adress "), 0, 2);// spacer
+    grid.add(ipField, 1, 2);
+    ipField.setPromptText("IP- number of the node");
+
 
     Label componentLabel = new Label("Select initial components:");
     componentLabel.setStyle("-fx-font-weight: bold;");
@@ -65,11 +73,11 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
         createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png"),
         createComponentToggle("Light Sensor", "/icons/light_sensor.png"),
         createComponentToggle("Humidity Sensor", "/icons/humidity_sensor.png"),
-        createComponentToggle("Ph Sernor", "/icons/Ph.png"),
+        createComponentToggle("PH Sensor", "/icons/Ph.png"),
         createComponentToggle("Fan", "/icons/fan.png"),
-        createComponentToggle("Waterpump", "/icons/waterpump.png"),
+        createComponentToggle("Water Pump", "/icons/waterpump.png"),
         createComponentToggle("Window", "/icons/window.png"),
-        createComponentToggle("CO2 Generatod", "/icons/ceo2.png")
+        createComponentToggle("CO2 Generator", "/icons/ceo2.png")
     );
 
     ScrollPane scrollPane = new ScrollPane(tilePane);
@@ -91,7 +99,7 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
       if (dialogButton == ButtonType.OK) {
         return new NodeCreationResult(
             nameField.getText(),
-            locationField.getText(),
+            locationField.getText(),ipField.getText(),
             new ArrayList<>(selectedComponents) // copy for safety
         );
       }

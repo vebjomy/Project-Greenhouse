@@ -30,11 +30,11 @@ public class AddComponentDialog extends Dialog<List<String>> {
         createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png"),
         createComponentToggle("Light Sensor", "/icons/light_sensor.png"),
         createComponentToggle("Humidity Sensor", "/icons/humidity_sensor.png"),
-        createComponentToggle("Ph Sernor", "/icons/Ph.png"),
+        createComponentToggle("PH Sensor", "/icons/Ph.png"),
         createComponentToggle("Fan", "/icons/fan.png"),
-        createComponentToggle("Waterpump", "/icons/waterpump.png"),
+        createComponentToggle("Water Pump", "/icons/waterpump.png"),
         createComponentToggle("Window", "/icons/window.png"),
-        createComponentToggle("CO2 Generatod", "/icons/ceo2.png")
+        createComponentToggle("CO2 Generator", "/icons/ceo2.png")
     );
 
     ScrollPane scrollPane = new ScrollPane(tilePane);

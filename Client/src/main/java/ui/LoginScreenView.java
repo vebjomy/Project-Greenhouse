@@ -62,6 +62,12 @@ public class LoginScreenView {
     VBox.setMargin(passwordField, new Insets(0, 0, 25, 0));
 
 
+    TextField ipField = new TextField();
+    ipField.setPromptText("Server IP (default: localhost)");
+    ipField.getStyleClass().add("text-field");
+
+
+
 
     Button loginButton = new Button("LOG IN");
     loginButton.getStyleClass().add("login-button");
@@ -72,7 +78,7 @@ public class LoginScreenView {
 
 
 
-    pane.getChildren().addAll(headerFlow, new VBox(5,  usernameField), new VBox(5, passwordField), loginButton);
+    pane.getChildren().addAll(headerFlow, new VBox(5,  usernameField), new VBox(5, passwordField), new VBox(5) ,ipField, loginButton);
     return pane;
   }
 
@@ -81,8 +87,6 @@ public class LoginScreenView {
     VBox pane = new VBox(30);
     pane.setPadding(new Insets(30));
     pane.setAlignment(Pos.TOP_CENTER);
-
-    // --- Контент для переключения ---
     ImageView imageView = new ImageView(new Image(getClass().getResourceAsStream("/images/house.gif")));
     imageView.setFitHeight(850);
     imageView.setPreserveRatio(true);
@@ -110,9 +114,8 @@ public class LoginScreenView {
 
     StackPane contentArea = new StackPane(imageView, aboutText, creatorsText);
     contentArea.setAlignment(Pos.CENTER);
-    contentArea.setMinHeight(350); // Резервируем место
+    contentArea.setMinHeight(350);
 
-    // --- Кнопки меню ---
     Button homeButton = new Button("HOME");
     Button aboutButton = new Button("ABOUT PROJECT");
     Button creatorsButton = new Button("CREATORS");
@@ -120,7 +123,6 @@ public class LoginScreenView {
     HBox menuBar = new HBox(30, homeButton, aboutButton, creatorsButton);
     menuBar.setAlignment(Pos.CENTER);
 
-    // --- Действия кнопок меню ---
     homeButton.setOnAction(e -> mainApp.showSplashScreen());
     aboutButton.setOnAction(e -> {
       imageView.setVisible(false);
@@ -133,7 +135,7 @@ public class LoginScreenView {
       creatorsText.setVisible(true);
     });
 
-    // Стилизация кнопок меню
+
     for (Node n : menuBar.getChildren()) {
       if (n instanceof Button button) {
         button.setStyle("-fx-background-color: transparent; -fx-text-fill: #000000; -fx-font-weight: bold; " +

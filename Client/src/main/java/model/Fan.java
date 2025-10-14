@@ -1,5 +1,6 @@
 package model;
 
+import javafx.animation.RotateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -9,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.util.Duration;
 
 public class Fan implements Actuator {
 
@@ -39,13 +41,15 @@ public class Fan implements Actuator {
 
   private Speed currentSpeed;
   private boolean isOn;
+  private RotateTransition rotateTransition;
+  private Label statusLabel;
+  private SVGPath fanIcon;
 
   public Fan() {
     this.isOn = false;
     this.currentSpeed = Speed.OFF;
   }
 
-  // --- Control Methods ---
 
   public void turnOn() {
     if (!this.isOn) {
@@ -80,16 +84,19 @@ public class Fan implements Actuator {
   public String getActuatorName() {
     return "Fan";
   }
-  private Label statusLabel;
-  private SVGPath fanIcon;
 
   @Override
   public Pane getVisualRepresentation() {
     // --- Icon ---
     fanIcon = new SVGPath();
-    fanIcon.setContent("M12,2A10,10 0 0,0 2,12C2,17.25 5.82,21.56 11,21.93V17.93C7.94,17.47 5.5,14.97 5.5,12A6.5,6.5 0 0,1 12,5.5A6.5,6.5 0 0,1 18.5,12C18.5,14.97 16.06,17.47 13,17.93V21.93C18.18,21.56 22,17.25 22,12A10,10 0 0,0 12,2M13.25,9V14.5L18.66,12.35L13.25,9Z");
+    fanIcon.setContent("M12,11a1,1,0,1,0,1,1,1,1,0,0,0-1-1m.5-9C17,2,17.1,5.57,14.73,6.75a3.36,3.36,0,0,0-1.62,2.47,3.17,3.17,0,0,1,1.23.91C18,8.13,22,8.92,22,12.5c0,4.5-3.58,4.6-4.75,2.23a3.44,3.44,0,0,0-2.5-1.62,3.24,3.24,0,0,1-.91,1.23c2,3.69,1.2,7.66-2.38,7.66C7,22,6.89,18.42,9.26,17.24a3.46,3.46,0,0,0,1.62-2.45,3,3,0,0,1-1.25-.92C5.94,15.85,2,15.07,2,11.5,2,7,5.54,6.89,6.72,9.26A3.39,3.39,0,0,0,9.2,10.87a2.91,2.91,0,0,1,.92-1.22C8.13,6,8.92,2,12.48,2Z");
     fanIcon.setScaleX(1.2);
     fanIcon.setScaleY(1.2);
+
+
+    rotateTransition = new RotateTransition(Duration.millis(1000), fanIcon);
+    rotateTransition.setByAngle(360);
+    rotateTransition.setCycleCount(RotateTransition.INDEFINITE);
 
     // --- Labels ---
     Label nameLabel = new Label(getActuatorName());
@@ -104,7 +111,6 @@ public class Fan implements Actuator {
     HBox topPane = new HBox(10, fanIcon, titleBox);
     topPane.setPadding(new Insets(0, 0, 10, 0));
 
-    // --- Control Buttons ---
     Button offButton = new Button("OFF");
     Button lowButton = new Button("LOW");
     Button mediumButton = new Button("MED");
@@ -142,17 +148,38 @@ public class Fan implements Actuator {
 
   private void updateUI() {
     Color statusColor;
+    Duration rotationDuration;
 
     if (currentSpeed == Speed.OFF) {
       statusColor = Color.web("#B0BEC5");
-    } else if (currentSpeed == Speed.LOW) {
-      statusColor = Color.web("#4CAF50");
-    } else if (currentSpeed == Speed.MEDIUM) {
-      statusColor = Color.web("#FFD54F");
-    } else if (currentSpeed == Speed.HIGH) {
-      statusColor = Color.web("#F44336");
+      rotationDuration = Duration.ZERO;
+
+      if (rotateTransition != null) {
+        rotateTransition.stop();
+      }
+      if (fanIcon != null) {
+        fanIcon.setRotate(0);
+      }
+
     } else {
-      statusColor = Color.web("#B0BEC5");
+
+      if (currentSpeed == Speed.LOW) {
+        statusColor = Color.web("#4CAF50");
+        rotationDuration = Duration.millis(3000);
+      } else if (currentSpeed == Speed.MEDIUM) {
+        statusColor = Color.web("#FFD54F");
+        rotationDuration = Duration.millis(1000);
+      } else { // HIGH
+        statusColor = Color.web("#F44336");
+        rotationDuration = Duration.millis(200);
+      }
+
+      if (rotateTransition != null) {
+        rotateTransition.setDuration(rotationDuration);
+        if (rotateTransition.getStatus() != RotateTransition.Status.RUNNING) {
+          rotateTransition.play();
+        }
+      }
     }
 
     fanIcon.setFill(statusColor);
@@ -161,5 +188,4 @@ public class Fan implements Actuator {
     statusLabel.setText(statusText);
     statusLabel.setTextFill(statusColor);
   }
-  }
-
+}

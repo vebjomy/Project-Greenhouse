@@ -82,8 +82,19 @@ public class DashboardController {
         case "Humidity Sensor":
           node.addSensor(new HumiditySensor());
           break;
+        case "PH Sensor":
+          node.addSensor(new PHSensor());
+          break;
+        case "Water Pump":
+          node.addActuator(new WaterPump());
+          break;
+          case "CO2 Generator":
+          node.addActuator(new CO2Generator());
         case "Fan":
           node.addActuator(new Fan());
+          break;
+        case "Window":
+          node.addActuator(new Window());
           break;
         default:
           System.err.println("Unknown component: " + componentName);

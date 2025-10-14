@@ -1,6 +1,8 @@
 model\HumiditySensor.class
 controller\Sensordata.class
 model\TemperatureSensor.class
+model\WaterPump.class
+model\WaterPump$Volume.class
 App\MainApp.class
 controller\DashboardController.class
 model\Fan$Speed.class
@@ -9,11 +11,16 @@ model\Node.class
 ui\AddNodeDialog.class
 model\Sensor.class
 model\LightSensor.class
+model\Window$Openness.class
+model\Window.class
+model\CO2Generator.class
 controller\NodeController.class
 ui\LoginScreenView.class
 ui\ClientApp.class
 model\Fan.class
 ui\DashboardView.class
+model\CO2Generator$Rate.class
 ui\AddNodeDialog$NodeCreationResult.class
 model\Actuator.class
+model\PHSensor.class
 ui\AddComponentDialog.class

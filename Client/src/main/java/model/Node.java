@@ -17,6 +17,7 @@ public class Node {
     this.name = name;
     this.location = location; // <<< ASSIGN LOCATION
 
+
     this.sensors = FXCollections.observableArrayList();
     if (initialSensors != null) {
       this.sensors.addAll(initialSensors);
