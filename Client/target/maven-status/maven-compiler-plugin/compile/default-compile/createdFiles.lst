@@ -6,6 +6,7 @@ controller\DashboardController.class
 model\Fan$Speed.class
 ui\SplashScreenView.class
 model\Node.class
+ui\AddNodeDialog.class
 model\Sensor.class
 model\LightSensor.class
 controller\NodeController.class
@@ -13,4 +14,6 @@ ui\LoginScreenView.class
 ui\ClientApp.class
 model\Fan.class
 ui\DashboardView.class
+ui\AddNodeDialog$NodeCreationResult.class
 model\Actuator.class
+ui\AddComponentDialog.class

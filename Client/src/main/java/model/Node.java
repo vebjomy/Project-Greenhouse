@@ -4,45 +4,42 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.util.Collection;
+import java.util.List;
 
 public class Node {
   private final ObservableList<Sensor> sensors;
   private final ObservableList<Actuator> actuators;
   private final String name;
+  private final String location; // <<< NEW FIELD
 
-  // Constructor 1: Original constructor for an empty node
-  public Node(String name) {
-    this(name, null, null);
-  }
-
-  // Constructor 2: Constructor for a node with only initial sensors
-  public Node(String name, Collection<? extends Sensor> initialSensors) {
-    this(name, initialSensors, null);
-  }
-
-  // Constructor 3: The main constructor handling all initial collections
-  public Node(String name,
-              Collection<? extends Sensor> initialSensors,
-              Collection<? extends Actuator> initialActuators) {
+  // Main constructor updated to include location
+  public Node(String name, String location, Collection<Sensor> initialSensors, Collection<Actuator> initialActuators) {
     this.name = name;
+    this.location = location; // <<< ASSIGN LOCATION
 
-    // Initialize ObservableLists
     this.sensors = FXCollections.observableArrayList();
-    this.actuators = FXCollections.observableArrayList();
-
-    // Add initial sensors if the collection is provided
     if (initialSensors != null) {
       this.sensors.addAll(initialSensors);
     }
 
-    // Add initial actuators if the collection is provided
+    this.actuators = FXCollections.observableArrayList();
     if (initialActuators != null) {
       this.actuators.addAll(initialActuators);
     }
   }
 
+  // Simplified constructor for convenience
+  public Node(String name, String location) {
+    this(name, location, null, null);
+  }
+
   public String getName() {
     return name;
+  }
+
+  // <<< NEW GETTER
+  public String getLocation() {
+    return location;
   }
 
   public void addActuator(Actuator actuator) {

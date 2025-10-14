@@ -19,7 +19,6 @@ public class DashboardView {
   private Label userGreetingLabel;
 
   public DashboardView() {
-    // Assuming DashboardController is implemented and handles the logic
     controller = new DashboardController(this);
     setupUI();
   }

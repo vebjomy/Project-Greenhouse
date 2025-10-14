@@ -9,6 +9,8 @@ C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\LightSensor.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\Node.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\Sensor.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\TemperatureSensor.java
+C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\AddComponentDialog.java
+C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\AddNodeDialog.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\ClientApp.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\DashboardView.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\LoginScreenView.java

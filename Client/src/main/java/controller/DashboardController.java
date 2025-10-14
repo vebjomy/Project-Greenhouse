@@ -5,13 +5,15 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import model.TemperatureSensor;
+import model.*; // Import all models
+import ui.AddComponentDialog;
+import ui.AddNodeDialog;
 import ui.DashboardView;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class DashboardController {
   private final DashboardView view;
@@ -32,46 +34,63 @@ public class DashboardController {
   }
 
   /**
-   * Adds a new node to the farm and redraws the dashboard.
+   * Opens a dialog to create a new node. If the user confirms,
+   * the node is created and the dashboard is redrawn.
    */
   public void addNode() {
-    int newNodeId = nodes.size() + 1;
-    model.Node node = new model.Node("Farm Node " + newNodeId);
-    nodes.add(node);
-    redrawDashboard();
+    AddNodeDialog dialog = new AddNodeDialog();
+    Optional<AddNodeDialog.NodeCreationResult> result = dialog.showAndWait();
+
+    result.ifPresent(nodeData -> {
+      // Create the new node with name and location
+      model.Node newNode = new model.Node(nodeData.name, nodeData.location);
+
+      // Add the components the user selected in the dialog
+      addComponentsToNode(newNode, nodeData.components);
+
+      nodes.add(newNode);
+      redrawDashboard();
+    });
   }
 
   /**
-   * Adds a new temperature sensor to a specific node.
-   * @param node The model node to which the sensor will be added.
+   * Opens a dialog to add components to an existing node.
+   * @param node The node to which components will be added.
    */
-  public void addTemperatureSensor(model.Node node) {
-    node.addSensor(new TemperatureSensor());
-    redrawDashboard();
-  }
+  public void showAddComponentDialog(model.Node node) {
+    AddComponentDialog dialog = new AddComponentDialog();
+    Optional<List<String>> result = dialog.showAndWait();
 
-public void addLightSensor(model.Node node) {
-    node.addSensor(new model.LightSensor());
-    redrawDashboard();
-  }
-  /**
-   * Adds a new humidity sensor to a specific node.
-   * @param node The model node to which the sensor will be added.
-   */
-  public void addHumiditySensor(model.Node node) {
-    node.addSensor(new model.HumiditySensor());
-    redrawDashboard();
-  }
-
-  public void addFan(model.Node node) {
-    node.addActuator(new model.Fan()); //
-    redrawDashboard();
+    result.ifPresent(componentsToAdd -> {
+      addComponentsToNode(node, componentsToAdd);
+      redrawDashboard();
+    });
   }
 
   /**
-   * Handles the refresh data button click.
-   * This simply redraws the entire dashboard, which includes updating sensor readings.
+   * A helper method to add multiple components to a node based on a list of names.
    */
+  private void addComponentsToNode(model.Node node, List<String> componentNames) {
+    for (String componentName : componentNames) {
+      switch (componentName) {
+        case "Temperature Sensor":
+          node.addSensor(new TemperatureSensor());
+          break;
+        case "Light Sensor":
+          node.addSensor(new LightSensor());
+          break;
+        case "Humidity Sensor":
+          node.addSensor(new HumiditySensor());
+          break;
+        case "Fan":
+          node.addActuator(new Fan());
+          break;
+        default:
+          System.err.println("Unknown component: " + componentName);
+      }
+    }
+  }
+
   public void refreshData() {
     if (lastUpdateLabel != null) {
       String currentTime = LocalDateTime.now().format(FORMATTER);
@@ -80,11 +99,8 @@ public void addLightSensor(model.Node node) {
     redrawDashboard();
   }
 
-  /**
-   * Clears and redraws all UI components from the model list.
-   * This is the central method for updating the view.
-   */
   private void redrawDashboard() {
+    if (nodesPane == null) return;
     nodesPane.getChildren().clear();
     for (model.Node node : nodes) {
       nodesPane.getChildren().add(createNodeView(node));
@@ -93,41 +109,33 @@ public void addLightSensor(model.Node node) {
 
   /**
    * Creates the UI View for a single Node.
-   *
-   * @param node The node model to represent.
-   * @return A Pane representing the node.
+   * This is heavily modified to show new info and use the new dialog.
    */
   private Pane createNodeView(model.Node node) {
+    // --- Node Title and Location ---
     Label nodeTitle = new Label(node.getName());
     nodeTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
-    Button addSensorBtn = new Button("Add Temperature Sensor");
-    addSensorBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5;");
-    addSensorBtn.setOnAction(e -> addTemperatureSensor(node));
+    Label nodeLocation = new Label(node.getLocation());
+    nodeLocation.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-style: italic;");
+    VBox titleBox = new VBox(2, nodeTitle, nodeLocation);
 
-    Button addLightSensorBtn = new Button("Add Light Sensor");
-    addLightSensorBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5;");
-    addLightSensorBtn.setOnAction(e -> addLightSensor(node));
-
-    Button addHumiditySensorBtn = new Button("Add Humidity Sensor");
-    addHumiditySensorBtn.setStyle("-fx-background-color: #FBBC05; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5;");
-    addHumiditySensorBtn.setOnAction(e -> addHumiditySensor(node));
-
-    Button addFanBtn = new Button("Add Fan");
-    addFanBtn.setStyle("-fx-background-color: #FF6D01; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5;");
-    addFanBtn.setOnAction(e -> addFan(node));
-
+    // --- Containers for sensors and actuators ---
     VBox sensorsContainer = new VBox(10);
     node.getSensors().forEach(sensor -> {
       sensorsContainer.getChildren().add(sensor.getVisualRepresentation());
     });
-    VBox actuatorsContainer = new VBox(10);
     node.getActuators().forEach(actuator -> {
-      actuatorsContainer.getChildren().add(actuator.getVisualRepresentation());
+      sensorsContainer.getChildren().add(actuator.getVisualRepresentation());
     });
-    sensorsContainer.getChildren().addAll(actuatorsContainer.getChildren());
 
-    VBox nodePane = new VBox(15, nodeTitle, sensorsContainer, addSensorBtn, addLightSensorBtn, addHumiditySensorBtn, addFanBtn);
+    // --- The single button to add new components ---
+    Button addComponentBtn = new Button("+ Add Component");
+    addComponentBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    addComponentBtn.setOnAction(e -> showAddComponentDialog(node)); // This now calls the dialog
+
+    // --- Final layout for the node card ---
+    VBox nodePane = new VBox(15, titleBox, sensorsContainer, addComponentBtn);
     nodePane.setPadding(new javafx.geometry.Insets(15));
     nodePane.setStyle("-fx-background-color: #f9f9f9; -fx-border-color: #d0d0d0; -fx-border-width: 1; -fx-border-radius: 8; -fx-background-radius: 8;");
     nodePane.setPrefWidth(250);
