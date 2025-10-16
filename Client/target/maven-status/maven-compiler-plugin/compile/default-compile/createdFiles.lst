@@ -16,6 +16,7 @@ ui\UsersView.class
 model\PHSensor.class
 controller\Sensordata.class
 model\TemperatureSensor.class
+model\ServerConfig.class
 model\WaterPump.class
 model\WaterPump$Volume.class
 controller\UsersController.class
@@ -27,5 +28,6 @@ model\Window.class
 ui\LoginScreenView.class
 ui\StatisticsView.class
 ui\AddNodeDialog$NodeCreationResult.class
+ui\RegistrationView.class
 controller\StatisticsController.class
 ui\AddComponentDialog.class

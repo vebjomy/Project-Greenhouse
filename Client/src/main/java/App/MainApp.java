@@ -6,6 +6,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import ui.DashboardView;
 import ui.LoginScreenView;
+import ui.RegistrationView;
 import ui.SplashScreenView;
 
 
@@ -50,6 +51,14 @@ public class MainApp extends Application {
     primaryStage.setTitle("Green House Control - Welcome");
   }
 
+
+  public void showRegistrationScreen() {
+   RegistrationView registration = new RegistrationView(this);
+    Scene scene = new Scene(registration.getRoot(), 400, 400);
+    primaryStage.setScene(scene);
+    primaryStage.setTitle("Green House Control - Register");
+  }
+
   /**
    * views the login screen.
    */
@@ -69,6 +78,10 @@ public class MainApp extends Application {
     primaryStage.setScene(scene);
     primaryStage.setTitle("Smart Farm Control"); // view the dashboard
   }
+
+
+
+
 
   public static void main(String[] args) {
     launch(args);

@@ -1,6 +1,7 @@
 package ui;
 
 import App.MainApp;
+import model.ServerConfig;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -8,9 +9,13 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.*;
-
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.control.TextInputDialog;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 public class LoginScreenView {
   private final HBox root;
@@ -62,11 +67,32 @@ public class LoginScreenView {
     VBox.setMargin(passwordField, new Insets(0, 0, 25, 0));
 
 
-    TextField ipField = new TextField();
-    ipField.setPromptText("Server IP (default: localhost)");
-    ipField.getStyleClass().add("text-field");
+    ObservableList<ServerConfig> serverList = FXCollections.observableArrayList(
+        new ServerConfig("Localhost (Default)", "localhost"),
+        new ServerConfig("Development Server", "192.168.1.100")
+    );
+    ComboBox<ServerConfig> serverComboBox = new ComboBox<>(serverList);
+    serverComboBox.setPromptText("Select Server");
+    serverComboBox.getSelectionModel().selectFirst();
+    serverComboBox.setMaxWidth(Double.MAX_VALUE);
+    serverComboBox.getStyleClass().add("text-field");
 
+    Button customIpButton = new Button("Set Custom\nIP Address");
+    customIpButton.getStyleClass().add("ip-button");
+    customIpButton.setMaxWidth(Double.MAX_VALUE);
+    customIpButton.setStyle("-fx-font-size: 11px; -fx-padding: 10 5;");
+    customIpButton.setWrapText(true);
+    customIpButton.setPrefHeight(50);
 
+    HBox serverSelector = new HBox(10, serverComboBox, customIpButton);
+    serverSelector.setAlignment(Pos.CENTER);
+    HBox.setHgrow(serverComboBox, Priority.ALWAYS);
+    HBox.setHgrow(customIpButton, Priority.ALWAYS);
+
+    serverComboBox.setPrefWidth(Region.USE_COMPUTED_SIZE);
+    customIpButton.setPrefWidth(Region.USE_COMPUTED_SIZE);
+
+    VBox.setMargin(serverSelector, new Insets(0, 0, 15, 0));
 
 
     Button loginButton = new Button("LOG IN");
@@ -74,14 +100,59 @@ public class LoginScreenView {
     HBox buttonContainer = new HBox(loginButton);
     buttonContainer.setAlignment(Pos.CENTER);
 
-    loginButton.setOnAction(e -> mainApp.showDashboard());
+    loginButton.setOnAction(e -> {
+      ServerConfig selectedServer = serverComboBox.getSelectionModel().getSelectedItem();
+      if (selectedServer != null) {
+        String ipAddress = selectedServer.getIpAddress();
+        System.out.println("Connecting to: " + ipAddress);
+        mainApp.showDashboard();
+      } else {
+        new Alert(Alert.AlertType.WARNING, "Please select a server!").showAndWait();
+      }
+    });
+
+    customIpButton.setOnAction(e -> {
+      showCustomIpDialog(serverComboBox);
+    });
 
 
 
-    pane.getChildren().addAll(headerFlow, new VBox(5,  usernameField), new VBox(5, passwordField), new VBox(5) ,ipField, loginButton);
+    pane.getChildren().addAll(
+        headerFlow,
+        new VBox(5, usernameField),
+        new VBox(5, passwordField),
+        serverSelector,
+        loginButton
+    );
     return pane;
   }
+  private void showCustomIpDialog(ComboBox<ServerConfig> serverComboBox) {
+    TextInputDialog dialog = new TextInputDialog("127.0.0.1");
+    dialog.setTitle("Set Custom Server IP");
+    dialog.setHeaderText("Enter the IP address of your Green House Server.");
+    dialog.setContentText("IP Address:");
+    ServerConfig currentSelection = serverComboBox.getSelectionModel().getSelectedItem();
+    if (currentSelection != null) {
+      dialog.getEditor().setText(currentSelection.getIpAddress());
+    }
+    Optional<String> result = dialog.showAndWait();
 
+    result.ifPresent(ip -> {
+      String trimmedIp = ip.trim();
+      if (!trimmedIp.isEmpty()) {
+        Optional<ServerConfig> existing = serverComboBox.getItems().stream()
+            .filter(sc -> sc.getIpAddress().equals(trimmedIp))
+            .findFirst();
+        if (existing.isPresent()) {
+          serverComboBox.getSelectionModel().select(existing.get());
+        } else {
+          ServerConfig customServer = new ServerConfig("Custom IP", trimmedIp);
+          serverComboBox.getItems().add(customServer);
+          serverComboBox.getSelectionModel().select(customServer);
+        }
+      }
+    });
+  }
 
   private VBox createRightPane(MainApp mainApp) {
     VBox pane = new VBox(30);

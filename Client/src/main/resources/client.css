@@ -71,6 +71,29 @@
     -fx-translate-y: 1px;
 }
 
+.ip-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 8px 25px;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0.5, 0, 2);
+    -fx-font-family: 'Arial';
+}
+
+.ip-button:hover {
+    -fx-background-color: #66BB6A;
+}
+
+.ip-button:pressed {
+    -fx-background-color: #388E3C;
+    -fx-translate-y: 1px;
+}
+
+
+
 .title-dash{
     -fx-font-family: 'Kaisei Decol';
     -fx-font-size: 30px;

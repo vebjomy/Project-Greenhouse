@@ -12,6 +12,7 @@ C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\LightSensor.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\Node.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\PHSensor.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\Sensor.java
+C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\ServerConfig.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\TemperatureSensor.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\User.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\model\WaterPump.java
@@ -21,6 +22,7 @@ C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\AddNodeDialog.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\ClientApp.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\DashboardView.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\LoginScreenView.java
+C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\RegistrationView.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\SplashScreenView.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\StatisticsView.java
 C:\NTNU\NETTWERK\Project-Greenhouse\Client\src\main\java\ui\UsersView.java
