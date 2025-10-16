@@ -7,7 +7,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Region;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -17,13 +16,13 @@ public class AddComponentDialog extends Dialog<List<String>> {
   private final List<String> selectedComponents = new ArrayList<>();
 
   public AddComponentDialog() {
-    setTitle("Add Components");
-    setHeaderText("Select the sensors and actuators to add.");
+    setTitle("Add New Components");
+    setHeaderText("Choose your sensors and actuators to add to the node.");
 
     TilePane tilePane = new TilePane();
-    tilePane.setPadding(new Insets(20));
-    tilePane.setHgap(15);
-    tilePane.setVgap(15);
+    tilePane.setPadding(new Insets(25));
+    tilePane.setHgap(20);
+    tilePane.setVgap(20);
     tilePane.setPrefColumns(3);
 
     tilePane.getChildren().addAll(
@@ -39,11 +38,18 @@ public class AddComponentDialog extends Dialog<List<String>> {
 
     ScrollPane scrollPane = new ScrollPane(tilePane);
     scrollPane.setFitToWidth(true);
+    scrollPane.getStyleClass().add("material-scroll-pane");
     getDialogPane().setContent(scrollPane);
 
     getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+    getDialogPane().lookupButton(ButtonType.OK).getStyleClass().addAll("dialog-button", "primary");
+    getDialogPane().lookupButton(ButtonType.CANCEL).getStyleClass().add("dialog-button");
+
+    getDialogPane().getStyleClass().add("material-dialog-pane");
+
     getDialogPane().getStylesheets().add(
-        Objects.requireNonNull(getClass().getResource("/client.css")).toExternalForm()
+        Objects.requireNonNull(getClass().getResource("/sensors.css")).toExternalForm()
     );
 
     setResultConverter(dialogButton -> {
@@ -55,17 +61,20 @@ public class AddComponentDialog extends Dialog<List<String>> {
   }
 
   private ToggleButton createComponentToggle(String name, String iconPath) {
+
+    final int ICON_SIZE = 40;
     ImageView icon = new ImageView();
-    icon.getStyleClass().add("image-view");
+
+
     try {
-      Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath)), 48, 48, true, true);
+      Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath)), ICON_SIZE, ICON_SIZE, true, true);
       icon.setImage(image);
     } catch (Exception e) {
       System.err.println("Could not load icon: " + iconPath);
     }
 
     Label label = new Label(name);
-    label.getStyleClass().add("label");
+    label.getStyleClass().add("component-label");
     VBox content = new VBox(5, icon, label);
     content.setAlignment(Pos.CENTER);
 
@@ -73,8 +82,11 @@ public class AddComponentDialog extends Dialog<List<String>> {
     button.setGraphic(content);
     button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-    button.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-    button.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+    final int TILE_SIZE = 100;
+    button.setMinWidth(TILE_SIZE);
+    button.setMinHeight(TILE_SIZE);
+    button.setMaxWidth(TILE_SIZE);
+    button.setMaxHeight(TILE_SIZE);
 
     button.getStyleClass().add("component-toggle-button");
 

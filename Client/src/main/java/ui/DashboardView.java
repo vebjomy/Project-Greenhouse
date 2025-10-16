@@ -158,7 +158,24 @@ public class DashboardView {
     scrollLog.setPrefHeight(VBox.USE_COMPUTED_SIZE);
     scrollLog.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
 
-    rightPanel.getChildren().addAll(header, scrollLog);
+    // create a delete and update button for the log
+    Button clearLogBtn = new Button("Clear Log");
+    clearLogBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    clearLogBtn.setOnAction(e -> logContent.getChildren().clear());
+
+    Button updateLogBtn = new Button("Update Log");
+    updateLogBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    updateLogBtn.setOnAction(e -> logContent.getChildren().add(createLogEntry("Now", "System",
+        "Log updated manually")));
+
+    Button saveLogBtn = new Button("Save Log");
+    saveLogBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    saveLogBtn.setOnAction(e -> logContent.getChildren().add(createLogEntry("Now", "System",
+        "Saved log to file")));
+
+
+
+    rightPanel.getChildren().addAll(header, scrollLog,clearLogBtn, updateLogBtn, saveLogBtn);
     rightPanel.setAlignment(Pos.TOP_LEFT);
 
     return rightPanel;
@@ -187,10 +204,12 @@ public class DashboardView {
     Label intervalLabel = new Label("Auto-Refresh:");
     intervalLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
 
-    // ComboBox for interval selection
+    // ComboBox for interval selection with custom styling
     javafx.scene.control.ComboBox<String> intervalComboBox = new javafx.scene.control.ComboBox<>();
-    intervalComboBox.getItems().addAll("2 sec", "10 sec", "20 sec", "Manual");
+    intervalComboBox.getItems().addAll("2 sec", "10 sec", "20 sec", "60 sec" , "Manual");
     intervalComboBox.getSelectionModel().select("Manual"); // Default selection
+    intervalComboBox.setStyle("-fx-font-size: 14px; -fx-padding: 5 10; -fx-background-color: #ffffff; " +
+        "-fx-border-color: #d0d0d0; -fx-border-radius: 5; -fx-background-radius: 5;");
 
     Button toggleRefreshBtn = new Button("Start Auto-Refresh");
     toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");

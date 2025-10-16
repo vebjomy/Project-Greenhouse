@@ -8,7 +8,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.Region;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,7 +32,6 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
       this.name = name;
       this.location = location;
       this.ip = ip;
-
       this.components = components;
     }
   }
@@ -42,33 +40,39 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
     setTitle("Create New Farm Node");
     setHeaderText("Enter the details for the new node.");
 
-    VBox mainLayout = new VBox(20);
-    mainLayout.setPadding(new Insets(20));
+    VBox mainLayout = new VBox(25);
+    mainLayout.setPadding(new Insets(30, 25, 20, 25));
 
     GridPane grid = new GridPane();
-    grid.setHgap(10);
-    grid.setVgap(10);
+    grid.setHgap(20);
+    grid.setVgap(20);
+
+
+    grid.getStyleClass().add("material-form-grid");
+
     grid.add(new Label("Node Name:"), 0, 0);
     grid.add(nameField, 1, 0);
     nameField.setPromptText("e.g., Greenhouse A-1");
+
     grid.add(new Label("Location:"), 0, 1);
     grid.add(locationField, 1, 1);
     locationField.setPromptText("e.g., North-West Corner");
-    grid.add( new Label("IP adress "), 0, 2);// spacer
+
+    grid.add(new Label("IP address:"), 0, 2);
     grid.add(ipField, 1, 2);
     ipField.setPromptText("IP- number of the node");
 
 
     Label componentLabel = new Label("Select initial components:");
-    componentLabel.setStyle("-fx-font-weight: bold;");
+    componentLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 1.1em;");
 
     TilePane tilePane = new TilePane();
     tilePane.setPadding(new Insets(10, 0, 10, 0));
-    tilePane.setHgap(15);
-    tilePane.setVgap(15);
+    tilePane.setHgap(25);
+    tilePane.setVgap(25);
     tilePane.setPrefColumns(4);
 
-    // Use ToggleButtons for reliable hitbox and selected state
+
     tilePane.getChildren().addAll(
         createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png"),
         createComponentToggle("Light Sensor", "/icons/light_sensor.png"),
@@ -82,17 +86,27 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
 
     ScrollPane scrollPane = new ScrollPane(tilePane);
     scrollPane.setFitToWidth(true);
-    scrollPane.setPrefHeight(150);
+    scrollPane.setPrefHeight(250);
+    scrollPane.getStyleClass().add("material-scroll-pane");
 
     mainLayout.getChildren().addAll(grid, new Separator(), componentLabel, scrollPane);
     getDialogPane().setContent(mainLayout);
 
+
+    getDialogPane().getStyleClass().add("material-dialog-pane");
+
     getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
     Button okButton = (Button) getDialogPane().lookupButton(ButtonType.OK);
+
+    okButton.getStyleClass().addAll("dialog-button", "primary");
+
+    getDialogPane().lookupButton(ButtonType.CANCEL).getStyleClass().add("dialog-button");
+
     okButton.disableProperty().bind(nameField.textProperty().isEmpty());
 
+
     getDialogPane().getStylesheets().add(
-        Objects.requireNonNull(getClass().getResource("/client.css")).toExternalForm()
+        Objects.requireNonNull(getClass().getResource("/test.css")).toExternalForm()
     );
 
     setResultConverter(dialogButton -> {
@@ -108,14 +122,16 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
   }
 
   /**
-   * Creates a ToggleButton with an icon and a label. ToggleButton confines the hitbox
-   * to the button area and provides built-in selected state.
+   * Creates a ToggleButton with an icon and a label.
    */
   private ToggleButton createComponentToggle(String name, String iconPath) {
     ImageView icon = new ImageView();
-    icon.getStyleClass().add("image-view");
+
+    icon.setFitWidth(40);
+    icon.setFitHeight(40);
+
     try {
-      Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath)), 48, 48, true, true);
+      Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath)), 40, 40, true, true);
       icon.setImage(image);
     } catch (Exception e) {
       System.err.println("Could not load icon: " + iconPath);
@@ -123,7 +139,7 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
     }
 
     Label label = new Label(name);
-    label.getStyleClass().add("label");
+    label.getStyleClass().add("component-label");
     VBox content = new VBox(5, icon, label);
     content.setAlignment(Pos.CENTER);
 
@@ -131,11 +147,13 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
     button.setGraphic(content);
     button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-    // Make sizes follow the preferred size of content
-    button.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-    button.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
 
-    // Optional: add css class for styling
+    button.setMinWidth(90);
+    button.setMinHeight(90);
+    button.setMaxWidth(90);
+    button.setMaxHeight(90);
+
+
     button.getStyleClass().add("component-toggle-button");
 
     // Sync selection list with the toggle state
