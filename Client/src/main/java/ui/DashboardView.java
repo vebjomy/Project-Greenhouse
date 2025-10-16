@@ -171,7 +171,7 @@ public class DashboardView {
     Button saveLogBtn = new Button("Save Log");
     saveLogBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
     saveLogBtn.setOnAction(e -> logContent.getChildren().add(createLogEntry("Now", "System",
-        "Saved log to file")));
+        "Save log ")));
 
 
 
