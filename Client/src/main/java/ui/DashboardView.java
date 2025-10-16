@@ -17,6 +17,9 @@ public class DashboardView {
   private FlowPane nodesPane;
   private Label lastUpdateLabel;
   private Label userGreetingLabel;
+  private VBox dashboardContent;
+  private BorderPane usersContent;
+  private BorderPane statisticsContent;
 
   public DashboardView() {
     controller = new DashboardController(this);
@@ -40,6 +43,9 @@ public class DashboardView {
 
     // --- 4. RIGHT PANEL (Status/Log) ---
     root.setRight(createRightPanel());
+
+    dashboardContent = createCenterContent();
+    root.setCenter(dashboardContent);
 
     // --- INITIALIZE CONTROLLER ---
     // Pass components the controller needs to update
@@ -67,46 +73,68 @@ public class DashboardView {
     return topBar;
   }
 
-  // --- LEFT SIDEBAR CREATION ---
+  // --- MODIFIED LEFT SIDEBAR ---
   private VBox createLeftSidebar() {
     VBox sidebar = new VBox(10);
     sidebar.setPadding(new Insets(15, 0, 15, 0));
     sidebar.setPrefWidth(200);
     sidebar.setAlignment(Pos.TOP_CENTER);
-    sidebar.setStyle("-fx-background-color: #2c3e50;"); // Darker background
+    sidebar.setStyle("-fx-background-color: #2c3e50;");
 
     String buttonStyle = "-fx-min-width: 180px; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-border-width: 0;";
     String buttonHoverStyle = "-fx-background-color: #34495e; -fx-cursor: hand;";
     String buttonActiveStyle = "-fx-background-color: #1a73e8; -fx-text-fill: white;";
 
-    Button homeBtn = new Button("  Home");
     Button dashboardBtn = new Button("  Dashboard");
     Button usersBtn = new Button("  Users");
     Button statsBtn = new Button("  Statistics");
-
     Button logoutBtn = new Button("  Log out");
 
-    // Add margin to push logout to the bottom visually
     VBox.setMargin(logoutBtn, new Insets(550, 0, 0, 0));
 
-    // Apply initial style and hover effects
-    Button[] navButtons = {homeBtn, dashboardBtn, usersBtn, statsBtn, logoutBtn};
+    Button[] navButtons = {dashboardBtn, usersBtn, statsBtn, logoutBtn};
+
+    // --- Logic for switching views ---
+    dashboardBtn.setOnAction(e -> {
+      root.setCenter(dashboardContent);
+      setActiveButton(dashboardBtn, navButtons, buttonStyle, buttonActiveStyle);
+    });
+
+    usersBtn.setOnAction(e -> {
+      if (usersContent == null) {
+        usersContent = new UsersView().getView();
+      }
+      root.setCenter(usersContent);
+      setActiveButton(usersBtn, navButtons, buttonStyle, buttonActiveStyle);
+    });
+    statsBtn.setOnAction(e -> {
+      // Create the view, passing the nodes from the main controller
+      statisticsContent = new StatisticsView(controller.getNodes()).getView();
+      root.setCenter(statisticsContent);
+      setActiveButton(statsBtn, navButtons, buttonStyle, buttonActiveStyle);
+    });
     for (Button btn : navButtons) {
       btn.setStyle(buttonStyle);
-      btn.setOnMouseEntered(e -> btn.setStyle(buttonStyle + buttonHoverStyle));
-      btn.setOnMouseExited(e -> btn.setStyle(buttonStyle));
-      // Highlight Dashboard as active
-      if (btn == dashboardBtn) {
-        btn.setStyle(buttonStyle + buttonActiveStyle);
-        btn.setOnMouseExited(e -> btn.setStyle(buttonStyle + buttonActiveStyle)); // Keep active style on exit
+      btn.setOnMouseEntered(e -> { if (!btn.getStyle().contains(buttonActiveStyle)) btn.setStyle(buttonStyle + buttonHoverStyle); });
+      btn.setOnMouseExited(e -> { if (!btn.getStyle().contains(buttonActiveStyle)) btn.setStyle(buttonStyle); });
+    }
+//    logoutBtn.setOnAction(e -> mainApp.showLoginScreen());
+
+    // --- Set Dashboard as the active button by default ---
+    setActiveButton(dashboardBtn, navButtons, buttonStyle, buttonActiveStyle);
+
+    sidebar.getChildren().addAll(dashboardBtn, usersBtn, statsBtn, logoutBtn);
+    return sidebar;
+  }
+  // --- Helper to change the active button ---
+  private void setActiveButton(Button activeButton, Button[] allButtons, String baseStyle, String activeStyle) {
+    for (Button btn : allButtons) {
+      if (btn == activeButton) {
+        btn.setStyle(baseStyle + activeStyle);
+      } else {
+        btn.setStyle(baseStyle);
       }
     }
-
-    // Example action for logout (can be customized)
-    logoutBtn.setOnAction(e -> System.out.println("User logged out."));
-
-    sidebar.getChildren().addAll(homeBtn, dashboardBtn, usersBtn, statsBtn, logoutBtn);
-    return sidebar;
   }
 
   // --- RIGHT PANEL CREATION ---
@@ -150,7 +178,6 @@ public class DashboardView {
     entry.setPadding(new Insets(3, 0, 3, 0));
     return entry;
   }
-
   // --- CENTER CONTENT CREATION ---
   private VBox createCenterContent() {
     // --- Controls Bar (Add Node, Refresh Data) ---
@@ -158,15 +185,72 @@ public class DashboardView {
     addNodeBtn.setOnAction(e -> controller.addNode());
     addNodeBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
 
-    Button refreshBtn = new Button("Refresh Data");
-    refreshBtn.setOnAction(e -> controller.refreshData());
-    refreshBtn.setStyle("-fx-background-color: #FABB05; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+    // --- New Auto-Refresh Controls ---
+    Label intervalLabel = new Label("Auto-Refresh:");
+    intervalLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
+
+    // ComboBox for interval selection
+    javafx.scene.control.ComboBox<String> intervalComboBox = new javafx.scene.control.ComboBox<>();
+    intervalComboBox.getItems().addAll("2 sec", "10 sec", "20 sec", "Manual");
+    intervalComboBox.getSelectionModel().select("Manual"); // Default selection
+
+    Button toggleRefreshBtn = new Button("Start Auto-Refresh");
+    toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+
+    // --- Logic for Auto-Refresh ---
+    final String startText = "Start Auto-Refresh";
+    final String stopText = "Stop Auto-Refresh";
+
+    toggleRefreshBtn.setOnAction(e -> {
+      if (controller.getRefreshIntervalSeconds() > 0) {
+        // Currently refreshing, so stop it
+        controller.setAutoRefreshInterval(0);
+        toggleRefreshBtn.setText(startText);
+        toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        intervalComboBox.getSelectionModel().select("Manual"); // Visually reset to manual
+      } else {
+        // Not refreshing, so start it
+        String selected = intervalComboBox.getSelectionModel().getSelectedItem();
+        if (selected == null || "Manual".equals(selected)) {
+          // If "Manual" is selected, just perform a single refresh
+          controller.refreshData();
+          return;
+        }
+
+        long seconds = Long.parseLong(selected.split(" ")[0]);
+        controller.setAutoRefreshInterval(seconds);
+        toggleRefreshBtn.setText(stopText);
+        toggleRefreshBtn.setStyle("-fx-background-color: #EA4335; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+      }
+    });
+
+    intervalComboBox.setOnAction(e -> {
+      String selected = intervalComboBox.getSelectionModel().getSelectedItem();
+      if (selected == null || "Manual".equals(selected)) {
+        // If manual is selected, stop the auto-refresh and reset button text
+        controller.setAutoRefreshInterval(0);
+        toggleRefreshBtn.setText(startText);
+        toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+      } else {
+        // If a time is selected, the user probably wants to start it right away
+        // The button will handle starting/stopping
+        if (controller.getRefreshIntervalSeconds() > 0) {
+          // If it was already running, change the interval immediately
+          long seconds = Long.parseLong(selected.split(" ")[0]);
+          controller.setAutoRefreshInterval(seconds);
+        }
+      }
+    });
+
+    HBox refreshControls = new HBox(10, intervalLabel, intervalComboBox, toggleRefreshBtn);
+    refreshControls.setAlignment(Pos.CENTER_LEFT);
+
+    // Combine Add Node button and Refresh Controls
+    HBox controlsBar = new HBox(30, addNodeBtn, refreshControls);
+    controlsBar.setAlignment(Pos.CENTER_LEFT);
 
     lastUpdateLabel = new Label("Last update: -");
     lastUpdateLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666666;");
-
-    HBox controlsBar = new HBox(15, addNodeBtn, refreshBtn);
-    controlsBar.setAlignment(Pos.CENTER_LEFT);
 
     // Combine controls and status on one line
     HBox headerRow = new HBox(30, controlsBar, lastUpdateLabel);
@@ -191,7 +275,6 @@ public class DashboardView {
 
     return centerContainer;
   }
-
   public BorderPane getRoot() {
     return root;
   }

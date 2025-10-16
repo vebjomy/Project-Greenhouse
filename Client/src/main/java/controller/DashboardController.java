@@ -1,10 +1,13 @@
 package controller;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import model.*; // Import all models
 import ui.AddComponentDialog;
 import ui.AddNodeDialog;
@@ -21,11 +24,19 @@ public class DashboardController {
   private FlowPane nodesPane; // The container for node views
   private Label lastUpdateLabel;
 
+  private Timeline refreshTimeline; // New: For automatic refreshing
+  private long refreshIntervalSeconds = 0; // New: Current interval
+
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
 
   public DashboardController(DashboardView view) {
     this.view = view;
     System.out.println("DashboardController initialized.");
+    // Initialize the Timeline for refreshing
+    refreshTimeline = new Timeline(
+        new KeyFrame(Duration.seconds(1), e -> refreshData())
+    );
+    refreshTimeline.setCycleCount(Timeline.INDEFINITE);
   }
 
   public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel) {
@@ -88,8 +99,9 @@ public class DashboardController {
         case "Water Pump":
           node.addActuator(new WaterPump());
           break;
-          case "CO2 Generator":
+        case "CO2 Generator":
           node.addActuator(new CO2Generator());
+          break; // Added missing break
         case "Fan":
           node.addActuator(new Fan());
           break;
@@ -102,7 +114,16 @@ public class DashboardController {
     }
   }
 
+  /**
+   * Manually refreshes the data and updates the last update label.
+   */
   public void refreshData() {
+    // Only update data if the controller has UI components set
+    if (nodesPane == null) return;
+
+    // Simulate data fetching/update for all nodes (e.g., calling node.updateData())
+    // For now, just redraw and update time.
+
     if (lastUpdateLabel != null) {
       String currentTime = LocalDateTime.now().format(FORMATTER);
       lastUpdateLabel.setText("Last update: " + currentTime);
@@ -119,10 +140,43 @@ public class DashboardController {
   }
 
   /**
+   * Sets the interval for automatic refreshing.
+   * @param seconds The refresh interval in seconds (0 to stop).
+   */
+  public void setAutoRefreshInterval(long seconds) {
+    this.refreshIntervalSeconds = seconds;
+
+    refreshTimeline.stop(); // Always stop before setting a new interval or stopping
+
+    if (seconds > 0) {
+      refreshTimeline.getKeyFrames().setAll(
+          new KeyFrame(Duration.seconds(seconds), e -> refreshData())
+      );
+      refreshTimeline.play();
+      System.out.println("Auto-refresh started every " + seconds + " seconds.");
+    } else {
+      // Interval is 0, so refresh is stopped
+      System.out.println("Auto-refresh stopped.");
+    }
+  }
+
+  /**
+   * Returns the current auto-refresh interval.
+   */
+  public long getRefreshIntervalSeconds() {
+    return refreshIntervalSeconds;
+  }
+
+  public List<model.Node> getNodes() {
+    return nodes;
+  }
+
+  /**
    * Creates the UI View for a single Node.
    * This is heavily modified to show new info and use the new dialog.
    */
   private Pane createNodeView(model.Node node) {
+    // ... (unchanged createNodeView method body)
     // --- Node Title and Location ---
     Label nodeTitle = new Label(node.getName());
     nodeTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");

@@ -96,5 +96,10 @@ public class HumiditySensor implements Sensor {
 
     return layout;
   }
+
+  @Override
+  public double getCurrentValue() {
+    return currentHumidity;
+  }
 }
 

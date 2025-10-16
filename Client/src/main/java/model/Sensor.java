@@ -8,6 +8,7 @@ import javafx.scene.layout.Pane;
 public interface Sensor {
   String getSensorName();
   String getReading();
+  public abstract double getCurrentValue();
   double getNumericValue();
   Pane getVisualRepresentation();
 }

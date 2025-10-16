@@ -121,3 +121,30 @@
     -fx-text-fill: #000000;
     -fx-font-size: 13px;
 }
+
+
+/* TableView Styling */
+.chart-series-bar.chart-series-temperature {
+    -fx-bar-fill: orange; /* или #FFA500 */
+}
+
+
+.chart-series-bar.chart-series-humidity {
+    -fx-bar-fill: deepskyblue; /* или #00BFFF */
+}
+
+
+.chart-series-bar.chart-series-light {
+    -fx-bar-fill: yellowgreen; /* или #9ACD32 */
+}
+
+
+.chart-series-bar.chart-series-ph {
+    -fx-bar-fill: mediumpurple; /* или #9370DB */
+}
+
+
+.chart-bar {
+    -fx-bar-gap: 2px;
+
+}

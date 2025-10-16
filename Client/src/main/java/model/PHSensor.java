@@ -152,4 +152,9 @@ public class PHSensor implements Sensor {
       gc.strokeLine(i * xStep, y1, (i + 1) * xStep, y2);
     }
   }
+
+  @Override
+  public double getCurrentValue() {
+    return currentPH;
+  }
 }
