@@ -1,0 +1,173 @@
+@font-face {
+    /* src: url("fonts/KaiseiDecol-Regular.ttf"); - ЭТО ОСТАВЛЯЕМ */
+    font-family: 'Kaisei Decol';
+}
+
+.splash-title {
+    -fx-font-family: 'Kaisei Decol';
+    -fx-font-size: 190px;
+    -fx-text-fill: #67a282;
+}
+
+.login-title-subtitle {
+    -fx-font-family: 'Kaisei Decol';
+    -fx-font-size: 40px;
+    -fx-fill: #4e865f;
+}
+
+.login-prompt {
+    -fx-font-family: 'Kaisei Decol';
+    -fx-font-size: 25px;
+    -fx-fill: #646363;
+}
+.home-button {
+    -fx-font-family: 'Kaisei Decol';
+}
+.about-button {
+    -fx-font-family: 'Kaisei Decol';
+}
+.creators-button {
+    -fx-font-family: 'Kaisei Decol';
+}
+
+
+
+
+.text-field, .password-field {
+
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 5px;
+    -fx-border-width: 1px;
+    -fx-font-size: 14px;
+    -fx-padding: 10px;
+    -fx-prompt-text-fill: #9e9e9e;
+    -fx-font-family: 'Arial';
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #ffffff;
+    -fx-border-width: 2px;
+}
+
+.login-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-padding: 8px 25px;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0.5, 0, 2);
+    -fx-font-family: 'Arial';
+}
+
+.login-button:hover {
+    -fx-background-color: #66BB6A;
+}
+
+.login-button:pressed {
+    -fx-background-color: #388E3C;
+    -fx-translate-y: 1px;
+}
+
+.ip-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 8px 25px;
+    -fx-background-radius: 10px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0.5, 0, 2);
+    -fx-font-family: 'Arial';
+}
+
+.ip-button:hover {
+    -fx-background-color: #66BB6A;
+}
+
+.ip-button:pressed {
+    -fx-background-color: #388E3C;
+    -fx-translate-y: 1px;
+}
+
+
+
+.title-dash{
+    -fx-font-family: 'Kaisei Decol';
+    -fx-font-size: 30px;
+    -fx-fill: #4e865f;
+    -fx-text-fill: #095f85;
+    -fx-font-weight: bold;
+}
+
+
+/*.component-toggle {*/
+/*    -fx-border-color: #ffffff;*/
+/*    -fx-border-width: 1px;*/
+/*    -fx-border-radius: 8px;*/
+/*    -fx-background-radius: 8px;*/
+/*    -fx-background-color: #f9f9f9;*/
+/*    -fx-cursor: hand;*/
+/*}*/
+
+/*.component-toggle:hover {*/
+/*    -fx-background-color: #ffffff;*/
+/*}*/
+/* Invisible background, no borders — looks like just an icon and text */
+.component-toggle-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 6;
+    -fx-cursor: hand;
+}
+
+/* Hover effect — soft glow */
+.component-toggle-button:hover .label,
+.component-toggle-button:hover .image-view {
+    -fx-opacity: 0.9;
+    -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.25), 8, 0.3, 0, 0);
+}
+
+/* Selected effect — blue magical glow */
+.component-toggle-button:selected .label,
+.component-toggle-button:selected .image-view,
+.component-toggle-button.selected .label,
+.component-toggle-button.selected .image-view {
+    -fx-effect: dropshadow(gaussian, rgba(26, 26, 26, 0.7), 14, 0.5, 0, 0);
+    -fx-opacity: 1.0;
+}
+
+/* Text style (optional) */
+.component-toggle-button .label {
+    -fx-text-fill: #000000;
+    -fx-font-size: 13px;
+}
+
+
+/* TableView Styling */
+.chart-series-bar.chart-series-temperature {
+    -fx-bar-fill: orange; /* или #FFA500 */
+}
+
+
+.chart-series-bar.chart-series-humidity {
+    -fx-bar-fill: deepskyblue; /* или #00BFFF */
+}
+
+
+.chart-series-bar.chart-series-light {
+    -fx-bar-fill: yellowgreen; /* или #9ACD32 */
+}
+
+
+.chart-series-bar.chart-series-ph {
+    -fx-bar-fill: mediumpurple; /* или #9370DB */
+}
+
+
+.chart-bar {
+    -fx-bar-gap: 2px;
+
+}

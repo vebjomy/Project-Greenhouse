@@ -1,0 +1,150 @@
+/* ================================================= */
+/* 1. (Material Palette) */
+/* ================================================= */
+
+.material-dialog-pane {
+    /* Основные Material  */
+    -fx-base: #FFFFFF;
+    -fx-accent: #00BCD4; /* Cyan 500 */
+    -fx-primary-text: #212121;
+    -fx-secondary-text: #757575;
+    -fx-light-grey: #EEEEEE;
+    -fx-dark-grey: #616161;
+}
+
+.dialog-pane {
+    -fx-background-color: -fx-base;
+    -fx-padding: 0;
+}
+
+.header-panel {
+    -fx-background-color: -fx-light-grey;
+}
+
+.header-panel .label {
+    -fx-text-fill: -fx-primary-text;
+    -fx-font-size: 1.2em;
+    -fx-font-weight: normal;
+    -fx-padding: 10px 0 10px 0;
+}
+
+/* ================================================= */
+/* 2.  (TextField) - Underline Style */
+/* ================================================= */
+
+.text-field {
+    -fx-background-color: transparent;
+    -fx-border-color: -fx-secondary-text; /*  */
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8px 0px 4px 0px;
+    -fx-font-size: 14px;
+    -fx-text-fill: -fx-primary-text;
+}
+
+.text-field:focused {
+    -fx-border-color: -fx-accent; /*  */
+    -fx-border-width: 0 0 2 0;
+}
+
+/*  */
+.material-form-grid .label {
+    -fx-text-fill: -fx-secondary-text;
+}
+
+/* ================================================= */
+/* 3. ToggleButtons  - Card Style */
+/* ================================================= */
+
+.component-toggle-button {
+    -fx-background-color: -fx-base;
+    -fx-background-radius: 4px;
+    -fx-padding: 10px;
+    -fx-cursor: hand;
+
+    /* И (Material Card) */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 5, 0.1, 0, 1);
+
+    /*  hover/selected */
+    -fx-transition-duration: 0.2s;
+}
+
+/*  */
+.component-toggle-button:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0.2, 0, 2);
+}
+
+/*  */
+.component-toggle-button.selected {
+    -fx-border-color: -fx-accent;
+    -fx-border-width: 3px;
+    -fx-background-color: #E0F7FA; /*  */
+    -fx-border-radius: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0.3, 0, 3);
+}
+
+.component-label {
+    -fx-text-fill: -fx-dark-grey;
+    -fx-font-size: 0.9em;
+}
+
+.component-toggle-button.selected .component-label {
+    -fx-text-fill: -fx-accent;
+    -fx-font-weight: bold;
+}
+
+/* ================================================= */
+/* 4.  (OK/Cancel) */
+/* ================================================= */
+
+.dialog-pane > .button-bar {
+    -fx-background-color: -fx-base; /*  */
+    -fx-padding: 8 24 8 24; /* Material Design */
+}
+
+.dialog-button {
+    -fx-background-color: transparent; /* Пд */
+    -fx-font-weight: bold;
+    -fx-font-size: 1.0em;
+    -fx-text-fill: -fx-dark-grey;
+    -fx-padding: 8 16 8 16;
+}
+
+.dialog-button:hover {
+    -fx-background-color: -fx-light-grey; /*  */
+}
+
+/* Primary Action Button (OK) */
+.dialog-button.primary {
+    -fx-text-fill: -fx-accent; /*  */
+}
+
+.dialog-button.primary:hover {
+    -fx-background-color: #E0F7FA; /*  */
+}
+
+/* ================================================= */
+/* 5. ScrollPane */
+/* ================================================= */
+
+.material-scroll-pane {
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+}
+
+.material-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* ================================================= */
+/* 6.  (Separator) */
+/* ================================================= */
+
+.separator {
+    -fx-padding: 0 0 10 0;
+}
+
+.separator > .line {
+    -fx-border-color: -fx-light-grey;
+    -fx-border-width: 1 0 0 0;
+}
