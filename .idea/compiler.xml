@@ -8,8 +8,10 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Client" />
         <module name="Server" />
-        <module name="SensorNode" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="SensorNode" target="21" />
+    </bytecodeTargetLevel>
   </component>
 </project>
