@@ -9,8 +9,12 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
 import java.text.DecimalFormat;
+
+
+/* this class represents a Water Pump actuator in a smart irrigation system.
+ * It allows setting dosing volumes and simulates the pump operation.
+ */
 
 public class WaterPump implements Actuator {
 
@@ -24,10 +28,14 @@ public class WaterPump implements Actuator {
     private final double liters;
     private final String label;
 
+    /* Constructor for Volume enum */
+
     Volume(double liters, String label) {
       this.liters = liters;
       this.label = label;
     }
+
+    /* Getter for liters */
 
     public double getLiters() {
       return liters;
@@ -42,6 +50,8 @@ public class WaterPump implements Actuator {
       return label;
     }
   }
+
+  /* Variables to track current volume and running state */
 
   private Volume currentVolume;
   private boolean isRunning;
@@ -73,6 +83,7 @@ public class WaterPump implements Actuator {
     }
   }
 
+  /* Setter for volume */
   public void setVolume(Volume newVolume) {
     this.currentVolume = newVolume;
 
@@ -94,6 +105,8 @@ public class WaterPump implements Actuator {
   private Label statusLabel;
   private SVGPath pumpIcon;
 
+
+  /* Method to create the visual representation of the Water Pump actuator */
   @Override
   public Pane getVisualRepresentation() {
     // --- Icon ---
@@ -125,7 +138,9 @@ public class WaterPump implements Actuator {
     Button mediumVolumeButton = new Button("MED");
     Button highVolumeButton = new Button("HIGH");
 
-    // --- Action Button ---
+    /* Main Action Button
+    * This button starts the dosing operation based on the selected volume.
+    * */
     Button startDosingButton = new Button("START DOSE");
     startDosingButton.getStyleClass().add("action-button"); // For potential CSS styling
 
@@ -171,6 +186,8 @@ public class WaterPump implements Actuator {
     return layout;
   }
 
+  /* Method to update the UI elements based on current state */
+
   private void updateUI() {
     Color statusColor;
     String statusText;
@@ -187,8 +204,6 @@ public class WaterPump implements Actuator {
       statusColor = Color.web("#81C784"); // Green/Ready color
       statusText = "READY - " + df.format(currentVolume.getLiters()) + " L";
     }
-
-
     pumpIcon.setFill(statusColor);
     statusLabel.setText(statusText);
     statusLabel.setTextFill(statusColor);

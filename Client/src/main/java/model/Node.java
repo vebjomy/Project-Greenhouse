@@ -6,6 +6,12 @@ import javafx.collections.ObservableList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Represents a Node that contains Sensors and Actuators.
+ * Each Node has a name and a location.
+ * @version 1.1
+ */
+
 public class Node {
   private final ObservableList<Sensor> sensors;
   private final ObservableList<Actuator> actuators;
@@ -50,6 +56,10 @@ public class Node {
   public void addSensor(Sensor sensor) {
     this.sensors.add(sensor);
   }
+
+  /* Getters for sensors and actuators
+  * List of sensors and actuators in the node
+  *  */
 
   public ObservableList<Sensor> getSensors() {
     return sensors;

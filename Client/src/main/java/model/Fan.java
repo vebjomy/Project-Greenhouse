@@ -12,9 +12,22 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 
+/*
+ * Fan actuator class representing a fan device with speed control.
+ * Includes methods to turn the fan on/off and set speed levels.
+ * Provides a JavaFX visual representation with dynamic UI updates based on state.
+ * Implements the Actuator interface.
+ */
+
 public class Fan implements Actuator {
 
-  // --- Enum for Fan Speed ---
+/*  * Speed levels for the fan.
+* OFF: 0
+* LOW: 1
+* MEDIUM: 2
+* HIGH: 3
+* Each level has an associated integer value and string label.
+  */
   public enum Speed {
     OFF(0, "OFF"),
     LOW(1, "LOW"),
@@ -39,6 +52,14 @@ public class Fan implements Actuator {
     }
   }
 
+  /* Fan state variables AND UI components
+  * currentSpeed: Current speed level of the fan.
+  * isOn: Boolean indicating if the fan is on or off.
+  * rotateTransition: JavaFX RotateTransition for fan icon animation.
+  * statusLabel: Label displaying the current status of the fan.
+  * fanIcon: SVGPath representing the fan icon.
+  * */
+
   private Speed currentSpeed;
   private boolean isOn;
   private RotateTransition rotateTransition;
@@ -49,6 +70,10 @@ public class Fan implements Actuator {
     this.isOn = false;
     this.currentSpeed = Speed.OFF;
   }
+
+  /* Fan control methods
+  * Includes methods to turn the fan on/off and set speed levels.
+  * */
 
 
   public void turnOn() {
@@ -78,7 +103,9 @@ public class Fan implements Actuator {
     }
   }
 
-  // --- Actuator Interface Methods ---
+/* Actuator interface methods and this class's visual representation
+* Includes methods to get the actuator name and provide a JavaFX visual representation.
+ */
 
   @Override
   public String getActuatorName() {
@@ -145,6 +172,13 @@ public class Fan implements Actuator {
 
     return layout;
   }
+
+  /* UI update method where the fan icon color and rotation speed are adjusted based on the current state.
+    * If the fan is OFF, the icon is gray and not rotating.
+    * If the fan is ON, the icon color changes based on speed (green for LOW, yellow for MEDIUM, red for HIGH)
+    * and rotates at a speed corresponding to the current speed level.
+    * The status label is updated to reflect the current state and speed of the fan.
+   */
 
   private void updateUI() {
     Color statusColor;

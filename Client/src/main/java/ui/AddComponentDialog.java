@@ -11,10 +11,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+
+/**
+ * A dialog that allows users to select and add new components (sensors and actuators) to a node.
+ */
 public class AddComponentDialog extends Dialog<List<String>> {
 
   private final List<String> selectedComponents = new ArrayList<>();
 
+  /**
+   * Constructs the AddComponentDialog with predefined components.
+   */
   public AddComponentDialog() {
     setTitle("Add New Components");
     setHeaderText("Choose your sensors and actuators to add to the node.");
@@ -59,7 +66,13 @@ public class AddComponentDialog extends Dialog<List<String>> {
       return null;
     });
   }
-
+/**
+   * Creates a toggle button for a component with an icon and label.
+   *
+   * @param name     The name of the component.
+   * @param iconPath The path to the component's icon.
+   * @return A ToggleButton representing the component.
+   */
   private ToggleButton createComponentToggle(String name, String iconPath) {
 
     final int ICON_SIZE = 40;

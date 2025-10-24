@@ -9,10 +9,17 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.concurrent.ThreadLocalRandom;
+
+
+/**
+ * PHSensor simulates a pH sensor that provides pH level readings.
+ * It maintains a history of readings and provides a visual representation
+ * of the current pH level along with a trend chart.
+ * @version 1.0
+ */
 
 public class PHSensor implements Sensor {
   private double currentPH;
@@ -36,10 +43,12 @@ public class PHSensor implements Sensor {
     }
   }
 
+  /**
+   * Simulates updating the pH value with a random fluctuation.
+   * The new value is constrained within the valid pH range (0.0 to 14.0).
+   */
+
   public void updateValue() {
-    //
-    //
-    //
     double nextPH = currentPH + ThreadLocalRandom.current().nextDouble(-0.5, 0.5);
     this.currentPH = Math.max(MIN_PH, Math.min(MAX_PH, nextPH));
 
@@ -48,6 +57,11 @@ public class PHSensor implements Sensor {
       history.removeFirst();
     }
   }
+
+  /**
+   * Returns the name of the sensor.
+   * @return the sensor name "pH"
+   */
 
   @Override
   public String getSensorName() {
@@ -111,6 +125,12 @@ public class PHSensor implements Sensor {
     return layout;
   }
 
+  /**
+   * Draws the pH trend chart on the provided canvas.
+   * @param canvas the canvas to draw on
+   * @param lineColor the color of the trend line
+   */
+
   private void drawChart(Canvas canvas, Color lineColor) {
     GraphicsContext gc = canvas.getGraphicsContext2D();
     double width = canvas.getWidth();
@@ -127,14 +147,10 @@ public class PHSensor implements Sensor {
       gc.strokeLine(0, (height / (numLines - 1)) * i, width, (height / (numLines - 1)) * i);
     }
 
-
     double y_neutral = height - ((7.0 - MIN_PH) / (MAX_PH - MIN_PH) * height);
     gc.setStroke(Color.web("#CCCCCC"));
     gc.setLineWidth(1.5);
     gc.strokeLine(0, y_neutral, width, y_neutral);
-
-
-
     gc.setStroke(lineColor);
     gc.setLineWidth(2.0);
 
@@ -152,6 +168,11 @@ public class PHSensor implements Sensor {
       gc.strokeLine(i * xStep, y1, (i + 1) * xStep, y2);
     }
   }
+
+  /**
+   * Returns the current pH value.
+   * @return the current pH value
+   */
 
   @Override
   public double getCurrentValue() {

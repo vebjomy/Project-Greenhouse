@@ -9,16 +9,25 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.concurrent.ThreadLocalRandom;
+
+
+/**
+ * LightSensor simulates a light sensor that provides light intensity readings
+ * and a visual representation using JavaFX.
+ * @version 1.0
+ */
 
 public class LightSensor implements Sensor {
   private double currentLight;
   private final LinkedList<Double> history = new LinkedList<>();
   private static final int MAX_HISTORY_SIZE = 20;
   private static final DecimalFormat df = new DecimalFormat("0.0");
+
+  /* * Constructor initializes the light sensor with random values.
+   */
 
   public LightSensor() {
 
@@ -27,6 +36,9 @@ public class LightSensor implements Sensor {
     }
   }
 
+  /* * Updates the light value with a new random reading.
+   */
+
   public void updateValue() {
     this.currentLight = ThreadLocalRandom.current().nextDouble(0.0, 1000.0);
     history.addLast(this.currentLight);
@@ -34,6 +46,11 @@ public class LightSensor implements Sensor {
       history.removeFirst();
     }
   }
+
+  /* * Returns the name of the sensor.
+   * This method is overridden from the Sensor interface.
+   * @return Sensor name
+   */
 
   @Override
   public String getSensorName() {
@@ -100,6 +117,11 @@ public class LightSensor implements Sensor {
     return layout;
   }
 
+  /* * Draws the light intensity history chart on the provided canvas.
+   * @param canvas Canvas to draw the chart on
+   * @param lineColor Color of the chart line
+   */
+
   private void drawChart(Canvas canvas, Color lineColor) {
     GraphicsContext gc = canvas.getGraphicsContext2D();
     double width = canvas.getWidth();
@@ -127,6 +149,10 @@ public class LightSensor implements Sensor {
       gc.strokeLine(i * xStep, y1, (i + 1) * xStep, y2);
     }
   }
+
+  /* * Returns the current light value as a double.
+   * @return Current light intensity
+   */
 
   @Override
   public double getCurrentValue() {

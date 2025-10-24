@@ -9,6 +9,12 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 
 
+/**
+ * DashboardView sets up the main dashboard UI for the Farm Management System.
+ * It includes a top bar, left sidebar for navigation, center content area for nodes,
+ * and a right panel for activity logs.
+ */
+
 public class DashboardView {
   private final BorderPane root = new BorderPane();
   private final DashboardController controller;
@@ -23,6 +29,8 @@ public class DashboardView {
     controller = new DashboardController(this);
     setupUI();
   }
+
+  /** SETUP UI COMPONENTS AND LAYOUT */
 
   private void setupUI() {
     // --- Overall Styling ---
@@ -181,6 +189,8 @@ public class DashboardView {
     return rightPanel;
   }
 
+  /* Helper to create a log entry */
+
   private HBox createLogEntry(String time, String source, String message) {
     Label timeLabel = new Label(time);
     timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-weight: bold;");
@@ -292,6 +302,8 @@ public class DashboardView {
 
     return centerContainer;
   }
+
+  /** GETTER FOR ROOT PANE */
   public BorderPane getRoot() {
     return root;
   }

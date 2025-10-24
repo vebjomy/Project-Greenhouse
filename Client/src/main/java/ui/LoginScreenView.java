@@ -17,8 +17,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+
+/**
+ * LoginScreenView represents the login screen UI for the Green House Control application.
+ * It provides fields for username, password, server selection, and navigation options.
+ */
 public class LoginScreenView {
   private final HBox root;
+
+  // Constructor to initialize the login screen view
 
   public LoginScreenView(MainApp mainApp) {
     root = new HBox();
@@ -40,12 +47,18 @@ public class LoginScreenView {
     root.getChildren().addAll(leftPane, rightPane);
   }
 
+  /** Creates the left pane of the login screen containing login fields and server selection.
+   * @param mainApp Reference to the main application for navigation.
+   *                @return Configured VBox representing the left pane.
+   */
+
   private VBox createLeftPane(MainApp mainApp) {
     VBox pane = new VBox(25);
     pane.setPadding(new Insets(50));
     pane.setAlignment(Pos.CENTER_LEFT);
     pane.setStyle("-fx-background-color: #ecffe9; -fx-border-color: #eafde6; -fx-border-width: 0 1 0 0;");
 
+    // Header Texts
 
     Text subtitle = new Text("Green House\nAn Project can\nchange your live\n");
     subtitle.getStyleClass().add("login-title-subtitle");
@@ -54,7 +67,7 @@ public class LoginScreenView {
     TextFlow headerFlow = new TextFlow( subtitle, prompt);
     headerFlow.setTextAlignment(TextAlignment.LEFT);
 
-
+  // Input Fields
 
 
     TextField usernameField = new TextField();
@@ -66,6 +79,7 @@ public class LoginScreenView {
     passwordField.getStyleClass().add("password-field");
     VBox.setMargin(passwordField, new Insets(0, 0, 25, 0));
 
+// Server Selection
 
     ObservableList<ServerConfig> serverList = FXCollections.observableArrayList(
         new ServerConfig("Localhost (Default)", "localhost"),
@@ -76,14 +90,14 @@ public class LoginScreenView {
     serverComboBox.getSelectionModel().selectFirst();
     serverComboBox.setMaxWidth(Double.MAX_VALUE);
     serverComboBox.getStyleClass().add("text-field");
-
+// Custom IP Button
     Button customIpButton = new Button("Set Custom\nIP Address");
     customIpButton.getStyleClass().add("ip-button");
     customIpButton.setMaxWidth(Double.MAX_VALUE);
     customIpButton.setStyle("-fx-font-size: 11px; -fx-padding: 10 5;");
     customIpButton.setWrapText(true);
     customIpButton.setPrefHeight(50);
-
+// Server Selector Container
     HBox serverSelector = new HBox(10, serverComboBox, customIpButton);
     serverSelector.setAlignment(Pos.CENTER);
     HBox.setHgrow(serverComboBox, Priority.ALWAYS);
@@ -94,12 +108,12 @@ public class LoginScreenView {
 
     VBox.setMargin(serverSelector, new Insets(0, 0, 15, 0));
 
-
+// Login Button
     Button loginButton = new Button("LOG IN");
     loginButton.getStyleClass().add("login-button");
     HBox buttonContainer = new HBox(loginButton);
     buttonContainer.setAlignment(Pos.CENTER);
-
+// Login Button Action
     loginButton.setOnAction(e -> {
       ServerConfig selectedServer = serverComboBox.getSelectionModel().getSelectedItem();
       if (selectedServer != null) {
@@ -116,7 +130,7 @@ public class LoginScreenView {
     });
 
 
-
+// Assemble Left Pane
     pane.getChildren().addAll(
         headerFlow,
         new VBox(5, usernameField),
@@ -126,6 +140,10 @@ public class LoginScreenView {
     );
     return pane;
   }
+
+  /** Displays a dialog to input a custom server IP address.
+   * @param serverComboBox The ComboBox to update with the custom IP.
+   */
   private void showCustomIpDialog(ComboBox<ServerConfig> serverComboBox) {
     TextInputDialog dialog = new TextInputDialog("127.0.0.1");
     dialog.setTitle("Set Custom Server IP");
@@ -153,7 +171,10 @@ public class LoginScreenView {
       }
     });
   }
-
+/** Creates the right pane of the login screen containing navigation buttons and content area.
+   * @param mainApp Reference to the main application for navigation.
+   * @return Configured VBox representing the right pane.
+   */
   private VBox createRightPane(MainApp mainApp) {
     VBox pane = new VBox(30);
     pane.setPadding(new Insets(30));
@@ -161,7 +182,7 @@ public class LoginScreenView {
     ImageView imageView = new ImageView(new Image(getClass().getResourceAsStream("/images/house.gif")));
     imageView.setFitHeight(850);
     imageView.setPreserveRatio(true);
-
+// About Project Text
     Text aboutText = new Text("Our 'Green House Control' project is a modern system for automated " +
         "greenhouse management. It allows you to monitor and regulate temperature, " +
         "humidity, lighting, and watering in real time, ensuring optimal conditions for plant growth.");
@@ -169,7 +190,7 @@ public class LoginScreenView {
     aboutText.setTextAlignment(TextAlignment.JUSTIFY);
     aboutText.setStyle("-fx-font-size: 24px; -fx-line-spacing: 6px; -fx-font-family: 'Kaisei Decol';");
     aboutText.setVisible(false);
-
+// Creators Text
     Text creatorsText = new Text(
         "Creators of the 'Green House Control' project:\n\n" +
             "1. ejob - Project Manager\n" +
@@ -205,7 +226,7 @@ public class LoginScreenView {
       aboutText.setVisible(false);
       creatorsText.setVisible(true);
     });
-
+// Menu Button Styles
 
     for (Node n : menuBar.getChildren()) {
       if (n instanceof Button button) {
@@ -220,6 +241,10 @@ public class LoginScreenView {
     pane.getChildren().addAll(menuBar, contentArea);
     return pane;
   }
+
+  /** Returns the root HBox of the login screen view.
+   * @return The root HBox containing the entire login screen layout.
+   */
 
   public HBox getRoot() {
     return root;

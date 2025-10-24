@@ -9,10 +9,16 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.concurrent.ThreadLocalRandom;
+
+/**
+ * Class representing a Temperature Sensor.
+ * It simulates temperature readings and provides a visual representation.
+ * @author Your Name
+ * @version 1.0
+ */
 
 public class TemperatureSensor implements Sensor {
   private double currentTemperature;
@@ -20,12 +26,19 @@ public class TemperatureSensor implements Sensor {
   private static final int MAX_HISTORY_SIZE = 20; // Number of points for the graph
   private static final DecimalFormat df = new DecimalFormat("0.0");
 
+
+  /*  * Constructor initializes the sensor with random temperature values.
+   */
+
   public TemperatureSensor() {
     // Initialize with some historical data
     for (int i = 0; i < MAX_HISTORY_SIZE; i++) {
       updateValue();
     }
   }
+
+  /*  * Simulates updating the temperature value.
+   */
 
   public void updateValue() {
     // Simulate a temperature reading between -10.0 and 40.0
@@ -35,6 +48,9 @@ public class TemperatureSensor implements Sensor {
       history.removeFirst();
     }
   }
+
+  /*  * Returns the name of the sensor.
+   */
 
   @Override
   public String getSensorName() {
@@ -50,6 +66,9 @@ public class TemperatureSensor implements Sensor {
   public double getNumericValue() {
     return currentTemperature;
   }
+
+  /*  * Provides a visual representation of the sensor including an icon, labels, and a chart.
+   */
 
   @Override
   public Pane getVisualRepresentation() {
@@ -99,6 +118,9 @@ public class TemperatureSensor implements Sensor {
     return layout;
   }
 
+  /*  * Draws the temperature history chart on the provided canvas.
+   */
+
   private void drawChart(Canvas canvas, Color lineColor) {
     GraphicsContext gc = canvas.getGraphicsContext2D();
 
@@ -131,6 +153,8 @@ public class TemperatureSensor implements Sensor {
       gc.strokeLine(i * xStep, y1, (i + 1) * xStep, y2);
     }
   }
+  /*  * Returns the current temperature value.
+   */
 
   @Override
   public double getCurrentValue() {

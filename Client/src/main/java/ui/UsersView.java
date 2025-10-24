@@ -21,33 +21,33 @@ public class UsersView {
   private final BorderPane view;
   private final UsersController controller;
   private final TableView<User> userTable = new TableView<>();
-
+/* this class creates the user management view with a table and buttons */
   public UsersView() {
     controller = new UsersController(this);
     view = createUsersView();
     controller.loadUsers();
   }
-
+/* creates the user management view layout */
   private BorderPane createUsersView() {
     BorderPane layout = new BorderPane();
     layout.setPadding(new Insets(20));
-
     Label titleLabel = new Label("User Management");
     titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
-
+    // --- Buttons ---
+    // add user button
     Button addUserBtn = new Button("Add User");
     addUserBtn.setOnAction(e -> controller.addUser());
     addUserBtn.getStyleClass().add("success-button");
-
+    // edit user button
     Button editUserBtn = new Button("Edit User");
     editUserBtn.setOnAction(e -> controller.editUser());
     editUserBtn.getStyleClass().add("warning-button");
-
+    // delete user button
     Button deleteUserBtn = new Button("Delete User");
     deleteUserBtn.setOnAction(e -> controller.deleteUser());
     deleteUserBtn.getStyleClass().add("danger-button");
-
+   // layout for buttons
     HBox buttonBar = new HBox(10, addUserBtn, editUserBtn, deleteUserBtn);
     buttonBar.setAlignment(Pos.CENTER_LEFT);
 
@@ -59,6 +59,8 @@ public class UsersView {
 
     return layout;
   }
+
+  /* sets up the user table columns */
 
   private void setupTable() {
     TableColumn<User, Integer> idCol = new TableColumn<>("ID");
@@ -76,9 +78,13 @@ public class UsersView {
     userTable.getColumns().addAll(idCol, usernameCol, roleCol);
   }
 
+  /* getters for the user table and main view */
+
   public TableView<User> getUserTable() {
     return userTable;
   }
+
+  /* returns the main view pane */
 
   public BorderPane getView() {
     return view;

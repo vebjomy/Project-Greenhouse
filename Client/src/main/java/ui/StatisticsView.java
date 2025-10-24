@@ -93,6 +93,10 @@ public class StatisticsView {
     controller.updateStatistics();
   }
 
+  /** Creates the main layout for the statistics view.
+   * @return A BorderPane containing the entire statistics layout.
+   */
+
   private BorderPane createStatisticsLayout() {
     BorderPane layout = new BorderPane();
     layout.setPadding(new Insets(20));
@@ -143,11 +147,13 @@ public class StatisticsView {
   public Label getAvgHumidityLabel() { return avgHumidityLabel; }
   public Label getAvgLightLabel() { return avgLightLabel; }
   public Label getAvgPhLevelLabel() { return avgPhLevelLabel; }
-
+  // --- Getters for charts ---
   public BarChart<String, Number> getTempBarChart() { return tempBarChart; }
   public BarChart<String, Number> getHumidityBarChart() { return humidityBarChart; }
   public BarChart<String, Number> getLightBarChart() { return lightBarChart; }
   public BarChart<String, Number> getPhBarChart() { return phBarChart; }
-
+/*  * Returns the root BorderPane of the statistics view.
+   * @return The root BorderPane containing the entire statistics layout.
+   */
   public BorderPane getView() { return view; }
 }

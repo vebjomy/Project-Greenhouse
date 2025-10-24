@@ -10,6 +10,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 
+/**
+ * RegistrationView represents the user registration screen UI for the application.
+ * It provides fields for username, password, and password confirmation.
+ */
+
 public class RegistrationView {
   private final BorderPane root;
 
@@ -29,8 +34,6 @@ public class RegistrationView {
     PasswordField confirmPasswordField = new PasswordField();
     confirmPasswordField.setPromptText("Confirm password");
 
-
-
     Button registerButton = new Button("Register");
     registerButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 20; -fx-font-size: 16px; -fx-cursor: hand;");
     registerButton.setOnAction(e -> {
@@ -44,6 +47,8 @@ public class RegistrationView {
     formBox.setPadding(new Insets(20));
     root.setCenter(formBox);
   }
+
+  // Getter for the root pane
 
   public BorderPane getRoot() {
     return root;

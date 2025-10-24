@@ -10,6 +10,10 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+
+/* This class represents a Window actuator in a smart home system.
+ * It allows setting the window openness level and provides a visual representation.
+ */
 public class Window implements Actuator {
 
   // --- Enum for Window Openness Level (й) ---
@@ -36,6 +40,8 @@ public class Window implements Actuator {
     }
   }
 
+  /* Variables to track current openness level */
+
   // --- SVG Icon Definitions ---
   private static final String SVG_CLOSED = "M3,21V19H21V21H3M12,17V5H21V17H12M3,17V5H12V17H3Z";
   private static final String SVG_HALF = "M3,21V19H21V21H3M12,17V5H21V17M3,17V5H12V17H3Z";
@@ -56,6 +62,8 @@ public class Window implements Actuator {
   public void close() {
     setOpenness(Openness.CLOSED);
   }
+
+  /* Set the window openness level */
 
   public void setOpenness(Openness newOpenness) {
     this.currentOpenness = newOpenness;
@@ -123,6 +131,8 @@ public class Window implements Actuator {
 
     return layout;
   }
+
+  /* Update the visual representation based on the current openness level */
 
   private void updateUI() {
     Color statusColor;

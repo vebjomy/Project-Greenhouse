@@ -22,11 +22,21 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
   private final TextField ipField = new TextField();
   private final List<String> selectedComponents = new ArrayList<>();
 
+  /** A simple data class to hold the result of the node creation dialog.
+  */
   public static class NodeCreationResult {
     public final String name;
     public final String location;
     public final String ip;
     public final List<String> components;
+
+
+    /** Constructs a NodeCreationResult with the given parameters.
+     * @param name The name of the node.
+     * @param location The location of the node.
+     * @param ip The IP address of the node.
+     * @param components The list of initial components for the node.
+     */
 
     public NodeCreationResult(String name, String location, String ip, List<String> components) {
       this.name = name;
@@ -35,6 +45,10 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
       this.components = components;
     }
   }
+
+  /**
+   * Constructs the AddNodeDialog with input fields and component selection.
+   */
 
   public AddNodeDialog() {
     setTitle("Create New Farm Node");

@@ -10,6 +10,15 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
+/*
+ * CO2Generator Actuator Class
+ *
+ * This class represents a CO2 Generator actuator with adjustable generation rates.
+ * It provides methods to turn the generator on/off and set the generation rate.
+ * The visual representation includes an icon and status labels that change color
+ * based on the current activity rate.
+ */
+
 public class CO2Generator implements Actuator {
 
   // --- Enum for CO2 Generation Rate ---
@@ -37,15 +46,23 @@ public class CO2Generator implements Actuator {
     }
   }
 
+  /*  --- Instance Variables ---
+   */
+
   private Rate currentRate;
   private boolean isRunning;
+
+  /*  constructor Initializes the CO2 generator in the OFF state.
+   */
 
   public CO2Generator() {
     this.isRunning = false;
     this.currentRate = Rate.OFF;
   }
 
-  // --- Control Methods ---
+/*  Turns on the CO2 generator. If it is already running, does nothing.
+* If turned on from OFF state, sets a default rate (e.g., LOW).
+   */
 
   public void turnOn() {
     if (!this.isRunning) {
@@ -57,12 +74,19 @@ public class CO2Generator implements Actuator {
       System.out.println("CO2 Generator turned ON. Rate: " + this.currentRate);
     }
   }
+  /*  Turns off the CO2 generator and sets the rate to OFF.
+   */
 
   public void turnOff() {
     this.isRunning = false;
     this.currentRate = Rate.OFF;
     System.out.println("CO2 Generator turned OFF.");
   }
+
+  /*  Sets the CO2 generation rate.
+   * If the rate is set to OFF, the generator is turned off.
+   * If a non-OFF rate is set, the generator is turned on if it was off.
+   */
 
   public void setRate(Rate newRate) {
     if (newRate == Rate.OFF) {
@@ -80,6 +104,11 @@ public class CO2Generator implements Actuator {
   public String getActuatorName() {
     return "CO2 Generator";
   }
+
+  /*  This method constructs and returns the visual representation of the CO2 Generator actuator.
+   * It includes an icon, labels for the name and status, and buttons to control the generation rate.
+   * The UI elements are styled and arranged in a VBox layout.
+   */
 
   private Label statusLabel;
   private SVGPath co2Icon;
@@ -142,6 +171,12 @@ public class CO2Generator implements Actuator {
 
     return layout;
   }
+
+  /* This method updates the UI elements based on the current state of the CO2 Generator.
+  * It changes the color of the icon and status label according to the current generation rate.
+  * The colors represent different activity levels: gray for OFF, green for LOW, yellow for MEDIUM, and red for HIGH.
+  * The status text is also updated to reflect the current state.
+   */
 
   private void updateUI() {
     Color statusColor;

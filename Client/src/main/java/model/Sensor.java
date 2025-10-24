@@ -3,7 +3,10 @@ package model;
 import javafx.scene.layout.Pane;
 
 /**
- * Interface for all sensor types.
+ * Interface for all sensor types and their behaviors.
+ * this interface defines the methods that all sensor classes must implement.
+ * @author Your Name
+ * @version 1.0
  */
 public interface Sensor {
   String getSensorName();

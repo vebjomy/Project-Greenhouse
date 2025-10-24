@@ -12,6 +12,8 @@ public class User {
   private final SimpleStringProperty username;
   private final SimpleStringProperty role;
 
+  /** Constructor to initialize a User object with id, username, and role. */
+
   public User(int id, String username, String role) {
     this.id = new SimpleIntegerProperty(id);
     this.username = new SimpleStringProperty(username);

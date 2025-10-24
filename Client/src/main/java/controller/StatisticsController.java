@@ -15,6 +15,13 @@ public class StatisticsController {
   private final StatisticsView view;
   private final List<Node> nodes;
 
+  /**
+   * Constructor for StatisticsController.
+   *
+   * @param view  The StatisticsView instance to control.
+   * @param nodes The list of nodes containing sensors to analyze.
+   */
+
   public StatisticsController(StatisticsView view, List<Node> nodes) {
     this.view = view;
     this.nodes = nodes;
@@ -22,6 +29,7 @@ public class StatisticsController {
 
   /**
    * Calculates all statistics and updates the UI components.
+   * This includes average values for each sensor type and updating bar charts.
    */
   public void updateStatistics() {
     if (nodes == null || nodes.isEmpty()) {
@@ -49,12 +57,24 @@ public class StatisticsController {
     applyBarColors();
   }
 
+  /** Applies distinct colors to each bar chart for better visual distinction.
+   * This method sets specific colors for temperature, humidity, light, and pH bar charts.
+   * Each chart is styled using CSS to enhance the user interface.
+   */
+
   private void applyBarColors() {
     setChartBarColor(view.getTempBarChart(), "#ff6f61");
     setChartBarColor(view.getHumidityBarChart(), "#4db8ff");
     setChartBarColor(view.getLightBarChart(), "#ffd54f");
     setChartBarColor(view.getPhBarChart(), "#81c784");
   }
+
+  /**
+   * Sets the color of the bars in a given BarChart.
+   *
+   * @param chart The BarChart to style.
+   * @param color The color to apply to the bars (in hex format).
+   */
 
   private void setChartBarColor(BarChart<String, Number> chart, String color) {
     chart.lookupAll(".chart-bar").forEach(bar ->
@@ -81,11 +101,10 @@ public class StatisticsController {
     return average.orElse(0.0);
   }
 
-  // ------------------------------------------------------------------
-  // ------------------------------------------------------------------
-
   /**
    * Calls the generic chart update method for all sensor types.
+   * This method updates the bar charts for temperature, humidity,
+   * light, and pH sensors.
    */
   private void updateAllCharts() {
     // 1.

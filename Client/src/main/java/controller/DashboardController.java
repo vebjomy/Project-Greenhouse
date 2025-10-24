@@ -18,6 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * The `DashboardController` class is responsible for managing the dashboard view and its interactions.
+ * It handles the creation and management of nodes, sensors, and actuators, as well as refreshing the
+ * dashboard data and updating the user interface.
+ */
+
 public class DashboardController {
   private final DashboardView view;
   private final List<model.Node> nodes = new ArrayList<>();
@@ -29,6 +35,13 @@ public class DashboardController {
 
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
 
+  /**
+   * Constructs a new `DashboardController` with the specified dashboard view.
+   *
+   * @param view The `DashboardView` instance associated with this controller.
+   */
+
+
   public DashboardController(DashboardView view) {
     this.view = view;
     System.out.println("DashboardController initialized.");
@@ -38,6 +51,11 @@ public class DashboardController {
     );
     refreshTimeline.setCycleCount(Timeline.INDEFINITE);
   }
+  /**
+   * Sets the UI components that the controller will manage.
+   * @param nodesPane The FlowPane containing node views.
+   * @param lastUpdateLabel The label displaying the last update time.
+   */
 
   public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel) {
     this.nodesPane = nodesPane;
@@ -80,6 +98,9 @@ public class DashboardController {
 
   /**
    * A helper method to add multiple components to a node based on a list of names.
+   * @param node The node to which components will be added.
+   * @param componentNames The list of component names to add.
+   *
    */
   private void addComponentsToNode(model.Node node, List<String> componentNames) {
     for (String componentName : componentNames) {
@@ -116,6 +137,7 @@ public class DashboardController {
 
   /**
    * Manually refreshes the data and updates the last update label.
+   * This method simulates data fetching and updates the UI accordingly.
    */
   public void refreshData() {
     // Only update data if the controller has UI components set
@@ -130,6 +152,11 @@ public class DashboardController {
     }
     redrawDashboard();
   }
+
+  /**
+   * Redraws the entire dashboard by clearing and recreating all node views.
+   * This method is called whenever nodes are added or data is refreshed.
+   */
 
   private void redrawDashboard() {
     if (nodesPane == null) return;
@@ -162,10 +189,16 @@ public class DashboardController {
 
   /**
    * Returns the current auto-refresh interval.
+   * @return The refresh interval in seconds.
    */
   public long getRefreshIntervalSeconds() {
     return refreshIntervalSeconds;
   }
+
+  /**
+   * Returns the list of nodes managed by this controller.
+   * @return The list of nodes.
+   */
 
   public List<model.Node> getNodes() {
     return nodes;
