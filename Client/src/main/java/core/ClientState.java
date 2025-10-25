@@ -1,0 +1,78 @@
+package core;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+
+/**
+ * Stores the current state of all greenhouse nodes, including sensor values.
+ * Provides listener subscriptions for real-time sensor updates.
+ */
+public class ClientState {
+
+  public static class NodeState {
+    public final String nodeId;
+    public String name;
+    public String location;
+    public String ip;
+    public final Set<String> sensors = ConcurrentHashMap.newKeySet();
+    public final Set<String> actuators = ConcurrentHashMap.newKeySet();
+    public final Map<String, Object> last = new ConcurrentHashMap<>();
+    public NodeState(String id){ this.nodeId = id; }
+  }
+
+  private final Map<String, NodeState> nodes = new ConcurrentHashMap<>();
+
+  // listeners
+  private final List<Consumer<NodeState>> sensorListeners = Collections.synchronizedList(new ArrayList<>());
+  private final List<Consumer<NodeState>> nodeChangeListeners = Collections.synchronizedList(new ArrayList<>());
+
+  public NodeState upsertNode(String id){
+    return nodes.computeIfAbsent(id, NodeState::new);
+  }
+
+  public void patchNode(String id, String name, String location, String ip,
+                        Collection<String> sensors, Collection<String> actuators){
+    NodeState n = upsertNode(id);
+    if (name != null) n.name = name;
+    if (location != null) n.location = location;
+    if (ip != null) n.ip = ip;
+    if (sensors != null){ n.sensors.clear(); n.sensors.addAll(sensors); }
+    if (actuators != null){ n.actuators.clear(); n.actuators.addAll(actuators); }
+    notifyNodeChange(n);
+  }
+
+  public void removeNode(String id){
+    NodeState n = nodes.remove(id);
+    if (n != null) notifyNodeChange(n);
+  }
+
+  public void updateSensors(String nodeId, Map<String,Object> data){
+    NodeState n = upsertNode(nodeId);
+    n.last.putAll(data);
+    notifySensor(n);
+  }
+
+  public void applyLastValues(String nodeId, Map<String,Object> data){
+    NodeState n = upsertNode(nodeId);
+    n.last.clear();
+    n.last.putAll(data);
+    notifySensor(n);
+  }
+
+  // listeners
+  public void onSensorUpdate(Consumer<NodeState> l){ sensorListeners.add(l); }
+  public void onNodeChange(Consumer<NodeState> l){ nodeChangeListeners.add(l); }
+
+  private void notifySensor(NodeState ns){
+    synchronized (sensorListeners){ for (var l: sensorListeners) l.accept(ns); }
+  }
+  private void notifyNodeChange(NodeState ns){
+    synchronized (nodeChangeListeners){ for (var l: nodeChangeListeners) l.accept(ns); }
+  }
+
+  public Collection<NodeState> allNodes(){ return nodes.values(); }
+  public NodeState get(String id){ return nodes.get(id); }
+}
+
+

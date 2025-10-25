@@ -1,0 +1,36 @@
+package net;
+
+/**
+ * A utility class that holds constants for different message types used in the network communication.
+ */
+public final class MessageTypes {
+  public static final String HELLO = "hello";
+  public static final String WELCOME = "welcome";
+  public static final String PING = "ping";
+  public static final String PONG = "pong";
+
+  public static final String GET_TOPOLOGY = "get_topology";
+  public static final String TOPOLOGY = "topology";
+  public static final String NODE_CHANGE = "node_change";
+
+  public static final String CREATE_NODE = "create_node";
+  public static final String UPDATE_NODE = "update_node";
+  public static final String DELETE_NODE = "delete_node";
+  public static final String ADD_COMPONENT = "add_component";
+  public static final String REMOVE_COMPONENT = "remove_component";
+  public static final String SET_SAMPLING = "set_sampling";
+
+  public static final String SUBSCRIBE = "subscribe";
+  public static final String UNSUBSCRIBE = "unsubscribe";
+  public static final String SENSOR_UPDATE = "sensor_update";
+
+  public static final String COMMAND = "command";
+  public static final String ACK = "ack";
+  public static final String ERROR = "error";
+
+  public static final String GET_LAST_VALUES = "get_last_values";
+  public static final String LAST_VALUES = "last_values";
+
+  private MessageTypes(){}
+}
+

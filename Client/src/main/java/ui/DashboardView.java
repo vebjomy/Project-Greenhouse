@@ -307,4 +307,9 @@ public class DashboardView {
   public BorderPane getRoot() {
     return root;
   }
+
+    /** INITIALIZE NETWORKING */
+  public void initNetwork(core.ClientApi api) {
+    controller.setApi(api);
+  }
 }
