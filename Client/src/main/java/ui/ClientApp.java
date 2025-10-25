@@ -1,6 +1,6 @@
 package ui;
 
 /**
- * Placeholder.
+ * Client Application Main Class
  */
 public class ClientApp {}
