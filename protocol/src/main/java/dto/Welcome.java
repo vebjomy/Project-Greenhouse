@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 public class Welcome {
   public String type = "welcome";

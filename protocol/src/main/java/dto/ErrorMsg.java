@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 public class ErrorMsg {
   public String type = "error";

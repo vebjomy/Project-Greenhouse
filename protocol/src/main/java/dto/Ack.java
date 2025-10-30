@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 public class Ack {
   public String type = "ack";

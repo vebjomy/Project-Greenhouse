@@ -31,7 +31,12 @@ public class MainApp extends Application {
     DashboardView dashboard = new DashboardView();
 
     ClientApi api = new ClientApi();
-    api.useMock();
+    api.connect("127.0.0.1", 5555).thenRun(() -> {
+      System.out.println("Connected to server");
+    }).exceptionally(ex -> {
+      System.err.println("Failed to connect to server: " + ex.getMessage());
+      return null;
+    });
     dashboard.initNetwork(api);
 
     this.primaryStage = stage;

@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 public class GetLastValues {
   public String type = "get_last_values";

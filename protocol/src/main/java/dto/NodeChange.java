@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 public class NodeChange {
   public String type = "node_change";

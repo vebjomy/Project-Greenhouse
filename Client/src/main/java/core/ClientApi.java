@@ -1,8 +1,8 @@
 package core;
 
+import dto.*;
 import net.MessageTypes;
 import net.NetworkClient;
-import net.dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import javafx.application.Platform;
 

@@ -1,11 +1,9 @@
 model\HumiditySensor.class
-App\MainApp.class
 model\Fan$Speed.class
 ui\SplashScreenView.class
 model\Node.class
 model\LightSensor.class
 model\CO2Generator.class
-controller\NodeController.class
 ui\ClientApp.class
 model\User.class
 model\Fan.class
@@ -14,13 +12,12 @@ model\CO2Generator$Rate.class
 model\Actuator.class
 ui\UsersView.class
 model\PHSensor.class
-controller\Sensordata.class
+net\MockServer.class
 model\TemperatureSensor.class
+net\NetworkClient.class
 model\ServerConfig.class
 model\WaterPump.class
 model\WaterPump$Volume.class
-controller\UsersController.class
-controller\DashboardController.class
 ui\AddNodeDialog.class
 model\Sensor.class
 model\Window$Openness.class
@@ -29,5 +26,6 @@ ui\LoginScreenView.class
 ui\StatisticsView.class
 ui\AddNodeDialog$NodeCreationResult.class
 ui\RegistrationView.class
-controller\StatisticsController.class
+net\MockServer$1.class
 ui\AddComponentDialog.class
+net\MessageCodec.class

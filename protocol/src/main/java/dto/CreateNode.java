@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 public class CreateNode {
   public String type = "create_node";

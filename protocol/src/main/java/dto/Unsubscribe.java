@@ -1,10 +1,9 @@
-package net.dto;
+package dto;
 
 import java.util.List;
 
-
-public class Subscribe {
-  public String type = "subscribe";
+public class Unsubscribe {
+  public String type = "unsubscribe";
   public String id;
   public List<String> nodes;
   public List<String> events;

@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 import java.util.List;
 public class Topology {

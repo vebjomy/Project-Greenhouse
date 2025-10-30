@@ -1,6 +1,7 @@
 package net;
 
-import net.dto.*;
+import dto.*;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;

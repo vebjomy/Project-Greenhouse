@@ -1,4 +1,4 @@
-package net.dto;
+package dto;
 
 public class SetSampling {
   public String type = "set_sampling";
