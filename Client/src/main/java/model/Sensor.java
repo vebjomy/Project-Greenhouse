@@ -14,4 +14,6 @@ public interface Sensor {
   public abstract double getCurrentValue();
   double getNumericValue();
   Pane getVisualRepresentation();
+
+  String getName();
 }

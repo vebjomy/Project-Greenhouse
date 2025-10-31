@@ -169,6 +169,11 @@ public class PHSensor implements Sensor {
     }
   }
 
+  @Override
+  public String getName() {
+    return "";
+  }
+
   /**
    * Returns the current pH value.
    * @return the current pH value

@@ -18,9 +18,11 @@ import ui.SplashScreenView;
 public class MainApp extends Application {
 
   private Stage primaryStage;
+  private LoginScreenView loginScreenView;
   private static final double SCENE_WIDTH = 1480;
   private static final double SCENE_HEIGHT = 1000;
-
+  private boolean isConnected = false; // new status field
+  private final String SERVER_ADDRESS = "127.0.0.1";
   /**
    * Starts the JavaFX application by setting up the primary stage and displaying the splash screen.
    *
@@ -31,10 +33,20 @@ public class MainApp extends Application {
     DashboardView dashboard = new DashboardView();
 
     ClientApi api = new ClientApi();
-    api.connect("127.0.0.1", 5555).thenRun(() -> {
+    api.connect(SERVER_ADDRESS, 5555).thenRun(() -> {
       System.out.println("Connected to server");
+      isConnected = true; // status update
+      // Оupdate UI if LoginScreenView is already initialized
+      if (loginScreenView != null) {
+        javafx.application.Platform.runLater(() -> loginScreenView.updateServerStatus(true));
+      }
     }).exceptionally(ex -> {
       System.err.println("Failed to connect to server: " + ex.getMessage());
+      isConnected = false; // setting status
+      // update UI if LoginScreenView is already initialized
+      if (loginScreenView != null) {
+        javafx.application.Platform.runLater(() -> loginScreenView.updateServerStatus(false));
+      }
       return null;
     });
     dashboard.initNetwork(api);
@@ -81,10 +93,27 @@ public class MainApp extends Application {
    * Displays the login screen view.
    */
   public void showLoginScreen() {
-    LoginScreenView login = new LoginScreenView(this);
-    Scene scene = new Scene(login.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
+    // Initialize the loginScreenView field
+    loginScreenView = new LoginScreenView(this);
+
+    // Update the server status
+    loginScreenView.updateServerStatus(isConnected);
+
+    // Set up the scene and stage
+    Scene scene = new Scene(loginScreenView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Green House Control - Login");
+  }
+
+
+
+
+  public boolean isConnected() {
+    return isConnected;
+  }
+
+  public String getServerAddress() {
+    return SERVER_ADDRESS;
   }
 
   /**

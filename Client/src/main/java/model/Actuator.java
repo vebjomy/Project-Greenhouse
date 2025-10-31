@@ -18,4 +18,6 @@ public interface Actuator {
    * @return A JavaFX Pane representing the actuator's visual controls and status.
    */
   Pane getVisualRepresentation();
+
+  String getName();
 }

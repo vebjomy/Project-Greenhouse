@@ -4,7 +4,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * Represents a Node that contains Sensors and Actuators.
@@ -44,6 +43,13 @@ public class Node {
     return name;
   }
 
+  public String getId() {
+    return name.replaceAll("\\s+", "_").toLowerCase();
+  }
+  public String getIpAddress() {
+    return "192.168.1." + (int)(Math.random() * 254 + 1); // Dummy IP for example
+  }
+
   // <<< NEW GETTER
   public String getLocation() {
     return location;
@@ -67,5 +73,19 @@ public class Node {
 
   public ObservableList<Actuator> getActuators() {
     return actuators;
+  }
+
+  public void removeActuator(Actuator actuator) {
+  }
+
+  public void removeSensor(Sensor sensor) {
+
+  }
+
+  public void setName(String name) {
+  }
+
+  public void setLocation(String location) {
+
   }
 }
