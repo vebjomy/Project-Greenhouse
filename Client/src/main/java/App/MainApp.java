@@ -1,5 +1,6 @@
 package App;
 
+import core.ClientApi;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.text.Font;
@@ -27,6 +28,17 @@ public class MainApp extends Application {
    */
   @Override
   public void start(Stage stage) {
+    DashboardView dashboard = new DashboardView();
+
+    ClientApi api = new ClientApi();
+    api.connect("127.0.0.1", 5555).thenRun(() -> {
+      System.out.println("Connected to server");
+    }).exceptionally(ex -> {
+      System.err.println("Failed to connect to server: " + ex.getMessage());
+      return null;
+    });
+    dashboard.initNetwork(api);
+
     this.primaryStage = stage;
     primaryStage.setTitle("Green House Control");
     primaryStage.centerOnScreen();

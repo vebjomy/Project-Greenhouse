@@ -1,5 +1,6 @@
 package controller;
 
+import core.ClientApi;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.control.Button;
@@ -29,11 +30,25 @@ public class DashboardController {
   private final List<model.Node> nodes = new ArrayList<>();
   private FlowPane nodesPane; // The container for node views
   private Label lastUpdateLabel;
+  private ClientApi api; // For server communication
 
   private Timeline refreshTimeline; // New: For automatic refreshing
   private long refreshIntervalSeconds = 0; // New: Current interval
 
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
+
+  /**
+   * Sets the ClientApi instance for server communication.
+   * @param api The ClientApi instance to be used by this controller.
+   */
+  public void setApi(ClientApi api) {
+    this.api = api;
+    this.api.onSensorUpdate(ns -> {
+      // Here can be logic to update nodes based on incoming sensor data
+      // For now, we just refresh the data
+      refreshData();
+    });
+  }
 
   /**
    * Constructs a new `DashboardController` with the specified dashboard view.

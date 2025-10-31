@@ -1,28 +1,34 @@
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\App\MainApp.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\controller\DashboardController.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\controller\NodeController.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\controller\Sensordata.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\controller\StatisticsController.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\controller\UsersController.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\Actuator.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\CO2Generator.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\Fan.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\HumiditySensor.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\LightSensor.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\Node.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\PHSensor.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\Sensor.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\ServerConfig.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\TemperatureSensor.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\User.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\WaterPump.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\model\Window.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\AddComponentDialog.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\AddNodeDialog.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\ClientApp.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\DashboardView.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\LoginScreenView.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\RegistrationView.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\SplashScreenView.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\StatisticsView.java
-C:\NTNU\Datanetwerk  green house\Project-Greenhouse\Client\src\main\java\ui\UsersView.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\App\MainApp.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\controller\DashboardController.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\controller\NodeController.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\controller\Sensordata.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\controller\StatisticsController.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\controller\UsersController.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\core\ClientApi.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\core\ClientState.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\core\RequestManager.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\Actuator.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\CO2Generator.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\Fan.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\HumiditySensor.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\LightSensor.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\Node.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\PHSensor.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\Sensor.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\ServerConfig.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\TemperatureSensor.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\User.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\WaterPump.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\model\Window.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\net\MessageCodec.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\net\MockServer.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\net\NetworkClient.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\AddComponentDialog.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\AddNodeDialog.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\ClientApp.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\DashboardView.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\LoginScreenView.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\RegistrationView.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\SplashScreenView.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\StatisticsView.java
+D:\Java Projects\Greenhouse\Project-Greenhouse\Client\src\main\java\ui\UsersView.java

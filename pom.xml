@@ -8,11 +8,14 @@
     <groupId>idata2304</groupId>
     <artifactId>Project-Greenhouse</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>Project-Greenhouse</name>
+    <description>Multi-module Maven project for Greenhouse Monitoring System</description>
 
 
     <modules>
         <module>Client</module>
         <module>Server</module>
+        <module>protocol</module>
     </modules>
 
     <properties>
