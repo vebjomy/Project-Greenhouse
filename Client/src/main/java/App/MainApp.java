@@ -30,7 +30,7 @@ public class MainApp extends Application {
    */
   @Override
   public void start(Stage stage) {
-    DashboardView dashboard = new DashboardView();
+    DashboardView dashboard = new DashboardView(this); // pass MainApp instance
 
     ClientApi api = new ClientApi();
     api.connect(SERVER_ADDRESS, 5555).thenRun(() -> {
@@ -120,7 +120,7 @@ public class MainApp extends Application {
    * Displays the dashboard view.
    */
   public void showDashboard() {
-    DashboardView dashboard = new DashboardView();
+    DashboardView dashboard = new DashboardView(this);
     Scene scene = new Scene(dashboard.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Smart Farm Control");

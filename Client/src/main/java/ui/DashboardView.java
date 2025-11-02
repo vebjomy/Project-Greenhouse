@@ -1,4 +1,5 @@
 package ui;
+import App.MainApp;
 import controller.DashboardController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,10 +21,17 @@ public class DashboardView {
   private VBox dashboardContent;
   private BorderPane usersContent;
   private BorderPane statisticsContent;
-  public DashboardView() {
-    controller = new DashboardController(this);
+
+  // Reference to MainApp for navigation
+  private final MainApp mainApp;
+
+  public DashboardView(MainApp mainApp) { //mainApp parameter
+    this.mainApp = mainApp; // save reference
+    // to the main application
+    controller = new DashboardController(this, mainApp);
     setupUI();
   }
+
   /** SETUP UI COMPONENTS AND LAYOUT */
   private void setupUI() {
     // --- Overall Styling ---
@@ -102,8 +110,10 @@ public class DashboardView {
       btn.setOnMouseEntered(e -> { if (!btn.getStyle().contains(buttonActiveStyle)) btn.setStyle(buttonStyle + buttonHoverStyle); });
       btn.setOnMouseExited(e -> { if (!btn.getStyle().contains(buttonActiveStyle)) btn.setStyle(buttonStyle); });
     }
-//    logoutBtn.setOnAction(e -> mainApp.showLoginScreen());
-    // --- Set Dashboard as the active button by default ---
+    // --- Logout Logic ---
+    logoutBtn.setOnAction(e -> controller.logout());
+
+
     setActiveButton(dashboardBtn, navButtons, buttonStyle, buttonActiveStyle);
 
     sidebar.getChildren().addAll(dashboardBtn, usersBtn, statsBtn, logoutBtn);
@@ -261,7 +271,7 @@ public class DashboardView {
   public BorderPane getRoot() {
     return root;
   }
-    /** INITIALIZE NETWORKING */
+  /** INITIALIZE NETWORKING */
   public void initNetwork(core.ClientApi api) {
     controller.setApi(api);
   }
