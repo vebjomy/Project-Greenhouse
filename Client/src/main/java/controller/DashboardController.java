@@ -3,6 +3,7 @@ import App.MainApp;
 import core.ClientApi;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -21,6 +22,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The `DashboardController` class is responsible for managing the dashboard view and its interactions.
@@ -29,14 +31,15 @@ import java.util.Optional;
  */
 public class DashboardController {
   private final DashboardView view;
-  private final MainApp mainApp; // link to MainApp for navigation
+  private final MainApp mainApp; // mainApp reference for scene management
   private final List<Node> nodes = new ArrayList<>();
-  private FlowPane nodesPane; // The container for node views
+  private FlowPane nodesPane; // container for node views
   private Label lastUpdateLabel;
-  private ClientApi api; // For server communication
-  private Timeline refreshTimeline; // New: For automatic refreshing
-  private long refreshIntervalSeconds = 0; // New: Current interval
-  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
+  private VBox logContent; // new VBox for log entries
+  private ClientApi api; //for server communication
+  private Timeline refreshTimeline; // for auto-refresh
+  private long refreshIntervalSeconds = 0; // in seconds, 0 means no auto-refresh
+  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
   /**
    * Sets the ClientApi instance for server communication.
@@ -45,8 +48,8 @@ public class DashboardController {
   public void setApi(ClientApi api) {
     this.api = api;
     this.api.onSensorUpdate(ns -> {
-      // Here can be logic to update nodes based on incoming sensor data
-      // For now, we just refresh the data
+     // Handle sensor update from server!!!
+      // For simplicity, we just refresh the data!!!!!! viktigf
       refreshData();
     });
   }
@@ -58,9 +61,9 @@ public class DashboardController {
    */
   public DashboardController(DashboardView view, MainApp mainApp) {
     this.view = view;
-    this.mainApp = mainApp;
+    this.mainApp = mainApp; // save mainApp reference
     System.out.println("DashboardController initialized.");
-    // Initialize the Timeline for refreshing
+    // update every second by default, can be changed later
     refreshTimeline = new Timeline(
         new KeyFrame(Duration.seconds(1), e -> refreshData())
     );
@@ -72,11 +75,28 @@ public class DashboardController {
    * Sets the UI components that the controller will manage.
    * @param nodesPane The FlowPane containing node views.
    * @param lastUpdateLabel The label displaying the last update time.
+   * @param logContent The VBox containing log entries.
    */
-  public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel) {
+  public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel, VBox logContent) {
     this.nodesPane = nodesPane;
     this.lastUpdateLabel = lastUpdateLabel;
+    this.logContent = logContent; // save log content container
   }
+
+  /**
+    * Logs an activity to the log view with a timestamp, source, and message.
+   * @param source The source of the activity (e.g., node name).
+   *               @param message The message describing the activity.
+   *
+   */
+  public void logActivity(String source, String message) {
+    Platform.runLater(() -> {
+      String currentTime = LocalDateTime.now().format(FORMATTER);
+      HBox entry = view.createLogEntry(currentTime, source, message);
+      logContent.getChildren().add(0, entry); // add to the top
+    });
+  }
+
   /**
    * Opens a dialog to create a new node. If the user confirms,
    * the node is created and the dashboard is redrawn.
@@ -86,12 +106,28 @@ public class DashboardController {
     Optional<AddNodeDialog.NodeCreationResult> result = dialog.showAndWait();
 
     result.ifPresent(nodeData -> {
-      // Create the new node with name and location
+      // 1. create new node
       Node newNode = new Node(nodeData.name, nodeData.location);
-      // Add the components the user selected in the dialog
-      addComponentsToNode(newNode, nodeData.components);
+
+      // 2. add components
+      int sensorsCount = addComponentsToNode(newNode, nodeData.components);
+
       nodes.add(newNode);
       redrawDashboard();
+
+      // 3. log creation
+      String componentSummary = String.format(
+          "%d sensor(s), %d actuator(s).",
+          sensorsCount,
+          newNode.getActuators().size()
+      );
+      String logMessage = String.format(
+          "New Node '%s' created at %s. Status: OK. Components: %s",
+          newNode.getName(),
+          newNode.getLocation(),
+          componentSummary
+      );
+      logActivity(newNode.getName(), logMessage);
     });
   }
   /**
@@ -103,37 +139,58 @@ public class DashboardController {
     Optional<List<String>> result = dialog.showAndWait();
 
     result.ifPresent(componentsToAdd -> {
-      addComponentsToNode(node, componentsToAdd);
-      redrawDashboard();
+      if (!componentsToAdd.isEmpty()) {
+        int addedCount = addComponentsToNode(node, componentsToAdd);
+        redrawDashboard();
+
+        // log the addition
+        String componentList = componentsToAdd.stream()
+            .map(c -> c.replace(" Sensor", "(S)").replace(" Pump",
+                "(A)").replace(" Generator", "(A)").replace(" Window",
+                "(A)").replace(" Fan", "(A)"))
+            .collect(Collectors.joining(", "));
+        String logMessage = String.format(
+            "%d component(s) added. New items: %s. Total components: %d.",
+            addedCount,
+            componentList,
+            node.getSensors().size() + node.getActuators().size()
+        );
+        logActivity(node.getName(), logMessage);
+      }
     });
   }
   /**
    * A helper method to add multiple components to a node based on a list of names.
    * @param node The node to which components will be added.
    * @param componentNames The list of component names to add.
-   *
+   * @return The number of sensors added.
    */
-  private void addComponentsToNode(Node node, List<String> componentNames) {
+  private int addComponentsToNode(Node node, List<String> componentNames) {
+    int sensorsAdded = 0;
     for (String componentName : componentNames) {
       switch (componentName) {
         case "Temperature Sensor":
           node.addSensor(new TemperatureSensor());
+          sensorsAdded++;
           break;
         case "Light Sensor":
           node.addSensor(new LightSensor());
+          sensorsAdded++;
           break;
         case "Humidity Sensor":
           node.addSensor(new HumiditySensor());
+          sensorsAdded++;
           break;
         case "PH Sensor":
           node.addSensor(new PHSensor());
+          sensorsAdded++;
           break;
         case "Water Pump":
           node.addActuator(new WaterPump());
           break;
         case "CO2 Generator":
           node.addActuator(new CO2Generator());
-          break; // Added missing break
+          break;
         case "Fan":
           node.addActuator(new Fan());
           break;
@@ -144,6 +201,7 @@ public class DashboardController {
           System.err.println("Unknown component: " + componentName);
       }
     }
+    return sensorsAdded;
   }
   /**
    * Manually refreshes the data and updates the last update label.
@@ -155,10 +213,14 @@ public class DashboardController {
     // Simulate data fetching/update for all nodes (e.g., calling node.updateData())
     // For now, just redraw and update time.
     if (lastUpdateLabel != null) {
-      String currentTime = LocalDateTime.now().format(FORMATTER);
+      String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy")); //updated format
       lastUpdateLabel.setText("Last update: " + currentTime);
     }
     redrawDashboard();
+    //log auto-refresh activity
+    if (refreshIntervalSeconds > 0) {
+      logActivity("System", "Auto-refresh: Data update OK.");
+    }
   }
   /**
    * Redraws the entire dashboard by clearing and recreating all node views.
@@ -177,16 +239,16 @@ public class DashboardController {
    */
   public void setAutoRefreshInterval(long seconds) {
     this.refreshIntervalSeconds = seconds;
-    refreshTimeline.stop(); // Always stop before setting a new interval or stopping
+    refreshTimeline.stop(); // always stop before changing
     if (seconds > 0) {
       refreshTimeline.getKeyFrames().setAll(
           new KeyFrame(Duration.seconds(seconds), e -> refreshData())
       );
       refreshTimeline.play();
-      System.out.println("Auto-refresh started every " + seconds + " seconds.");
+      logActivity("System", "Auto-refresh started every " + seconds + " seconds.");
     } else {
-      // Interval is 0, so refresh is stopped
-      System.out.println("Auto-refresh stopped.");
+      // interval 0 means stop auto-refresh
+      logActivity("System", "Auto-refresh stopped.");
     }
   }
   /**
@@ -201,11 +263,11 @@ public class DashboardController {
    * The MainApp instance handles the actual scene navigation.
    */
   public void logout() {
-    // 1. Stop the auto-refresh
+    // 1. stop auto-refresh
     refreshTimeline.stop();
-    // 2. Navigate back to splash screen using the MainApp instance
+    logActivity("User", "User logged out.");
+    // 2. back to splash screen
     mainApp.showSplashScreen();
-    // Optionally: Perform any necessary session cleanup here (e.g., clear tokens)
   }
   /**
    * Returns the list of nodes managed by this controller.
@@ -221,6 +283,7 @@ public class DashboardController {
   public void deleteNode(Node node) {
     nodes.remove(node);
     redrawDashboard();
+    logActivity(node.getName(), "Node deleted from the system.");
   }
   // --- MODIFIED METHOD STARTS HERE ---
   /**
@@ -264,7 +327,7 @@ public class DashboardController {
 
     MenuItem editNodeItem = new MenuItem("Edit Node");
     editNodeItem.setOnAction(e -> {
-      System.out.println("Edit Node functionality not implemented yet.");
+      logActivity(node.getName(), "Edit dialog opened.");
     });
 
     MenuItem deleteNodeItem = new MenuItem("Delete Node");
@@ -288,8 +351,10 @@ public class DashboardController {
 
     // --- Containers for sensors and actuators ---
     VBox sensorsContainer = new VBox(10);
-    node.getSensors().forEach(sensor -> sensorsContainer.getChildren().add(sensor.getVisualRepresentation()));
-    node.getActuators().forEach(actuator -> sensorsContainer.getChildren().add(actuator.getVisualRepresentation()));
+    node.getSensors().forEach(sensor ->
+        sensorsContainer.getChildren().add(sensor.getVisualRepresentation()));
+    node.getActuators().forEach(actuator ->
+        sensorsContainer.getChildren().add(actuator.getVisualRepresentation()));
     sensorsContainer.setPadding(new Insets(10, 15, 10, 15));
 
     // --- Combine info and sensors ---

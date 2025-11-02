@@ -22,12 +22,14 @@ public class DashboardView {
   private BorderPane usersContent;
   private BorderPane statisticsContent;
 
-  // Reference to MainApp for navigation
+  // create a new field for log content
+  private VBox logContent;
+
+  // new field for mainApp reference
   private final MainApp mainApp;
 
-  public DashboardView(MainApp mainApp) { //mainApp parameter
-    this.mainApp = mainApp; // save reference
-    // to the main application
+  public DashboardView(MainApp mainApp) { // change constructor to accept MainApp
+    this.mainApp = mainApp; // sacve reference to mainApp
     controller = new DashboardController(this, mainApp);
     setupUI();
   }
@@ -51,7 +53,7 @@ public class DashboardView {
     root.setCenter(dashboardContent);
     // --- INITIALIZE CONTROLLER ---
     // Pass components the controller needs to update
-    controller.setUiComponents(nodesPane, lastUpdateLabel);
+    controller.setUiComponents(nodesPane, lastUpdateLabel, logContent); //new logContent
     controller.refreshData(); // Initial data load
   }
   // --- TOP BAR CREATION ---
@@ -107,8 +109,10 @@ public class DashboardView {
     });
     for (Button btn : navButtons) {
       btn.setStyle(buttonStyle);
-      btn.setOnMouseEntered(e -> { if (!btn.getStyle().contains(buttonActiveStyle)) btn.setStyle(buttonStyle + buttonHoverStyle); });
-      btn.setOnMouseExited(e -> { if (!btn.getStyle().contains(buttonActiveStyle)) btn.setStyle(buttonStyle); });
+      btn.setOnMouseEntered(e -> { if (!btn.getStyle().contains(buttonActiveStyle))
+        btn.setStyle(buttonStyle + buttonHoverStyle); });
+      btn.setOnMouseExited(e -> { if (!btn.getStyle().contains(buttonActiveStyle))
+        btn.setStyle(buttonStyle); });
     }
     // --- Logout Logic ---
     logoutBtn.setOnAction(e -> controller.logout());
@@ -137,53 +141,68 @@ public class DashboardView {
     rightPanel.setStyle("-fx-background-color: #f0f4f8; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 0 1;");
     Label header = new Label("Activity Log");
     header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
-    VBox logContent = new VBox(5);
-    logContent.getChildren().addAll(
-        createLogEntry("10:05", "Node 3", "Low Humidity Warning"),
-        createLogEntry("10:00", "System", "Data refresh complete"),
-        createLogEntry("09:45", "Node 1", "Offline for 5 minutes"),
-        createLogEntry("09:30", "System", "Scheduled check OK")
+
+    // use the new logContent field
+    logContent = new VBox(5);
+    logContent.setPadding(new Insets(5)
     );
+
     ScrollPane scrollLog = new ScrollPane(logContent);
     scrollLog.setFitToWidth(true);
     scrollLog.setPrefHeight(VBox.USE_COMPUTED_SIZE);
     scrollLog.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+
+    VBox.setVgrow(scrollLog, Priority.ALWAYS);
     // create a delete and update button for the log
     Button clearLogBtn = new Button("Clear Log");
-    clearLogBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    clearLogBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white;" +
+        " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
     clearLogBtn.setOnAction(e -> logContent.getChildren().clear());
     Button updateLogBtn = new Button("Update Log");
-    updateLogBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-    updateLogBtn.setOnAction(e -> logContent.getChildren().add(createLogEntry("Now", "System",
-        "Log updated manually")));
+    updateLogBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white;" +
+        " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    updateLogBtn.setOnAction(e -> controller.logActivity("System",
+        "Log updated manually")); // use controller method
     Button saveLogBtn = new Button("Save Log");
-    saveLogBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-    saveLogBtn.setOnAction(e -> logContent.getChildren().add(createLogEntry("Now", "System",
-        "Save log ")));
+    saveLogBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white;" +
+        " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    saveLogBtn.setOnAction(e -> controller.logActivity("System",
+        "Save log initiated")); // use controller method
     rightPanel.getChildren().addAll(header, scrollLog,clearLogBtn, updateLogBtn, saveLogBtn);
     rightPanel.setAlignment(Pos.TOP_LEFT);
-
     return rightPanel;
   }
   /* Helper to create a log entry */
-  private HBox createLogEntry(String time, String source, String message) {
+  public HBox createLogEntry(String time, String source, String message) {
     Label timeLabel = new Label(time);
     timeLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-weight: bold;");
 
     Label messageLabel = new Label(source + ": " + message);
     messageLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #555;");
 
+    messageLabel.setWrapText(true);
+    HBox.setHgrow(messageLabel, Priority.ALWAYS);
+
     HBox entry = new HBox(10, timeLabel, messageLabel);
     entry.setAlignment(Pos.CENTER_LEFT);
     entry.setPadding(new Insets(3, 0, 3, 0));
     return entry;
   }
+
+
+
+  /** New get for get info to logg */
+  public VBox getLogContent() {
+    return logContent;
+  }
+
   // --- CENTER CONTENT CREATION ---
   private VBox createCenterContent() {
     // --- Controls Bar (Add Node, Refresh Data) ---
     Button addNodeBtn = new Button("+ Add Node");
     addNodeBtn.setOnAction(e -> controller.addNode());
-    addNodeBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+    addNodeBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white;" +
+        " -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
     // --- New Auto-Refresh Controls ---
     Label intervalLabel = new Label("Auto-Refresh:");
     intervalLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
@@ -194,7 +213,8 @@ public class DashboardView {
     intervalComboBox.setStyle("-fx-font-size: 14px; -fx-padding: 5 10; -fx-background-color: #ffffff; " +
         "-fx-border-color: #d0d0d0; -fx-border-radius: 5; -fx-background-radius: 5;");
     Button toggleRefreshBtn = new Button("Start Auto-Refresh");
-    toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+    toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; " +
+        "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
 
     // --- Logic for Auto-Refresh ---
     final String startText = "Start Auto-Refresh";
@@ -205,7 +225,8 @@ public class DashboardView {
         // Currently refreshing, so stop it
         controller.setAutoRefreshInterval(0);
         toggleRefreshBtn.setText(startText);
-        toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; " +
+            "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
         intervalComboBox.getSelectionModel().select("Manual"); // Visually reset to manual
       } else {
         // Not refreshing, so start it
@@ -219,7 +240,8 @@ public class DashboardView {
         long seconds = Long.parseLong(selected.split(" ")[0]);
         controller.setAutoRefreshInterval(seconds);
         toggleRefreshBtn.setText(stopText);
-        toggleRefreshBtn.setStyle("-fx-background-color: #EA4335; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        toggleRefreshBtn.setStyle("-fx-background-color: #EA4335; -fx-text-fill: white; " +
+            "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
       }
     });
 
@@ -229,7 +251,8 @@ public class DashboardView {
         // If manual is selected, stop the auto-refresh and reset button text
         controller.setAutoRefreshInterval(0);
         toggleRefreshBtn.setText(startText);
-        toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white;" +
+            " -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
       } else {
         // If a time is selected, the user probably wants to start it right away
         // The button will handle starting/stopping
