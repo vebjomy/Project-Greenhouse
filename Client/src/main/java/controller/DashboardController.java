@@ -10,6 +10,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import model.*; // Import all models
@@ -35,11 +36,13 @@ public class DashboardController {
   private final List<Node> nodes = new ArrayList<>();
   private FlowPane nodesPane; // container for node views
   private Label lastUpdateLabel;
-  private VBox logContent; // new VBox for log entries
+  private VBox logContent; // VBox for log entries
+  private TextArea commandOutputArea; // NEW: Text area for command output/history
   private ClientApi api; //for server communication
   private Timeline refreshTimeline; // for auto-refresh
   private long refreshIntervalSeconds = 0; // in seconds, 0 means no auto-refresh
   private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+  private static final DateTimeFormatter FULL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
 
   /**
    * Sets the ClientApi instance for server communication.
@@ -48,8 +51,7 @@ public class DashboardController {
   public void setApi(ClientApi api) {
     this.api = api;
     this.api.onSensorUpdate(ns -> {
-     // Handle sensor update from server!!!
-      // For simplicity, we just refresh the data!!!!!! viktigf
+      // Handle sensor update from server
       refreshData();
     });
   }
@@ -63,6 +65,7 @@ public class DashboardController {
     this.view = view;
     this.mainApp = mainApp; // save mainApp reference
     System.out.println("DashboardController initialized.");
+
     // update every second by default, can be changed later
     refreshTimeline = new Timeline(
         new KeyFrame(Duration.seconds(1), e -> refreshData())
@@ -76,17 +79,19 @@ public class DashboardController {
    * @param nodesPane The FlowPane containing node views.
    * @param lastUpdateLabel The label displaying the last update time.
    * @param logContent The VBox containing log entries.
+   * @param commandOutputArea The TextArea for command line output.
    */
-  public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel, VBox logContent) {
+  public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel, VBox logContent, TextArea commandOutputArea) {
     this.nodesPane = nodesPane;
     this.lastUpdateLabel = lastUpdateLabel;
-    this.logContent = logContent; // save log content container
+    this.logContent = logContent;
+    this.commandOutputArea = commandOutputArea; // NEW: save command output area
   }
 
   /**
-    * Logs an activity to the log view with a timestamp, source, and message.
+   * Logs an activity to the log view with a timestamp, source, and message.
    * @param source The source of the activity (e.g., node name).
-   *               @param message The message describing the activity.
+   * @param message The message describing the activity.
    *
    */
   public void logActivity(String source, String message) {
@@ -213,7 +218,7 @@ public class DashboardController {
     // Simulate data fetching/update for all nodes (e.g., calling node.updateData())
     // For now, just redraw and update time.
     if (lastUpdateLabel != null) {
-      String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy")); //updated format
+      String currentTime = LocalDateTime.now().format(FULL_FORMATTER);
       lastUpdateLabel.setText("Last update: " + currentTime);
     }
     redrawDashboard();

@@ -55,6 +55,12 @@ public class MainApp extends Application {
     primaryStage.setTitle("Green House Control");
     primaryStage.centerOnScreen();
 
+
+//    primaryStage.setFullScreen(true);
+//    primaryStage.setFullScreenExitHint("");
+
+    primaryStage.setMaximized(true);
+
     Font customFont = Font.loadFont(getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10);
     if (customFont == null) {
       System.err.println("error loading font");
@@ -77,6 +83,7 @@ public class MainApp extends Application {
     Scene scene = new Scene(splash.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Green House Control - Welcome");
+    primaryStage.setMaximized(true);
   }
 
   /**
@@ -87,6 +94,7 @@ public class MainApp extends Application {
     Scene scene = new Scene(registration.getRoot(), 400, 400);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Green House Control - Register");
+    primaryStage.setMaximized(true);
   }
 
   /**
@@ -103,6 +111,7 @@ public class MainApp extends Application {
     Scene scene = new Scene(loginScreenView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Green House Control - Login");
+    primaryStage.setMaximized(true);
   }
 
 
@@ -124,6 +133,7 @@ public class MainApp extends Application {
     Scene scene = new Scene(dashboard.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Smart Farm Control");
+    primaryStage.setMaximized(true);
   }
 
   /**

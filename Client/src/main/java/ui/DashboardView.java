@@ -3,14 +3,12 @@ import App.MainApp;
 import controller.DashboardController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 /**
  * DashboardView sets up the main dashboard UI for the Farm Management System.
  * It includes a top bar, left sidebar for navigation, center content area for nodes,
- * and a right panel for activity logs.
+ * a right panel for activity logs, and a new bottom panel for command input (Terminal Panel).
  */
 public class DashboardView {
   private final BorderPane root = new BorderPane();
@@ -22,8 +20,11 @@ public class DashboardView {
   private BorderPane usersContent;
   private BorderPane statisticsContent;
 
-  // create a new field for log content
+  // Field for log content (Activity Log)
   private VBox logContent;
+
+  // NEW FIELD: Text area for command output/history (Command Panel)
+  private TextArea commandOutputArea;
 
   // new field for mainApp reference
   private final MainApp mainApp;
@@ -49,11 +50,17 @@ public class DashboardView {
     root.setCenter(centerContainer);
     // --- 4. RIGHT PANEL (Status/Log) ---
     root.setRight(createRightPanel());
+
+    // --- 5. BOTTOM COMMAND PANEL (Terminal) ---
+    root.setBottom(createBottomPanel());
+
     dashboardContent = createCenterContent();
     root.setCenter(dashboardContent);
+
     // --- INITIALIZE CONTROLLER ---
-    // Pass components the controller needs to update
-    controller.setUiComponents(nodesPane, lastUpdateLabel, logContent); //new logContent
+    // Pass components the controller needs to update, including the new command output area
+    controller.setUiComponents(nodesPane, lastUpdateLabel,
+        logContent, commandOutputArea);
     controller.refreshData(); // Initial data load
   }
   // --- TOP BAR CREATION ---
@@ -63,14 +70,16 @@ public class DashboardView {
     // Greeting and additional information
     userGreetingLabel = new Label("Hello, John Doe!");
     Label additionalInfo = new Label("System Status: Operational (4 Nodes)");
-    userGreetingLabel.setStyle("-fx-font-size: 21px; -fx-font-weight: 500; -fx-text-fill: #333333;");
+    userGreetingLabel.setStyle("-fx-font-size: 21px; -fx-font-weight: 500;" +
+        " -fx-text-fill: #333333;");
     additionalInfo.setStyle("-fx-font-size: 14px; -fx-text-fill: #00796b;"); // Teal color for status
     VBox userInfo = new VBox(5, userGreetingLabel, additionalInfo);
     userInfo.setAlignment(Pos.CENTER_LEFT);
     HBox topBar = new HBox(20, titledash, userInfo);
     topBar.setPadding(new Insets(20));
     topBar.setAlignment(Pos.CENTER_LEFT);
-    topBar.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;");
+    topBar.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #e0e0e0; " +
+        "-fx-border-width: 0 0 1 0;");
     return topBar;
   }
   // --- MODIFIED LEFT SIDEBAR ---
@@ -80,7 +89,9 @@ public class DashboardView {
     sidebar.setPrefWidth(200);
     sidebar.setAlignment(Pos.TOP_CENTER);
     sidebar.setStyle("-fx-background-color: #2c3e50;");
-    String buttonStyle = "-fx-min-width: 180px; -fx-alignment: CENTER_LEFT; -fx-padding: 10 15; -fx-background-color: transparent; -fx-text-fill: #ecf0f1; -fx-font-size: 14px; -fx-border-width: 0;";
+    String buttonStyle = "-fx-min-width: 180px; -fx-alignment: CENTER_LEFT; " +
+        "-fx-padding: 10 15; -fx-background-color: transparent; -fx-text-fill: #ecf0f1;" +
+        " -fx-font-size: 14px; -fx-border-width: 0;";
     String buttonHoverStyle = "-fx-background-color: #34495e; -fx-cursor: hand;";
     String buttonActiveStyle = "-fx-background-color: #1a73e8; -fx-text-fill: white;";
     Button dashboardBtn = new Button("  Dashboard");
@@ -124,7 +135,8 @@ public class DashboardView {
     return sidebar;
   }
   // --- Helper to change the active button ---
-  private void setActiveButton(Button activeButton, Button[] allButtons, String baseStyle, String activeStyle) {
+  private void setActiveButton(Button activeButton, Button[] allButtons,
+                               String baseStyle, String activeStyle) {
     for (Button btn : allButtons) {
       if (btn == activeButton) {
         btn.setStyle(baseStyle + activeStyle);
@@ -138,9 +150,11 @@ public class DashboardView {
     VBox rightPanel = new VBox(10);
     rightPanel.setPadding(new Insets(10));
     rightPanel.setPrefWidth(250);
-    rightPanel.setStyle("-fx-background-color: #f0f4f8; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 0 1;");
+    rightPanel.setStyle("-fx-background-color: #f0f4f8; -fx-border-color: #e0e0e0; " +
+        "-fx-border-width: 0 0 0 1;");
     Label header = new Label("Activity Log");
-    header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+    header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;" +
+        " -fx-text-fill: #333333;");
 
     // use the new logContent field
     logContent = new VBox(5);
@@ -189,7 +203,58 @@ public class DashboardView {
     return entry;
   }
 
+  /** NEW METHOD: Creates the bottom command panel (Terminal) */
+  private VBox createBottomPanel() {
+    VBox bottomPanel = new VBox(0);
+    bottomPanel.setPrefHeight(150); // Fixed height for the console area
+    bottomPanel.setStyle("-fx-background-color: #252526; -fx-border-color: #444444;" +
+        " -fx-border-width: 1 0 0 0;");
 
+    // Console Output Area (TextArea)
+    commandOutputArea = new TextArea();
+    commandOutputArea.setEditable(false);
+    commandOutputArea.setFocusTraversable(false);
+    commandOutputArea.setWrapText(true);
+    commandOutputArea.setText("Console initialized. Ready for command input.\n");
+    commandOutputArea.setStyle("-fx-control-inner-background:rgba(255,255,255,0.82);" +
+        " -fx-font-family: 'Consolas'; -fx-text-fill: #000000; -fx-font-size: 12px;");
+    VBox.setVgrow(commandOutputArea, Priority.ALWAYS); // Output area takes all vertical space
+
+    // Input Bar (HBox)
+    Label promptLabel = new Label(">");
+    promptLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #f0f0f0;");
+
+    TextField inputField = new TextField();
+    inputField.setPromptText("Enter command...");
+    HBox.setHgrow(inputField, Priority.ALWAYS); // Input field stretches
+    inputField.setStyle("-fx-background-color: #333333; -fx-text-fill: #ffffff; " +
+        "-fx-border-color: #555555; -fx-border-width: 0;");
+
+    Button sendButton = new Button("Send");
+    sendButton.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; " +
+        "-fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 3; -fx-cursor: hand;");
+
+    HBox inputBar = new HBox(5, promptLabel, inputField, sendButton);
+    inputBar.setAlignment(Pos.CENTER_LEFT);
+    inputBar.setPadding(new Insets(5, 10, 5, 10));
+
+    // Command Execution Placeholder Logic (No logic, just output)
+    Runnable processInputPlaceholder = () -> {
+      String command = inputField.getText().trim();
+      if (!command.isEmpty()) {
+        commandOutputArea.appendText("-> " + command + "\n");
+        commandOutputArea.appendText("System: Command received." +
+            " Processing logic is currently disabled.\n");
+        inputField.clear(); // Clear input after sending
+      }
+    };
+    sendButton.setOnAction(e -> processInputPlaceholder.run());
+    inputField.setOnAction(e -> processInputPlaceholder.run()); // Also execute on Enter key press
+
+    bottomPanel.getChildren().addAll(commandOutputArea, inputBar);
+
+    return bottomPanel;
+  }
 
   /** New get for get info to logg */
   public VBox getLogContent() {
