@@ -22,6 +22,9 @@ public class ClientHandler implements Runnable {
   private PrintWriter out;
   private ClientRegistry.Session session;
 
+  private static final String SERVER_NAME = "GreenhouseServer";
+  private static final String SERVER_VERSION = "1.0";
+
   public ClientHandler(Socket socket, NodeManager nodeManager, ClientRegistry registry, SensorEngine engine) {
     this.socket = socket;
     this.nodeManager = nodeManager;
@@ -74,8 +77,8 @@ public class ClientHandler implements Runnable {
     session.clientId = msg.path("clientId").asText(null); 
     Welcome welcome = new Welcome();
     welcome.id = msg.path("id").asText(null);
-    welcome.server = "GreenhouseServer";
-    welcome.version = "1.0";
+    welcome.server = SERVER_NAME;
+    welcome.version = SERVER_VERSION;
     send(welcome);
   }
 
