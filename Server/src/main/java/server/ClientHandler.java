@@ -37,11 +37,6 @@ public class ClientHandler implements Runnable {
 
       session = registry.addSession(json -> { out.write(json); out.flush(); });
 
-      Welcome welcome = new Welcome();
-      welcome.server = "GreenhouseServer";
-      welcome.version = "1.0";
-      send(welcome);
-
       String line;
       while ((line = in.readLine()) != null) process(line);
 
@@ -75,13 +70,20 @@ public class ClientHandler implements Runnable {
     } catch (Exception e) { e.printStackTrace(); }
   }
 
-  private void handleHello(JsonNode msg) { session.clientId = msg.path("clientId").asText(null); ack(msg, "ok"); }
+  private void handleHello(JsonNode msg) { 
+    session.clientId = msg.path("clientId").asText(null); 
+    Welcome welcome = new Welcome();
+    welcome.id = msg.path("id").asText(null);
+    welcome.server = "GreenhouseServer";
+    welcome.version = "1.0";
+    send(welcome);
+  }
 
   private void handleGetTopology(JsonNode msg) {
     Topology t = new Topology();
+    t.id = msg.path("id").asText(null);
     t.nodes = nodeManager.getAllNodes();
     send(t);
-    ack(msg, "ok");
   }
 
   private void handleCreateNode(JsonNode msg) throws Exception {

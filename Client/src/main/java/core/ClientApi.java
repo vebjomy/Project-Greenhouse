@@ -210,6 +210,8 @@ public class ClientApi implements AutoCloseable {
               state.patchNode(n.id, n.name, n.location, n.ip, n.sensors, n.actuators);
             }
           }
+          // Complete the request future
+          requests.complete(id, root);
         }
         case MessageTypes.SENSOR_UPDATE -> {
           SensorUpdate su = mapper.convertValue(root, SensorUpdate.class);

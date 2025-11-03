@@ -1,3 +1,6 @@
 /.idea/misc.xml
 /.idea
 /Client/target/
+/Server/target/
+/protocol/target/
+target/
