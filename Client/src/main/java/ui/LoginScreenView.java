@@ -1,6 +1,7 @@
 package ui;
 
 import App.MainApp;
+import controller.LoginController;
 import model.ServerConfig;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,6 +25,8 @@ import java.util.Optional;
  */
 public class LoginScreenView {
   private final HBox root;
+  private TextField usernameField;
+  private PasswordField passwordField;
 
   // Constructor to initialize the login screen view
 
@@ -70,11 +73,12 @@ public class LoginScreenView {
   // Input Fields
 
 
-    TextField usernameField = new TextField();
+    // Input Fields
+    usernameField = new TextField();
     usernameField.setPromptText("Username");
     usernameField.getStyleClass().add("text-field");
 
-    PasswordField passwordField = new PasswordField();
+    passwordField = new PasswordField(); // Use the class field, not a new local variable
     passwordField.setPromptText("Password");
     passwordField.getStyleClass().add("password-field");
     VBox.setMargin(passwordField, new Insets(0, 0, 25, 0));
@@ -115,13 +119,14 @@ public class LoginScreenView {
     buttonContainer.setAlignment(Pos.CENTER);
 // Login Button Action
     loginButton.setOnAction(e -> {
-      ServerConfig selectedServer = serverComboBox.getSelectionModel().getSelectedItem();
-      if (selectedServer != null) {
-        String ipAddress = selectedServer.getIpAddress();
-        System.out.println("Connecting to: " + ipAddress);
-        mainApp.showDashboard();
-      } else {
-        new Alert(Alert.AlertType.WARNING, "Please select a server!").showAndWait();
+      LoginController loginController = new LoginController(this);
+      if (loginController.handleLogin()) {
+        ServerConfig selectedServer = serverComboBox.getSelectionModel().getSelectedItem();
+        if (selectedServer != null) {
+          String ipAddress = selectedServer.getIpAddress();
+          System.out.println("Connecting to: " + ipAddress);
+          mainApp.showDashboard();
+        }
       }
     });
 
@@ -139,6 +144,14 @@ public class LoginScreenView {
         loginButton
     );
     return pane;
+  }
+
+  public TextField getUsernameField() {
+    return usernameField;
+  }
+
+  public PasswordField getPasswordField() {
+    return passwordField;
   }
 
   /** Displays a dialog to input a custom server IP address.

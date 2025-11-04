@@ -1,9 +1,21 @@
 [ {
   "id" : 1,
   "username" : "john.doe",
+  "password" : "password123",
   "role" : "Admin"
 }, {
   "id" : 2,
   "username" : "jane.smith",
+  "password" : "password123",
+  "role" : "Operator"
+}, {
+  "id" : 3,
+  "username" : "mike.jones",
+  "password" : "password123",
+  "role" : "Viewer"
+}, {
+  "id" : 4,
+  "username" : "messi.cr7",
+  "password" : "messi123",
   "role" : "Operator"
 } ]
