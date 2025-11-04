@@ -1,18 +1,18 @@
 package model;
 
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
 /**
- * A model class representing a user in the system.
- * It uses JavaFX Properties for easy integration with a TableView.
+ * Entity class representing a user in the system.
+ * Contains JavaFX properties for UI binding.
  */
 public class User {
-  private final SimpleIntegerProperty id;
-  private final SimpleStringProperty username;
-  private final SimpleStringProperty role;
-
-  /** Constructor to initialize a User object with id, username, and role. */
+  private final IntegerProperty id;
+  private final StringProperty username;
+  private final StringProperty role;
 
   public User(int id, String username, String role) {
     this.id = new SimpleIntegerProperty(id);
@@ -20,29 +20,46 @@ public class User {
     this.role = new SimpleStringProperty(role);
   }
 
-  // --- Getters and Property Getters ---
+  // Property methods for JavaFX binding
+  public IntegerProperty idProperty() {
+    return id;
+  }
 
+  public StringProperty usernameProperty() {
+    return username;
+  }
+
+  public StringProperty roleProperty() {
+    return role;
+  }
+
+  // Getters and Setters
   public int getId() {
     return id.get();
   }
 
-  public SimpleIntegerProperty idProperty() {
-    return id;
+  public void setId(int id) {
+    this.id.set(id);
   }
 
   public String getUsername() {
     return username.get();
   }
 
-  public SimpleStringProperty usernameProperty() {
-    return username;
+  public void setUsername(String username) {
+    this.username.set(username);
   }
 
   public String getRole() {
     return role.get();
   }
 
-  public SimpleStringProperty roleProperty() {
-    return role;
+  public void setRole(String role) {
+    this.role.set(role);
+  }
+
+  @Override
+  public String toString() {
+    return "User{id=" + getId() + ", username='" + getUsername() + "', role='" + getRole() + "'}";
   }
 }

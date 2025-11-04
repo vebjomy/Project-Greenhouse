@@ -25,7 +25,7 @@ public class UsersView {
   public UsersView() {
     controller = new UsersController(this);
     view = createUsersView();
-    controller.loadUsers();
+//    controller.loadUsers();
   }
 /* creates the user management view layout */
   private BorderPane createUsersView() {
