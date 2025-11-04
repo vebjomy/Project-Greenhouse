@@ -28,6 +28,14 @@ public class UserRegister {
 //        loadUsers();
     }
 
+     /**
+      *  Adds a new user with username, password, and role.
+      */
+    public void addUser(String username, String password, String role) {
+        userList.add(new User(nextId++, username, password, role));
+        saveUsersToFile();
+    }
+
     /**
      * Loads users from JSON file. If file doesn't exist, loads default users.
      */
@@ -53,11 +61,11 @@ public class UserRegister {
      * Loads default users when JSON file doesn't exist.
      */
     private void loadDefaultUsers() {
-        userList.addAll(
-                new User(1, "john.doe", "Admin"),
-                new User(2, "jane.smith", "Operator"),
-                new User(3, "mike.jones", "Viewer")
-        );
+        userList.addAll(List.of(
+                new User(1, "john.doe", "password123", "Admin"),
+                new User(2, "jane.smith", "password123", "Operator"),
+                new User(3, "mike.jones", "password123", "Viewer")
+        ));
         nextId = 4;
     }
 
@@ -77,17 +85,26 @@ public class UserRegister {
      * Adds a new user through dialog interaction and saves to file.
      */
     public void addUser() {
-        TextInputDialog dialog = new TextInputDialog("new.user");
-        dialog.setTitle("Add New User");
-        dialog.setHeaderText("Enter the username for the new user.");
-        dialog.setContentText("Username:");
+        TextInputDialog usernameDialog = new TextInputDialog("new.user");
+        usernameDialog.setTitle("Add New User");
+        usernameDialog.setHeaderText("Enter the username for the new user.");
+        usernameDialog.setContentText("Username:");
 
-        Optional<String> result = dialog.showAndWait();
-        result.ifPresent(username -> {
-            userList.add(new User(nextId++, username, "Operator"));
-            saveUsersToFile();
-        });
+        Optional<String> usernameResult = usernameDialog.showAndWait();
+        if (usernameResult.isPresent()) {
+            TextInputDialog passwordDialog = new TextInputDialog();
+            passwordDialog.setTitle("Add New User");
+            passwordDialog.setHeaderText("Enter the password for the new user.");
+            passwordDialog.setContentText("Password:");
+
+            Optional<String> passwordResult = passwordDialog.showAndWait();
+            if (passwordResult.isPresent()) {
+                userList.add(new User(nextId++, usernameResult.get(), passwordResult.get(), "Operator"));
+                saveUsersToFile();
+            }
+        }
     }
+
 
     /**
      * Edits the selected user.

@@ -12,11 +12,13 @@ import javafx.beans.property.StringProperty;
 public class User {
   private final IntegerProperty id;
   private final StringProperty username;
+  private final StringProperty password;
   private final StringProperty role;
 
-  public User(int id, String username, String role) {
+  public User(int id, String username, String password, String role) {
     this.id = new SimpleIntegerProperty(id);
     this.username = new SimpleStringProperty(username);
+    this.password = new SimpleStringProperty(password);
     this.role = new SimpleStringProperty(role);
   }
 
@@ -27,6 +29,10 @@ public class User {
 
   public StringProperty usernameProperty() {
     return username;
+  }
+
+  public StringProperty passwordProperty() {
+    return password;
   }
 
   public StringProperty roleProperty() {
@@ -48,6 +54,14 @@ public class User {
 
   public void setUsername(String username) {
     this.username.set(username);
+  }
+
+  public String getPassword() {
+    return password.get();
+  }
+
+  public void setPassword(String password) {
+    this.password.set(password);
   }
 
   public String getRole() {

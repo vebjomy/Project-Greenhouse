@@ -6,25 +6,28 @@ package model;
 public class UserDTO {
     private int id;
     private String username;
+    private String password;
     private String role;
 
     // Default constructor for Jackson
     public UserDTO() {}
 
-    public UserDTO(int id, String username, String role) {
+    public UserDTO(int id, String username, String password, String role) {
         this.id = id;
         this.username = username;
+        this.password = password;
         this.role = role;
     }
 
+
     // Convert from User to UserDTO
     public static UserDTO fromUser(User user) {
-        return new UserDTO(user.getId(), user.getUsername(), user.getRole());
+        return new UserDTO(user.getId(), user.getUsername(), user.getPassword(), user.getRole());
     }
 
     // Convert from UserDTO to User
     public User toUser() {
-        return new User(id, username, role);
+        return new User(id, username, password, role);
     }
 
     // Getters and Setters
@@ -33,6 +36,9 @@ public class UserDTO {
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
