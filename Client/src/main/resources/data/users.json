@@ -18,4 +18,14 @@
   "username" : "messi.cr7",
   "password" : "messi123",
   "role" : "Operator"
+}, {
+  "id" : 5,
+  "username" : "Chris Wood",
+  "password" : "chris9",
+  "role" : "Operator"
+}, {
+  "id" : 6,
+  "username" : "dymitri",
+  "password" : "dymitri1",
+  "role" : "Operator"
 } ]
