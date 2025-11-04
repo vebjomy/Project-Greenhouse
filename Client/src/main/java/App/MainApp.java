@@ -2,6 +2,7 @@ package App;
 
 import core.ClientApi;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -9,6 +10,8 @@ import ui.DashboardView;
 import ui.LoginScreenView;
 import ui.RegistrationView;
 import ui.SplashScreenView;
+
+import java.util.List;
 
 /**
  * The `MainApp` class serves as the entry point for the Green House Control application.
@@ -34,6 +37,11 @@ public class MainApp extends Application {
 
     ClientApi api = new ClientApi();
     api.connect(SERVER_ADDRESS, 5555).thenRun(() -> {
+      Platform.runLater(() -> {
+        api.getTopology();
+        api.subscribe(List.of("*"), List.of("sensor_update","node_change"));
+        System.out.println("Subscribed for live updates");
+      });
       System.out.println("Connected to server");
       isConnected = true; // status update
       // Оupdate UI if LoginScreenView is already initialized

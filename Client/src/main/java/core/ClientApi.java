@@ -20,9 +20,9 @@ public class ClientApi implements AutoCloseable {
   private final NetworkClient tcp = new NetworkClient();
   private final RequestManager requests = new RequestManager();
 
-  // Optional mock server for offline development
-  private net.MockServer mock;
-  private boolean usingMock;
+//  // Optional mock server for offline development
+//  private net.MockServer mock;
+//  private boolean usingMock;
 
   public ClientApi(){
     tcp.setOnLine(this::handleLine);
@@ -30,24 +30,29 @@ public class ClientApi implements AutoCloseable {
   }
 
   // ---------- Connection ----------
-  public void useMock(){
-    usingMock = true;
-    mock = new net.MockServer();
-    mock.attachClient(this::handleLine);
-  }
+//  public void useMock(){
+//    usingMock = true;
+//    mock = new net.MockServer();
+//    mock.attachClient(this::handleLine);
+//  }
 
   public CompletableFuture<Void> connect(String host, int port) {
     try {
-      usingMock = false;
       tcp.connect(host, port);
+      System.out.println("Connecting to: " + host + ":" + port);
+
+      // Send "hello" message
       String id = requests.newId();
       CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
+
       Hello h = new Hello();
       h.id = id;
       h.clientId = "ui-" + UUID.randomUUID();
       h.user = "local";
-      h.capabilities = List.of("topology","commands","subscribe");
+      h.capabilities = List.of("topology", "commands", "subscribe");
       send(h);
+
+      fut.thenRun(() -> System.out.println("Connected to GreenhouseServer ✔"));
       return fut;
     } catch (IOException e) {
       CompletableFuture<Void> f = new CompletableFuture<>();
@@ -55,6 +60,7 @@ public class ClientApi implements AutoCloseable {
       return f;
     }
   }
+
 
   // ---------- Listeners for GUI ----------
   public void onSensorUpdate(Consumer<ClientState.NodeState> l){
@@ -163,7 +169,7 @@ public class ClientApi implements AutoCloseable {
     Command c = new Command();
     c.id = id; c.nodeId = nodeId; c.target = target; c.action = action; c.params = params;
     send(c);
-    if (usingMock && mock != null) mock.onClientCommand(c);
+
     return fut;
   }
 
@@ -232,12 +238,11 @@ public class ClientApi implements AutoCloseable {
   private void send(Object dto){
     try {
       String line = tcp.codec().toJsonLine(dto);
-      if (usingMock) System.out.print("> "+line); else tcp.sendLine(line);
+        tcp.sendLine(line);
     } catch (Exception e) { e.printStackTrace(); }
   }
 
   @Override public void close() throws IOException {
-    if (mock != null) mock.shutdown();
     tcp.close();
   }
 
