@@ -172,6 +172,11 @@ public class CO2Generator implements Actuator {
     return layout;
   }
 
+  @Override
+  public String getName() {
+    return "";
+  }
+
   /* This method updates the UI elements based on the current state of the CO2 Generator.
   * It changes the color of the icon and status label according to the current generation rate.
   * The colors represent different activity levels: gray for OFF, green for LOW, yellow for MEDIUM, and red for HIGH.

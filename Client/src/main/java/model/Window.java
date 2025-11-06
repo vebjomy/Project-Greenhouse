@@ -161,4 +161,9 @@ public class Window implements Actuator {
     statusLabel.setText(statusText);
     statusLabel.setTextFill(statusColor);
   }
+
+  @Override
+  public String getName() {
+    return "";
+  }
 }

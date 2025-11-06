@@ -150,6 +150,11 @@ public class LightSensor implements Sensor {
     }
   }
 
+  @Override
+  public String getName() {
+    return "";
+  }
+
   /* * Returns the current light value as a double.
    * @return Current light intensity
    */
