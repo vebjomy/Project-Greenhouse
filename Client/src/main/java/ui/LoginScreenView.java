@@ -1,6 +1,7 @@
 package ui;
 
 import App.MainApp;
+import javafx.scene.shape.Circle;
 import model.ServerConfig;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -10,11 +11,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.control.TextInputDialog;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 
@@ -24,12 +21,16 @@ import java.util.Optional;
  */
 public class LoginScreenView {
   private final HBox root;
+  private final Circle statusIndicator;
+  private final Text statusText;
 
   // Constructor to initialize the login screen view
 
   public LoginScreenView(MainApp mainApp) {
     root = new HBox();
     root.setStyle("-fx-background-color: #ffffff;");
+    statusIndicator = new Circle(7);
+    statusText = new Text("Server Status: Connecting...") ;
 
     root.getStylesheets().add(getClass().getResource("/client.css").toExternalForm());
 
@@ -79,34 +80,15 @@ public class LoginScreenView {
     passwordField.getStyleClass().add("password-field");
     VBox.setMargin(passwordField, new Insets(0, 0, 25, 0));
 
-// Server Selection
+// Server Status Indicator ---
 
-    ObservableList<ServerConfig> serverList = FXCollections.observableArrayList(
-        new ServerConfig("Localhost (Default)", "localhost"),
-        new ServerConfig("Development Server", "192.168.1.100")
-    );
-    ComboBox<ServerConfig> serverComboBox = new ComboBox<>(serverList);
-    serverComboBox.setPromptText("Select Server");
-    serverComboBox.getSelectionModel().selectFirst();
-    serverComboBox.setMaxWidth(Double.MAX_VALUE);
-    serverComboBox.getStyleClass().add("text-field");
-// Custom IP Button
-    Button customIpButton = new Button("Set Custom\nIP Address");
-    customIpButton.getStyleClass().add("ip-button");
-    customIpButton.setMaxWidth(Double.MAX_VALUE);
-    customIpButton.setStyle("-fx-font-size: 11px; -fx-padding: 10 5;");
-    customIpButton.setWrapText(true);
-    customIpButton.setPrefHeight(50);
-// Server Selector Container
-    HBox serverSelector = new HBox(10, serverComboBox, customIpButton);
-    serverSelector.setAlignment(Pos.CENTER);
-    HBox.setHgrow(serverComboBox, Priority.ALWAYS);
-    HBox.setHgrow(customIpButton, Priority.ALWAYS);
+    statusIndicator.getStyleClass().add("status-indicator");
 
-    serverComboBox.setPrefWidth(Region.USE_COMPUTED_SIZE);
-    customIpButton.setPrefWidth(Region.USE_COMPUTED_SIZE);
+    statusText.getStyleClass().add("status-text");
 
-    VBox.setMargin(serverSelector, new Insets(0, 0, 15, 0));
+    HBox serverStatusContainer = new HBox(10, statusIndicator, statusText);
+    serverStatusContainer.setAlignment(Pos.CENTER_LEFT);
+    VBox.setMargin(serverStatusContainer, new Insets(0, 0, 15, 0));
 
 // Login Button
     Button loginButton = new Button("LOG IN");
@@ -115,30 +97,38 @@ public class LoginScreenView {
     buttonContainer.setAlignment(Pos.CENTER);
 // Login Button Action
     loginButton.setOnAction(e -> {
-      ServerConfig selectedServer = serverComboBox.getSelectionModel().getSelectedItem();
-      if (selectedServer != null) {
-        String ipAddress = selectedServer.getIpAddress();
-        System.out.println("Connecting to: " + ipAddress);
+      // define login action here
+      String ipAddress = mainApp.getServerAddress(); // adjust as needed
+      if (mainApp.isConnected()) { // check server connection
+        System.out.println("Attempting login to: " + ipAddress);
         mainApp.showDashboard();
       } else {
-        new Alert(Alert.AlertType.WARNING, "Please select a server!").showAndWait();
+        new Alert(Alert.AlertType.ERROR, "Server is offline. Cannot log in.").showAndWait();
       }
     });
-
-    customIpButton.setOnAction(e -> {
-      showCustomIpDialog(serverComboBox);
-    });
-
 
 // Assemble Left Pane
     pane.getChildren().addAll(
         headerFlow,
         new VBox(5, usernameField),
         new VBox(5, passwordField),
-        serverSelector,
+        serverStatusContainer,
         loginButton
     );
     return pane;
+  }
+
+  /** Updates the server status indicator and text based on connection status.
+   * @param isConnected True if connected to the server, false otherwise.
+   */
+  public void updateServerStatus(boolean isConnected) {
+    if (isConnected) {
+      statusIndicator.setFill(javafx.scene.paint.Color.LIMEGREEN);
+      statusText.setText("Server Status: Online (Connected)");
+    } else {
+      statusIndicator.setFill(javafx.scene.paint.Color.RED);
+      statusText.setText("Server Status: Offline (Disconnected)");
+    }
   }
 
   /** Displays a dialog to input a custom server IP address.
