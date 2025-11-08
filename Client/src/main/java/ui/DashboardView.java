@@ -1,6 +1,9 @@
 package ui;
 import App.MainApp;
 import controller.DashboardController;
+import core.ClientApi;
+import core.CommandProcessor;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
@@ -12,6 +15,7 @@ import javafx.scene.layout.*;
  */
 public class DashboardView {
   private final BorderPane root = new BorderPane();
+  private final ClientApi clientApi;
   private final DashboardController controller;
   private FlowPane nodesPane;
   private Label lastUpdateLabel;
@@ -29,11 +33,13 @@ public class DashboardView {
   // new field for mainApp reference
   private final MainApp mainApp;
 
-  public DashboardView(MainApp mainApp) { // change constructor to accept MainApp
-    this.mainApp = mainApp; // sacve reference to mainApp
-    controller = new DashboardController(this, mainApp);
+  public DashboardView(MainApp mainApp, ClientApi api) {
+    this.mainApp = mainApp; // store reference
+    this.clientApi = api;
+    controller = new DashboardController(this, mainApp, api);
     setupUI();
   }
+
 
   /** SETUP UI COMPONENTS AND LAYOUT */
   private void setupUI() {
@@ -203,10 +209,74 @@ public class DashboardView {
     return entry;
   }
 
+//  private VBox createBottomPanel() {
+//    CommandProcessor commandProcessor = new CommandProcessor(clientApi);
+//    VBox bottomPanel = new VBox(0);
+//    bottomPanel.setPrefHeight(150); // Fixed height for the console area
+//    bottomPanel.setStyle("-fx-background-color: #252526; -fx-border-color: #444444;" +
+//        " -fx-border-width: 1 0 0 0;");
+//
+//    // Console Output Area (TextArea)
+//    commandOutputArea = new TextArea();
+//    commandOutputArea.setEditable(false);
+//    commandOutputArea.setFocusTraversable(false);
+//    commandOutputArea.setWrapText(true);
+//    commandOutputArea.setText("Console initialized. Ready for command input.\n");
+//    commandOutputArea.setStyle("-fx-control-inner-background:rgba(255,255,255,0.82);" +
+//        " -fx-font-family: 'Consolas'; -fx-text-fill: #000000; -fx-font-size: 12px;");
+//    VBox.setVgrow(commandOutputArea, Priority.ALWAYS); // Output area takes all vertical space
+//
+//    // Input Bar (HBox)
+//    Label promptLabel = new Label(">");
+//    promptLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #f0f0f0;");
+//
+//    TextField inputField = new TextField();
+//    inputField.setPromptText("Enter command...");
+//    HBox.setHgrow(inputField, Priority.ALWAYS); // Input field stretches
+//    inputField.setStyle("-fx-background-color: #333333; -fx-text-fill: #ffffff; " +
+//        "-fx-border-color: #555555; -fx-border-width: 0;");
+//
+//    Button sendButton = new Button("Send");
+//    sendButton.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; " +
+//        "-fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 3; -fx-cursor: hand;");
+//
+//    HBox inputBar = new HBox(5, promptLabel, inputField, sendButton);
+//    inputBar.setAlignment(Pos.CENTER_LEFT);
+//    inputBar.setPadding(new Insets(5, 10, 5, 10));
+//
+//    // Command Execution Placeholder Logic (No logic, just output)
+//    Runnable processInputPlaceholder = () -> {
+//      String command = inputField.getText().trim();
+//      if (!command.isEmpty()) {
+//        commandOutputArea.appendText("-> " + command + "\n");
+//        commandOutputArea.appendText("System: Command received." +
+//            " Processing logic is currently disabled.\n");
+//        inputField.clear(); // Clear input after sending
+//      }
+//    };
+//    sendButton.setOnAction(e -> {
+//      String command = inputField.getText().trim();
+//      if (!command.isEmpty()) {
+//        commandOutputArea.appendText("> " + command + "\n");
+//        commandProcessor.execute(command).thenAccept(response -> {
+//          Platform.runLater(() -> commandOutputArea.appendText(response + "\n"));
+//        });
+//        inputField.clear();
+//      }
+//    });
+//    inputField.setOnAction(e -> sendButton.fire());
+//
+//    bottomPanel.getChildren().addAll(commandOutputArea, inputBar);
+//
+//    return bottomPanel;
+//
   /** NEW METHOD: Creates the bottom command panel (Terminal) */
   private VBox createBottomPanel() {
+    // Pass mainApp to the CommandProcessor
+    CommandProcessor commandProcessor = new CommandProcessor(clientApi, mainApp);
+
     VBox bottomPanel = new VBox(0);
-    bottomPanel.setPrefHeight(150); // Fixed height for the console area
+    bottomPanel.setPrefHeight(150);
     bottomPanel.setStyle("-fx-background-color: #252526; -fx-border-color: #444444;" +
         " -fx-border-width: 1 0 0 0;");
 
@@ -215,10 +285,11 @@ public class DashboardView {
     commandOutputArea.setEditable(false);
     commandOutputArea.setFocusTraversable(false);
     commandOutputArea.setWrapText(true);
-    commandOutputArea.setText("Console initialized. Ready for command input.\n");
-    commandOutputArea.setStyle("-fx-control-inner-background:rgba(255,255,255,0.82);" +
-        " -fx-font-family: 'Consolas'; -fx-text-fill: #000000; -fx-font-size: 12px;");
-    VBox.setVgrow(commandOutputArea, Priority.ALWAYS); // Output area takes all vertical space
+    commandOutputArea.setText("Console initialized. Type 'help' for available commands.\n" +
+        "Auto-connecting to: " + mainApp.getServerAddress() + ":" + mainApp.getServerPort() + "\n");
+    commandOutputArea.setStyle("-fx-control-inner-background: #1e1e1e; " +
+        "-fx-font-family: 'Consolas'; -fx-text-fill: #ffffff; -fx-font-size: 12px;");
+    VBox.setVgrow(commandOutputArea, Priority.ALWAYS);
 
     // Input Bar (HBox)
     Label promptLabel = new Label(">");
@@ -226,7 +297,7 @@ public class DashboardView {
 
     TextField inputField = new TextField();
     inputField.setPromptText("Enter command...");
-    HBox.setHgrow(inputField, Priority.ALWAYS); // Input field stretches
+    HBox.setHgrow(inputField, Priority.ALWAYS);
     inputField.setStyle("-fx-background-color: #333333; -fx-text-fill: #ffffff; " +
         "-fx-border-color: #555555; -fx-border-width: 0;");
 
@@ -238,23 +309,25 @@ public class DashboardView {
     inputBar.setAlignment(Pos.CENTER_LEFT);
     inputBar.setPadding(new Insets(5, 10, 5, 10));
 
-    // Command Execution Placeholder Logic (No logic, just output)
-    Runnable processInputPlaceholder = () -> {
-      String command = inputField.getText().trim();
-      if (!command.isEmpty()) {
-        commandOutputArea.appendText("-> " + command + "\n");
-        commandOutputArea.appendText("System: Command received." +
-            " Processing logic is currently disabled.\n");
-        inputField.clear(); // Clear input after sending
-      }
-    };
-    sendButton.setOnAction(e -> processInputPlaceholder.run());
-    inputField.setOnAction(e -> processInputPlaceholder.run()); // Also execute on Enter key press
+    // Command execution
+    sendButton.setOnAction(e -> executeCommand(commandProcessor, inputField, commandOutputArea));
+    inputField.setOnAction(e -> executeCommand(commandProcessor, inputField, commandOutputArea));
 
     bottomPanel.getChildren().addAll(commandOutputArea, inputBar);
-
     return bottomPanel;
   }
+
+  private void executeCommand(  CommandProcessor commandProcessor, TextField inputField, TextArea commandOutputArea) {
+    String command = inputField.getText().trim();
+    if (!command.isEmpty()) {
+      commandOutputArea.appendText("> " + command + "\n");
+      commandProcessor.execute(command).thenAccept(response -> {
+        Platform.runLater(() -> commandOutputArea.appendText(response + "\n"));
+      });
+      inputField.clear();
+    }
+  }
+
 
   /** New get for get info to logg */
   public VBox getLogContent() {

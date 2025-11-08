@@ -72,12 +72,15 @@ public class ClientApi implements AutoCloseable {
 
   public ClientState state(){ return state; }
 
+
   // ---------- Topology ----------
+
   public CompletableFuture<Topology> getTopology(){
     String id = requests.newId();
     var fut = requests.register(id).thenApply(js -> tcp.codec().mapper().convertValue(js, Topology.class));
     var msg = new SimpleIdMessage(MessageTypes.GET_TOPOLOGY, id);
     send(msg);
+
     return fut.thenApply(topology -> {
       if (topology.nodes != null){
         for (var n : topology.nodes){
@@ -183,14 +186,14 @@ public class ClientApi implements AutoCloseable {
     return fut;
   }
 
-  // ---------- Heartbeat ----------
-  public CompletableFuture<Void> ping(){
+  public CompletableFuture<JsonNode> ping(){
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
+    CompletableFuture<JsonNode> fut = requests.register(id);
     Ping p = new Ping(); p.id = id;
     send(p);
     return fut;
   }
+
 
   // ---------- Incoming processing ----------
   private void handleLine(String line){
@@ -205,8 +208,8 @@ public class ClientApi implements AutoCloseable {
           // complete "hello" future if present
           requests.complete(id, root);
         }
-        case MessageTypes.ACK, MessageTypes.ERROR, MessageTypes.LAST_VALUES -> {
-          // complete pending request future (ACK/ERROR/LastValues have the id)
+        case MessageTypes.ACK, MessageTypes.ERROR, MessageTypes.LAST_VALUES, MessageTypes.PONG -> {
+          // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
           requests.complete(id, root);
         }
         case MessageTypes.TOPOLOGY -> {
@@ -234,6 +237,7 @@ public class ClientApi implements AutoCloseable {
       }
     } catch (Exception e) { e.printStackTrace(); }
   }
+
 
   private void send(Object dto){
     try {

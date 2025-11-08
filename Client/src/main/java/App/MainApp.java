@@ -19,68 +19,65 @@ import java.util.List;
  * to navigate between different views such as the splash screen, login screen, registration screen, and dashboard.
  */
 public class MainApp extends Application {
-
   private Stage primaryStage;
   private LoginScreenView loginScreenView;
+  private DashboardView dashboardView; // <-- Field for the dashboard
   private static final double SCENE_WIDTH = 1480;
   private static final double SCENE_HEIGHT = 1000;
-  private boolean isConnected = false; // new status field
+  private ClientApi api;
+  private boolean isConnected = false;
   private final String SERVER_ADDRESS = "127.0.0.1";
-  /**
-   * Starts the JavaFX application by setting up the primary stage and displaying the splash screen.
-   *
-   * @param stage The primary stage for this application.
-   */
+  private final int SERVER_PORT = 5555;
+
   @Override
   public void start(Stage stage) {
-    DashboardView dashboard = new DashboardView(this); // pass MainApp instance
+    api = new ClientApi(); // First, create the api
 
-    ClientApi api = new ClientApi();
-    api.connect(SERVER_ADDRESS, 5555).thenRun(() -> {
+    // Create the dashboard view ONCE and store it
+    dashboardView = new DashboardView(this, api); // Then, pass it
+
+    // Use the port constant
+    api.connect(SERVER_ADDRESS, SERVER_PORT).thenRun(() -> {
       Platform.runLater(() -> {
         api.getTopology();
-        api.subscribe(List.of("*"), List.of("sensor_update","node_change"));
+        api.subscribe(List.of("*"), List.of("sensor_update", "node_change"));
         System.out.println("Subscribed for live updates");
       });
       System.out.println("Connected to server");
-      isConnected = true; // status update
-      // Оupdate UI if LoginScreenView is already initialized
+      isConnected = true;
       if (loginScreenView != null) {
-        javafx.application.Platform.runLater(() -> loginScreenView.updateServerStatus(true));
+        Platform.runLater(() -> loginScreenView.updateServerStatus(true));
       }
     }).exceptionally(ex -> {
       System.err.println("Failed to connect to server: " + ex.getMessage());
-      isConnected = false; // setting status
-      // update UI if LoginScreenView is already initialized
+      isConnected = false;
       if (loginScreenView != null) {
-        javafx.application.Platform.runLater(() -> loginScreenView.updateServerStatus(false));
+        Platform.runLater(() -> loginScreenView.updateServerStatus(false));
       }
       return null;
     });
-    dashboard.initNetwork(api);
 
+    dashboardView.initNetwork(api); // Initialize the network for the dashboard
     this.primaryStage = stage;
     primaryStage.setTitle("Green House Control");
     primaryStage.centerOnScreen();
-
-
-//    primaryStage.setFullScreen(true);
-//    primaryStage.setFullScreenExitHint("");
-
     primaryStage.setMaximized(true);
 
     Font customFont = Font.loadFont(getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10);
     if (customFont == null) {
-      System.err.println("error loading font");
+      System.err.println("Error loading font");
     } else {
       System.out.println("Font is loaded: " + customFont.getFamily());
     }
 
-    showSplashScreen(); // Start with the splash screen
-
+    showSplashScreen();
     primaryStage.setMinHeight(SCENE_HEIGHT);
     primaryStage.setMinWidth(SCENE_WIDTH);
     primaryStage.show();
+  }
+
+  public int getServerPort() {
+    return SERVER_PORT;
   }
 
   /**
@@ -122,9 +119,6 @@ public class MainApp extends Application {
     primaryStage.setMaximized(true);
   }
 
-
-
-
   public boolean isConnected() {
     return isConnected;
   }
@@ -137,8 +131,8 @@ public class MainApp extends Application {
    * Displays the dashboard view.
    */
   public void showDashboard() {
-    DashboardView dashboard = new DashboardView(this);
-    Scene scene = new Scene(dashboard.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
+    // Use the *existing* dashboardView instance
+    Scene scene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Smart Farm Control");
     primaryStage.setMaximized(true);

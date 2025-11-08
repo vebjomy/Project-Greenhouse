@@ -61,7 +61,7 @@ public class DashboardController {
    * @param view The `DashboardView` instance associated with this controller.
    * @param mainApp The instance of the main application for UI navigation (e.g., logout).
    */
-  public DashboardController(DashboardView view, MainApp mainApp) {
+  public DashboardController(DashboardView view, MainApp mainApp,ClientApi api) {
     this.view = view;
     this.mainApp = mainApp; // save mainApp reference
     System.out.println("DashboardController initialized.");
