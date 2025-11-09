@@ -1,10 +1,13 @@
 package dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.util.List;
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Topology {
   public String type = "topology";
   public String id;
+  public String status;
   public List<Node> nodes;
 
   public static class Node {

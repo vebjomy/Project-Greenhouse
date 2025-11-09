@@ -1,0 +1,20 @@
+package core;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+
+public class ConnectionTest {
+  public static void main(String[] args) {
+    String serverAddress = "127.0.0.1";
+    int serverPort = 5555;
+
+    try (Socket socket = new Socket(serverAddress, serverPort);
+         PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+      out.println("Connection Test");
+      System.out.println("Connection to server successful!");
+    } catch (IOException e) {
+      System.err.println("Failed to connect to server: " + e.getMessage());
+    }
+  }
+}

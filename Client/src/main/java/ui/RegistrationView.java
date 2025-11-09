@@ -23,7 +23,7 @@ public class RegistrationView {
     root.setStyle("-fx-background-color: #ffffff;");
 
     Label title = new Label("User Registration");
-    title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+    title.setStyle("-fx-font-size: 60px; -fx-font-weight: bold; -fx-text-fill: #333333;");
 
     TextField usernameField = new TextField();
     usernameField.setPromptText("Enter username");

@@ -96,7 +96,7 @@ public class MainApp extends Application {
    */
   public void showRegistrationScreen() {
     RegistrationView registration = new RegistrationView(this);
-    Scene scene = new Scene(registration.getRoot(), 400, 400);
+    Scene scene = new Scene(registration.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Green House Control - Register");
     primaryStage.setMaximized(true);
