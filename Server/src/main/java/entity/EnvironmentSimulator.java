@@ -70,19 +70,29 @@ public class EnvironmentSimulator {
    */
   private void updateEnvironment(int second) {
     // Example: temperature rises for first 60 seconds, falls for next 60
+    updateLightState(second);
     if (second < 60) {
       setTemperature(getTemperature() + second / 6);
-      if (!lightOn) {
-        setLightLevel(getLightLevel() + second / 2); // if light is off, light level varies
-      } else {
-        setLightLevel(100); // Artificial light keeps it at max
-      }
     } else {
       setTemperature(getTemperature() - (second - 60) / 6);
-      setLightLevel(getLightLevel() - (second - 60) / 2);
     }
     // Humidity could follow a similar or different pattern
     setHumidity(50 + (int) (10 * Math.sin(Math.toRadians(second * 3))));
+  }
+
+  /**
+   * Update the light state of the environment.
+   *
+   * @param second the current second in the 120-second cycle
+   */
+  public void updateLightState(int second) {
+    if (!lightOn) {
+      if (second < 60) {
+        setLightLevel(getLightLevel() + second / 2);
+      } else {
+        setLightLevel(getLightLevel() - (second - 60) / 2);
+      }
+    } else setLightLevel(100);
   }
 
   /**
