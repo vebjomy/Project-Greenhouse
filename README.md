@@ -98,7 +98,7 @@ The protocol defines how nodes exchange messages, handle errors, and maintain re
 | Vebjørn Otneim Myklebust | Developer |Backend |
 | Dymitri Daniel Thorgeirsson | Developer |Backend and Documentation|
 | Eyob Mengsteab Berhane | Developer |Documentation|
-| Arkadii Navrotskyi | Scum Master/Developer |Backend and Frontend|
+| Arkadii Navrotskyi | Scrum Master/Developer |Backend and Frontend|
 
 ### 🧩 Collaboration
 
