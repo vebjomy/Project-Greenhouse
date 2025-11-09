@@ -22,25 +22,51 @@ public class EnvironmentSimulator {
   private int humidity;
   private int lightLevel;
   private int cycleSecond = 0; // Current second in the 120-second cycle
+  private int co2Level; // Current CO2 level in ppm
+  private int soilPH; // Current soil pH level
+  private int soilMoisture; // Current soil moisture level in percentage
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
+  // Actuators which influence the environment
+  private boolean fanOn = false;
+  private boolean pumpOn = false;
+  private boolean co2On = false; // CO2 generator. Raises CO2 levels.
+
+
+  /**
+   * Constructs a new EnvironmentSimulator with default values.
+   */
   public EnvironmentSimulator() {
     this.temperature = 22; // Default temperature in Celsius
     this.humidity = 50; // Default humidity in percentage
     this.lightLevel = 70; // Default light level in percentage
+    this.co2Level = 100; // Default CO2 level in ppm
+    this.soilPH = 6; // Default soil pH level
+    this.soilMoisture = 40; // Default soil moisture level in percentage
+    startCycle();
   }
 
+  /**
+   * Starts the environment simulation cycle. This method initializes a scheduled task that
+   * updates the environment values every second.
+   */
   private void startCycle() {
     scheduler.scheduleAtFixedRate(
-        () -> {
-          cycleSecond = (cycleSecond + 1) % 120;
-          updateEnvironment(cycleSecond);
-        },
-        0,
-        1,
-        TimeUnit.SECONDS);
+            () -> {
+              cycleSecond = (cycleSecond + 1) % 120;
+              updateEnvironment(cycleSecond);
+            },
+            0,
+            1,
+            TimeUnit.SECONDS);
   }
 
+  /**
+   * Updates the environment values. This method is called every second to simulate changes in the
+   * environment over time.
+   *
+   * @param second the current second in the 120-second cycle
+   */
   private void updateEnvironment(int second) {
     // Example: temperature rises for first 60 seconds, falls for next 60
     if (second < 60) {
@@ -62,7 +88,7 @@ public class EnvironmentSimulator {
   public void setTemperature(int temperature) {
     if (temperature < -273) {
       throw new IllegalArgumentException(
-          "Error: Physically impossible. Temperature must be > -273");
+              "Error: Physically impossible. Temperature must be > -273");
     }
     this.temperature = temperature;
   }
