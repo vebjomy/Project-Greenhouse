@@ -29,7 +29,7 @@ public class EnvironmentSimulator {
 
   // Actuators which influence the environment
   private boolean fanOn = false;
-  private boolean pumpOn = false;
+  private boolean pumpOn = false; // Water pump. Raises soil moisture.
   private boolean co2On = false; // CO2 generator. Raises CO2 levels.
   private boolean lightOn = false; // Artificial lighting
 
@@ -71,11 +71,8 @@ public class EnvironmentSimulator {
   private void updateEnvironment(int second) {
     // Example: temperature rises for first 60 seconds, falls for next 60
     updateLightState(second);
-    if (second < 60) {
-      setTemperature(getTemperature() + second / 6);
-    } else {
-      setTemperature(getTemperature() - (second - 60) / 6);
-    }
+    updateTemperatureState(second);
+
     // Humidity could follow a similar or different pattern
     setHumidity(50 + (int) (10 * Math.sin(Math.toRadians(second * 3))));
   }
@@ -94,6 +91,20 @@ public class EnvironmentSimulator {
       }
     } else setLightLevel(100);
   }
+
+  /**
+   * Update the temperature state of the environment.
+   *
+   * @param second the current second in the 120-second cycle
+   */
+  public void updateTemperatureState(int second) {
+    if (second < 60) {
+      setTemperature(getTemperature() + second / 6);
+    } else {
+      setTemperature(getTemperature() - (second - 60) / 6);
+    }
+  }
+
 
   /**
    * Set the temperature of the environment.
