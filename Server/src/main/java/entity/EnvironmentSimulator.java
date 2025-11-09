@@ -31,6 +31,7 @@ public class EnvironmentSimulator {
   private boolean fanOn = false;
   private boolean pumpOn = false;
   private boolean co2On = false; // CO2 generator. Raises CO2 levels.
+  private boolean lightOn = false; // Artificial lighting
 
 
   /**
@@ -71,7 +72,11 @@ public class EnvironmentSimulator {
     // Example: temperature rises for first 60 seconds, falls for next 60
     if (second < 60) {
       setTemperature(getTemperature() + second / 6);
-      setLightLevel(getLightLevel() + second / 2);
+      if (!lightOn) {
+        setLightLevel(getLightLevel() + second / 2); // if light is off, light level varies
+      } else {
+        setLightLevel(100); // Artificial light keeps it at max
+      }
     } else {
       setTemperature(getTemperature() - (second - 60) / 6);
       setLightLevel(getLightLevel() - (second - 60) / 2);
