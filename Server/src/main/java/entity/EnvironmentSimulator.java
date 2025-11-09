@@ -27,9 +27,9 @@ public class EnvironmentSimulator {
   private int soilMoisture; // Current soil moisture level in percentage
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-  // Actuators which influence the environment
+  // Actuators which influence the environment, with default values
   private boolean fanOn = false;
-  private boolean pumpOn = false; // Water pump. Raises soil moisture.
+  private boolean pumpOn = true; // Water pump. Raises soil moisture.
   private boolean co2On = false; // CO2 generator. Raises CO2 levels.
   private boolean lightOn = false; // Artificial lighting
 
@@ -72,9 +72,9 @@ public class EnvironmentSimulator {
     // Example: temperature rises for first 60 seconds, falls for next 60
     updateLightState(second);
     updateTemperatureState(second);
-
-    // Humidity could follow a similar or different pattern
-    setHumidity(50 + (int) (10 * Math.sin(Math.toRadians(second * 3))));
+    updateHumidityState(second);
+    updateCo2Level(second);
+    updateSoilMoisture();
   }
 
   /**
@@ -102,6 +102,46 @@ public class EnvironmentSimulator {
       setTemperature(getTemperature() + second / 6);
     } else {
       setTemperature(getTemperature() - (second - 60) / 6);
+    }
+  }
+
+  /**
+   * Update the humidity state of the environment.
+   *
+   * @param second the current second in the 120-second cycle
+   */
+  public void updateHumidityState(int second) {
+    setHumidity(50 + (int) (10 * Math.sin(Math.toRadians(second * 3))));
+  }
+
+  /**
+   * Update the CO2 level of the environment. CO2 levels fluctuate over time.
+   * The CO2 level is low during the day and increases at night.
+   * The CO2 generator sets the CO2 level to a constant high value when activated.
+   *
+   * @param second the current second in the 120-second cycle
+   */
+  public void updateCo2Level(int second) {
+    if (co2On) {
+      co2Level = 800; // High CO2 level when generator is on
+    } else {
+      if (second < 60) {
+        co2Level = 400 + (int) (100 * Math.sin(Math.toRadians(second * 3)));
+      } else {
+        co2Level = 400 - (int) (100 * Math.sin(Math.toRadians((second - 60) * 3)));
+      }
+    }
+  }
+
+  /**
+   * Update the soil moisture level of the environment. Soil moisture decreases over time.
+   * The water pump increases soil moisture when activated.
+   */
+  public void updateSoilMoisture() {
+    if (pumpOn) {
+      soilMoisture = Math.min(100, soilMoisture + 5); // Increase soil moisture
+    } else {
+      soilMoisture = Math.max(0, soilMoisture - 2); // Decrease soil moisture
     }
   }
 
