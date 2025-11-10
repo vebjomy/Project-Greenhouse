@@ -5,17 +5,33 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Simulates the environment in a greenhouse. Information about the environment can be retrieved by
+ * <p>Simulates the environment in a greenhouse. Information about the environment can be retrieved by
  * sensors. The environment can be influenced by actuators.
  *
  * <p>A 24-hour cycle is represented by a 120-second cycle in the simulator. Each second in the
- * simulator thus represents 12 minutes in real life.
+ * simulator thus represents 12 minutes in real life. The environment is updated every second to simulate changes over time.
+ * The simulator runs a scheduled task that updates the environment values every second.
+ * The simulator starts with default values for all parameters and updates them based on the state of the actuators.
  *
- * <p>The temperature is represented in degrees Celsius. It follows a simple model where the
- * temperature increases during the day and decreases at night.
+ * <p>The following environmental parameters are simulated:
+ * <ul>
+ *   <li>Temperature (°C)
+ *   <li>Humidity (%)
+ *   <li>Light Level (%)
+ *   <li>CO2 Level (ppm)
+ *   <li>Soil pH Level
+ *   <li>Soil Moisture (%)
+ * </ul>
  *
- * <p>Humidity is represented by a percentage. It follows a faster cycle than temperature and light
- * level.
+ * <p>
+ * The following actuators influence the environment:
+ * <ul>
+ *   <li>Fan (on/off) - lowers temperature and humidity when on
+ *   <li>Water Pump (on/off) - raises soil moisture when on
+ *   <li>CO2 Generator (on/off) - raises CO2 levels when on
+ *   <li>Artificial Lighting (on/off) - raises light levels when on
+ *   <li>Window (open/closed) - lowers temperature and humidity when open
+ * </ul>
  */
 public class EnvironmentSimulator {
   private int temperature; // Current temperature in Celsius
