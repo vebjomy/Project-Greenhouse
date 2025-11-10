@@ -83,7 +83,7 @@ public class EnvironmentSimulator {
    *
    * @param second the current second in the 120-second cycle
    */
-  public void updateLightState(int second) {
+  private void updateLightState(int second) {
     if (!lightOn) {
       if (second < 60) {
         setLightLevel(getLightLevel() + second / 2);
@@ -98,7 +98,7 @@ public class EnvironmentSimulator {
    *
    * @param second the current second in the 120-second cycle
    */
-  public void updateTemperatureState(int second) {
+  private void updateTemperatureState(int second) {
     if (!windowOpen) {
       if (second < 60) {
         setTemperature(getTemperature() + second / 6);
@@ -119,7 +119,7 @@ public class EnvironmentSimulator {
    *
    * @param second the current second in the 120-second cycle
    */
-  public void updateHumidityState(int second) {
+  private void updateHumidityState(int second) {
     setHumidity(50 + (int) (10 * Math.sin(Math.toRadians(second * 3))));
   }
 
@@ -130,7 +130,7 @@ public class EnvironmentSimulator {
    *
    * @param second the current second in the 120-second cycle
    */
-  public void updateCo2Level(int second) {
+  private void updateCo2Level(int second) {
     if (co2On) {
       setCo2Level(800); // High CO2 level when generator is on
     } else {
@@ -146,7 +146,7 @@ public class EnvironmentSimulator {
    * Update the soil moisture level of the environment. Soil moisture decreases over time.
    * The water pump increases soil moisture when activated.
    */
-  public void updateSoilMoisture() {
+  private void updateSoilMoisture() {
     if (pumpOn) {
       setSoilMoisture(Math.min(100, soilMoisture + 5)); // Increase soil moisture
     } else {
@@ -160,7 +160,7 @@ public class EnvironmentSimulator {
    *
    * @param temperature the new temperature in Celsius
    */
-  public void setTemperature(int temperature) {
+  private void setTemperature(int temperature) {
     if (temperature < -273) {
       throw new IllegalArgumentException(
               "Error: Physically impossible. Temperature must be > -273");
@@ -173,7 +173,7 @@ public class EnvironmentSimulator {
    *
    * @param humidity the new humidity in percentage
    */
-  public void setHumidity(int humidity) {
+  private void setHumidity(int humidity) {
     this.humidity = humidity;
   }
 
@@ -182,7 +182,7 @@ public class EnvironmentSimulator {
    *
    * @param lightLevel the new light level in percentage
    */
-  public void setLightLevel(int lightLevel) {
+  private void setLightLevel(int lightLevel) {
     this.lightLevel = lightLevel;
   }
 
@@ -227,7 +227,7 @@ public class EnvironmentSimulator {
    *
    * @param co2Level the new CO2 level in ppm.
    */
-  public void setCo2Level(int co2Level) {
+  private void setCo2Level(int co2Level) {
     if (co2Level < 0) {
       throw new IllegalArgumentException("CO2 level cannot be negative");
     }
@@ -260,7 +260,7 @@ public class EnvironmentSimulator {
    *
    * @param soilMoisture the new soil moisture level in percentage.
    */
-  public void setSoilMoisture(int soilMoisture) {
+  private void setSoilMoisture(int soilMoisture) {
     if (soilMoisture < 0 || soilMoisture > 100) {
       throw new IllegalArgumentException("Soil moisture must be between 0 and 100");
     }

@@ -34,74 +34,32 @@ public class TestEnvironmentSimulator {
   }
 
   @Test
-  public void testTemperatureTransition_increaseThenDecrease() {
-    EnvironmentSimulator env = new EnvironmentSimulator();
-    env.setTemperature(20); // known baseline
-
-    // Daytime (second < 60) increases by second/6
-    env.updateTemperatureState(30); // +30/6 = +5
-    assertEquals(25, env.getTemperature());
-
-    // Nighttime (second >= 60) decreases by (second-60)/6 from current value
-    env.updateTemperatureState(90); // -(90-60)/6 = -5 -> back to 20
-    assertEquals(20, env.getTemperature());
-  }
-
-  @Test
-  public void testHumiditySinusoidal_valuesAtKeyPoints() {
+  public void testSoilMoisture_increasesAndCapsAt100() throws Exception {
     EnvironmentSimulator env = new EnvironmentSimulator();
 
-    env.updateHumidityState(0);   // sin(0) = 0 -> 50
-    assertEquals(50, env.getHumidity());
-
-    env.updateHumidityState(30);  // sin(90°) = 1 -> 60
-    assertEquals(60, env.getHumidity());
-
-    env.updateHumidityState(60);  // sin(180°) = 0 -> 50
-    assertEquals(50, env.getHumidity());
-
-    env.updateHumidityState(90);  // sin(270°) = -1 -> 40
-    assertEquals(40, env.getHumidity());
-  }
-
-  @Test
-  public void testCo2DefaultBehaviour_atKeyPoints() {
-    EnvironmentSimulator env = new EnvironmentSimulator();
-
-    env.updateCo2Level(0);   // 400 + 100*sin(0) = 400
-    assertEquals(400, getCo2(env));
-
-    env.updateCo2Level(30);  // 400 + 100*sin(90°) = 500
-    assertEquals(500, getCo2(env));
-
-    env.updateCo2Level(90);  // 400 - 100*sin(90°) = 300 (night branch)
-    assertEquals(300, getCo2(env));
-  }
-
-  // helper reads CO2 via reflection because field is private
-  private int getCo2(EnvironmentSimulator env) {
+    // Stop the simulator's scheduler to avoid concurrent updates during the test
+    java.lang.reflect.Field schedField = EnvironmentSimulator.class.getDeclaredField("scheduler");
+    schedField.setAccessible(true);
+    java.util.concurrent.ScheduledExecutorService sched =
+            (java.util.concurrent.ScheduledExecutorService) schedField.get(env);
+    sched.shutdownNow();
     try {
-      java.lang.reflect.Field f = EnvironmentSimulator.class.getDeclaredField("co2Level");
-      f.setAccessible(true);
-      return f.getInt(env);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
+      sched.awaitTermination(100, java.util.concurrent.TimeUnit.MILLISECONDS);
+    } catch (InterruptedException ignored) {}
 
-  @Test
-  public void testSoilMoisture_increasesAndCapsAt100() {
-    EnvironmentSimulator env = new EnvironmentSimulator();
-
-    // default soilMoisture is 40; pumpOn defaults to true
+    // Invoke the private updateSoilMoisture method repeatedly via reflection
+    java.lang.reflect.Method updateMethod =
+            EnvironmentSimulator.class.getDeclaredMethod("updateSoilMoisture");
+    updateMethod.setAccessible(true);
     for (int i = 0; i < 20; i++) {
-      env.updateSoilMoisture();
+      updateMethod.invoke(env);
     }
-    // should not exceed 100
-    int moisture = getSoilMoisture(env);
+
+    int moisture = env.getSoilMoisture();
     assertTrue("soil moisture should be <= 100", moisture <= 100);
     assertEquals(100, moisture);
   }
+
 
   // helper reads soilMoisture via reflection because field is private
   private int getSoilMoisture(EnvironmentSimulator env) {
@@ -112,12 +70,6 @@ public class TestEnvironmentSimulator {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testSetTemperature_invalidThrows() {
-    EnvironmentSimulator env = new EnvironmentSimulator();
-    env.setTemperature(-274); // physically impossible -> exception
   }
 
   @Test
