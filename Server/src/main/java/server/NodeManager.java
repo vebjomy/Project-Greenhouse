@@ -95,11 +95,17 @@ public class NodeManager {
     var rt = runtimes.get(nodeId);
     if (rt == null) return Map.of();
     var env = rt.env;
+    // Sensor readings
     Map<String,Object> data = new LinkedHashMap<>();
     data.put("temperature", env.temperatureC);
     data.put("humidity", env.humidityPct);
     data.put("light", env.lightLux);
     data.put("ph", env.ph);
+    // Actuator states
+    data.put("fan", rt.fanOn.get() ? "ON" : "OFF");
+    data.put("water_pump", rt.pumpOn.get() ? "ON" : "OFF");
+    data.put("co2", rt.co2On.get() ? "ON" : "OFF");
+    data.put("window", rt.window.toString()); // "OPEN", "CLOSED", "PARTIAL"
     return data;
   }
 
