@@ -32,6 +32,7 @@ public class EnvironmentSimulator {
   private boolean pumpOn = true; // Water pump. Raises soil moisture.
   private boolean co2On = false; // CO2 generator. Raises CO2 levels.
   private boolean lightOn = false; // Artificial lighting
+  private boolean windowOpen = false; // Window. Lowers temperature and humidity.
 
 
   /**
@@ -98,10 +99,18 @@ public class EnvironmentSimulator {
    * @param second the current second in the 120-second cycle
    */
   public void updateTemperatureState(int second) {
-    if (second < 60) {
-      setTemperature(getTemperature() + second / 6);
+    if (!windowOpen) {
+      if (second < 60) {
+        setTemperature(getTemperature() + second / 6);
+      } else {
+        setTemperature(getTemperature() - (second - 60) / 6);
+      }
     } else {
-      setTemperature(getTemperature() - (second - 60) / 6);
+      if (second < 60) {
+        setTemperature(Math.max(15, getTemperature() - 1));
+      } else {
+        setTemperature(Math.max(5, getTemperature() + 1));
+      }
     }
   }
 
@@ -123,12 +132,12 @@ public class EnvironmentSimulator {
    */
   public void updateCo2Level(int second) {
     if (co2On) {
-      co2Level = 800; // High CO2 level when generator is on
+      setCo2Level(800); // High CO2 level when generator is on
     } else {
       if (second < 60) {
-        co2Level = 400 + (int) (100 * Math.sin(Math.toRadians(second * 3)));
+        setCo2Level(400 + (int) (100 * Math.sin(Math.toRadians(second * 3))));
       } else {
-        co2Level = 400 - (int) (100 * Math.sin(Math.toRadians((second - 60) * 3)));
+        setCo2Level(400 - (int) (100 * Math.sin(Math.toRadians((second - 60) * 3))));
       }
     }
   }
@@ -139,9 +148,9 @@ public class EnvironmentSimulator {
    */
   public void updateSoilMoisture() {
     if (pumpOn) {
-      soilMoisture = Math.min(100, soilMoisture + 5); // Increase soil moisture
+      setSoilMoisture(Math.min(100, soilMoisture + 5)); // Increase soil moisture
     } else {
-      soilMoisture = Math.max(0, soilMoisture - 2); // Decrease soil moisture
+      setSoilMoisture(Math.max(0, soilMoisture - 2)); // Decrease soil moisture
     }
   }
 
@@ -202,6 +211,60 @@ public class EnvironmentSimulator {
    */
   public int getLightLevel() {
     return lightLevel;
+  }
+
+  /**
+   * Get the current CO2 level of the environment.
+   *
+   * @return the current CO2 level in ppm.
+   */
+  public int getCo2Level() {
+    return co2Level;
+  }
+
+  /**
+   * Set the current CO2 level of the environment.
+   *
+   * @param co2Level the new CO2 level in ppm.
+   */
+  public void setCo2Level(int co2Level) {
+    if (co2Level < 0) {
+      throw new IllegalArgumentException("CO2 level cannot be negative");
+    }
+    if (co2Level > 1000000) {
+      throw new IllegalArgumentException("CO2 level exceeds physical limit");
+    }
+    this.co2Level = co2Level;
+  }
+
+  /**
+   * Get the current soil pH level of the environment.
+   *
+   * @return the current soil pH level.
+   */
+  public int getSoilPH() {
+    return soilPH;
+  }
+
+  /**
+   * Get the current soil moisture level of the environment.
+   *
+   * @return the current soil moisture level in percentage.
+   */
+  public int getSoilMoisture() {
+    return soilMoisture;
+  }
+
+  /**
+   * Set the current soil moisture level of the environment.
+   *
+   * @param soilMoisture the new soil moisture level in percentage.
+   */
+  public void setSoilMoisture(int soilMoisture) {
+    if (soilMoisture < 0 || soilMoisture > 100) {
+      throw new IllegalArgumentException("Soil moisture must be between 0 and 100");
+    }
+    this.soilMoisture = soilMoisture;
   }
 
   /**
