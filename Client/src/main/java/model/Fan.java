@@ -173,6 +173,11 @@ public class Fan implements Actuator {
     return layout;
   }
 
+  @Override
+  public String getName() {
+    return "";
+  }
+
   /* UI update method where the fan icon color and rotation speed are adjusted based on the current state.
     * If the fan is OFF, the icon is gray and not rotating.
     * If the fan is ON, the icon color changes based on speed (green for LOW, yellow for MEDIUM, red for HIGH)

@@ -20,9 +20,9 @@ public class ClientApi implements AutoCloseable {
   private final NetworkClient tcp = new NetworkClient();
   private final RequestManager requests = new RequestManager();
 
-  // Optional mock server for offline development
-  private net.MockServer mock;
-  private boolean usingMock;
+//  // Optional mock server for offline development
+//  private net.MockServer mock;
+//  private boolean usingMock;
 
   public ClientApi(){
     tcp.setOnLine(this::handleLine);
@@ -30,24 +30,29 @@ public class ClientApi implements AutoCloseable {
   }
 
   // ---------- Connection ----------
-  public void useMock(){
-    usingMock = true;
-    mock = new net.MockServer();
-    mock.attachClient(this::handleLine);
-  }
+//  public void useMock(){
+//    usingMock = true;
+//    mock = new net.MockServer();
+//    mock.attachClient(this::handleLine);
+//  }
 
   public CompletableFuture<Void> connect(String host, int port) {
     try {
-      usingMock = false;
       tcp.connect(host, port);
+      System.out.println("Connecting to: " + host + ":" + port);
+
+      // Send "hello" message
       String id = requests.newId();
       CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
+
       Hello h = new Hello();
       h.id = id;
       h.clientId = "ui-" + UUID.randomUUID();
       h.user = "local";
-      h.capabilities = List.of("topology","commands","subscribe");
+      h.capabilities = List.of("topology", "commands", "subscribe");
       send(h);
+
+      fut.thenRun(() -> System.out.println("Connected to GreenhouseServer ✔"));
       return fut;
     } catch (IOException e) {
       CompletableFuture<Void> f = new CompletableFuture<>();
@@ -55,6 +60,9 @@ public class ClientApi implements AutoCloseable {
       return f;
     }
   }
+
+
+
 
   // ---------- Listeners for GUI ----------
   public void onSensorUpdate(Consumer<ClientState.NodeState> l){
@@ -66,18 +74,59 @@ public class ClientApi implements AutoCloseable {
 
   public ClientState state(){ return state; }
 
+
   // ---------- Topology ----------
+
   public CompletableFuture<Topology> getTopology(){
+    System.out.println("📤 [ClientApi] Requesting topology...");
+
     String id = requests.newId();
-    var fut = requests.register(id).thenApply(js -> tcp.codec().mapper().convertValue(js, Topology.class));
+    System.out.println("   Request ID: " + id);
+
+    var fut = requests.register(id).thenApply(js -> {
+      System.out.println("📥 [ClientApi] Raw JSON response:");
+      System.out.println(js.toPrettyString());
+
+      try {
+        Topology topology = tcp.codec().mapper().convertValue(js, Topology.class);
+        System.out.println("   ✅ Parsed Topology object");
+        System.out.println("   - Type: " + topology.type);
+        System.out.println("   - Nodes field null? " + (topology.nodes == null));
+
+        if (topology.nodes != null) {
+          System.out.println("   - Nodes count: " + topology.nodes.size());
+          for (int i = 0; i < topology.nodes.size(); i++) {
+            var n = topology.nodes.get(i);
+            System.out.println("   - Node[" + i + "]: " + n.name + " (id=" + n.id + ")");
+          }
+        } else {
+          System.err.println("   ⚠️ WARNING: nodes field is NULL after parsing!");
+        }
+
+        return topology;
+      } catch (Exception e) {
+        System.err.println("   ❌ Failed to parse topology: " + e.getMessage());
+        e.printStackTrace();
+        throw e;
+      }
+    });
+
     var msg = new SimpleIdMessage(MessageTypes.GET_TOPOLOGY, id);
     send(msg);
+
     return fut.thenApply(topology -> {
+      System.out.println("🔧 [ClientApi] Processing topology in state...");
+
       if (topology.nodes != null){
+        System.out.println("   Updating state with " + topology.nodes.size() + " nodes");
         for (var n : topology.nodes){
+          System.out.println("   - Patching node: " + n.id + " (" + n.name + ")");
           state.patchNode(n.id, n.name, n.location, n.ip, n.sensors, n.actuators);
         }
+      } else {
+        System.err.println("   ⚠️ Skipping state update - nodes is null");
       }
+
       return topology;
     });
   }
@@ -102,11 +151,36 @@ public class ClientApi implements AutoCloseable {
   }
 
   // ---------- Node management ----------
+  // В ClientApi.java
+
   public CompletableFuture<String> createNode(Topology.Node node){
+    System.out.println("📤 [ClientApi] createNode called");
+    System.out.println("   Name: " + node.name);
+    System.out.println("   Location: " + node.location);
+    System.out.println("   IP: " + node.ip);
+    System.out.println("   Sensors: " + node.sensors);
+    System.out.println("   Actuators: " + node.actuators);
+
     String id = requests.newId();
-    var fut = requests.register(id).thenApply(js -> js.has("nodeId") ? js.get("nodeId").asText() : null);
+    System.out.println("   Request ID: " + id);
+
+    var fut = requests.register(id).thenApply(js -> {
+      System.out.println("📥 [ClientApi] Server response received");
+      System.out.println("   Response: " + js.toPrettyString());
+      return js.has("nodeId") ? js.get("nodeId").asText() : null;
+    });
+
     CreateNode msg = new CreateNode();
-    msg.id = id; msg.node = node;
+    msg.id = id;
+    msg.node = node;
+
+    try {
+      String jsonMsg = tcp.codec().toJsonLine(msg);
+      System.out.println("📡 [ClientApi] Sending JSON: " + jsonMsg);
+    } catch (Exception e) {
+      System.err.println("❌ [ClientApi] Failed to serialize: " + e.getMessage());
+    }
+
     send(msg);
     return fut;
   }
@@ -163,7 +237,7 @@ public class ClientApi implements AutoCloseable {
     Command c = new Command();
     c.id = id; c.nodeId = nodeId; c.target = target; c.action = action; c.params = params;
     send(c);
-    if (usingMock && mock != null) mock.onClientCommand(c);
+
     return fut;
   }
 
@@ -177,14 +251,14 @@ public class ClientApi implements AutoCloseable {
     return fut;
   }
 
-  // ---------- Heartbeat ----------
-  public CompletableFuture<Void> ping(){
+  public CompletableFuture<JsonNode> ping(){
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
+    CompletableFuture<JsonNode> fut = requests.register(id);
     Ping p = new Ping(); p.id = id;
     send(p);
     return fut;
   }
+
 
   // ---------- Incoming processing ----------
   private void handleLine(String line){
@@ -199,8 +273,8 @@ public class ClientApi implements AutoCloseable {
           // complete "hello" future if present
           requests.complete(id, root);
         }
-        case MessageTypes.ACK, MessageTypes.ERROR, MessageTypes.LAST_VALUES -> {
-          // complete pending request future (ACK/ERROR/LastValues have the id)
+        case MessageTypes.ACK, MessageTypes.ERROR, MessageTypes.LAST_VALUES, MessageTypes.PONG -> {
+          // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
           requests.complete(id, root);
         }
         case MessageTypes.TOPOLOGY -> {
@@ -229,15 +303,15 @@ public class ClientApi implements AutoCloseable {
     } catch (Exception e) { e.printStackTrace(); }
   }
 
+
   private void send(Object dto){
     try {
       String line = tcp.codec().toJsonLine(dto);
-      if (usingMock) System.out.print("> "+line); else tcp.sendLine(line);
+        tcp.sendLine(line);
     } catch (Exception e) { e.printStackTrace(); }
   }
 
   @Override public void close() throws IOException {
-    if (mock != null) mock.shutdown();
     tcp.close();
   }
 

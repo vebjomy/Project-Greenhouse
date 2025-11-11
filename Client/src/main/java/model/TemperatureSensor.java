@@ -157,6 +157,11 @@ public class TemperatureSensor implements Sensor {
    */
 
   @Override
+  public String getName() {
+    return "";
+  }
+
+  @Override
   public double getCurrentValue() {
     return currentTemperature;
   }

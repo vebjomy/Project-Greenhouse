@@ -124,6 +124,11 @@ public class HumiditySensor implements Sensor {
     return layout;
   }
 
+  @Override
+  public String getName() {
+    return "";
+  }
+
   /* * Returns the current humidity value as a double.
    * @return Current humidity
    */
