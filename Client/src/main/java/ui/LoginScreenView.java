@@ -12,6 +12,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.scene.control.TextInputDialog;
+
+import javax.swing.*;
 import java.util.Optional;
 
 
@@ -23,6 +25,8 @@ public class LoginScreenView {
   private final HBox root;
   private final Circle statusIndicator;
   private final Text statusText;
+  private TextField usernameField; // Declare usernameField
+  private PasswordField passwordField; // Declare passwordField
 
   // Constructor to initialize the login screen view
 
@@ -239,5 +243,13 @@ public class LoginScreenView {
 
   public HBox getRoot() {
     return root;
+  }
+
+  public AbstractButton getUsernameField() {
+    return null;
+  }
+
+  public AbstractButton getPasswordField() {
+    return null;
   }
 }

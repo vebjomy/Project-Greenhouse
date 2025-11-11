@@ -18,4 +18,9 @@
   "username" : "Chris Wood",
   "password" : "chris9",
   "role" : "Operator"
+}, {
+  "id" : 6,
+  "username" : "arkadii",
+  "password" : "123456",
+  "role" : "Operator"
 } ]
