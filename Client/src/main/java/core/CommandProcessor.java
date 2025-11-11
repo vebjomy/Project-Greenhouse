@@ -87,7 +87,6 @@ public class CommandProcessor {
                 return "❌ Received null topology";
               }
 
-              // ИСПРАВЛЕНО: Проверяем nodes, а не topology
               if (topology.nodes == null) {
                 return "🗺️ Topology received: 0 nodes (nodes list is null)";
               }
@@ -96,7 +95,6 @@ public class CommandProcessor {
                 return "🗺️ Topology received: 0 nodes (nodes list is empty)";
               }
 
-              // Формируем детальный ответ
               StringBuilder result = new StringBuilder();
               result.append("🗺️ Topology received: ").append(topology.nodes.size()).append(" node(s)\n\n");
 

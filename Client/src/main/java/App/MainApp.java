@@ -46,8 +46,6 @@ public class MainApp extends Application {
     api.connect(SERVER_ADDRESS, SERVER_PORT).thenRun(() -> {
       System.out.println("✅ Connected to server");
       isConnected = true;
-
-      // ВАЖНО: Сначала подписываемся, ПОТОМ запрашиваем topology
       Platform.runLater(() -> {
         // Subscribe to updates FIRST
         api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))

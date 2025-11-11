@@ -78,14 +78,14 @@ public class ClientHandler implements Runnable {
   private void handleHello(JsonNode msg) { session.clientId = msg.path("clientId").asText(null); ack(msg, "ok"); }
 
 
-  // Handle get_topology request
+  // Handle get_topology request and send topology response
   private void handleGetTopology(JsonNode msg) {
     System.out.println("📥 [Server] Received get_topology request");
     String requestId = msg.path("id").asText(null);
     System.out.println("   Request ID: " + requestId);
 
     Topology t = new Topology();
-    t.id = requestId; // IMPORTANT: Set the ID to match the request
+    t.id = requestId;
     t.nodes = nodeManager.getAllNodes();
 
     System.out.println("   📊 Topology created:");
@@ -117,6 +117,7 @@ public class ClientHandler implements Runnable {
     System.out.println("   ✅ Topology sent (no separate ACK)");
   }
 
+  // Handle create_node request and send ack with new node ID
   private void handleCreateNode(JsonNode msg) throws Exception {
     System.out.println("📥 [Server] Received create_node request");
     System.out.println("   Raw JSON: " + msg.toPrettyString());

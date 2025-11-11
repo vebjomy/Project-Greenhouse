@@ -357,7 +357,6 @@ public class DashboardController {
     return sensorsAdded;
   }
 
-  // Добавь этот метод в DashboardController.java
 
   /**
    * Synchronizes the dashboard with the server topology and displays the result.

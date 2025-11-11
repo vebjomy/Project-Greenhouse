@@ -20,21 +20,11 @@ public class ClientApi implements AutoCloseable {
   private final NetworkClient tcp = new NetworkClient();
   private final RequestManager requests = new RequestManager();
 
-//  // Optional mock server for offline development
-//  private net.MockServer mock;
-//  private boolean usingMock;
 
   public ClientApi(){
     tcp.setOnLine(this::handleLine);
     tcp.setOnError(err -> System.err.println("TCP error: " + err));
   }
-
-  // ---------- Connection ----------
-//  public void useMock(){
-//    usingMock = true;
-//    mock = new net.MockServer();
-//    mock.attachClient(this::handleLine);
-//  }
 
   public CompletableFuture<Void> connect(String host, int port) {
     try {
@@ -151,8 +141,6 @@ public class ClientApi implements AutoCloseable {
   }
 
   // ---------- Node management ----------
-  // В ClientApi.java
-
   public CompletableFuture<String> createNode(Topology.Node node){
     System.out.println("📤 [ClientApi] createNode called");
     System.out.println("   Name: " + node.name);
