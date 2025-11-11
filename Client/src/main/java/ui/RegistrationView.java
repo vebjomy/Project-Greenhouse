@@ -17,6 +17,9 @@ import javafx.scene.layout.VBox;
 
 public class RegistrationView {
   private final BorderPane root;
+  private TextField usernameField;
+  private PasswordField passwordField;
+  private PasswordField confirmPasswordField;
 
   public RegistrationView(MainApp mainApp) {
     root = new BorderPane();
@@ -25,21 +28,22 @@ public class RegistrationView {
     Label title = new Label("User Registration");
     title.setStyle("-fx-font-size: 60px; -fx-font-weight: bold; -fx-text-fill: #333333;");
 
-    TextField usernameField = new TextField();
+    usernameField = new TextField();
     usernameField.setPromptText("Enter username");
 
-    PasswordField passwordField = new PasswordField();
+    passwordField = new PasswordField();
     passwordField.setPromptText("Enter password");
 
-    PasswordField confirmPasswordField = new PasswordField();
+    confirmPasswordField = new PasswordField();
     confirmPasswordField.setPromptText("Confirm password");
 
     Button registerButton = new Button("Register");
     registerButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 20; -fx-font-size: 16px; -fx-cursor: hand;");
     registerButton.setOnAction(e -> {
-      // Handle registration logic here
-      System.out.println("Registered: " + usernameField.getText());
-      mainApp.showSplashScreen(); // Return to splash screen
+      controller.RegisterController registerController = new controller.RegisterController(this);
+      if (registerController.handleRegister()) {
+        mainApp.showLoginScreen(); // Navigate to login after successful registration
+      }
     });
 
     VBox formBox = new VBox(10, title, usernameField, passwordField,confirmPasswordField ,registerButton);
@@ -48,7 +52,17 @@ public class RegistrationView {
     root.setCenter(formBox);
   }
 
-  // Getter for the root pane
+  public TextField getUsernameField() {
+    return usernameField;
+  }
+
+  public PasswordField getPasswordField() {
+    return passwordField;
+  }
+
+  public PasswordField getConfirmPasswordField() {
+    return confirmPasswordField;
+  }
 
   public BorderPane getRoot() {
     return root;

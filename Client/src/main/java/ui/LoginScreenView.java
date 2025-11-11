@@ -71,11 +71,12 @@ public class LoginScreenView {
   // Input Fields
 
 
-    TextField usernameField = new TextField();
+    // Input Fields
+    usernameField = new TextField();
     usernameField.setPromptText("Username");
     usernameField.getStyleClass().add("text-field");
 
-    PasswordField passwordField = new PasswordField();
+    passwordField = new PasswordField(); // Use the class field, not a new local variable
     passwordField.setPromptText("Password");
     passwordField.getStyleClass().add("password-field");
     VBox.setMargin(passwordField, new Insets(0, 0, 25, 0));
