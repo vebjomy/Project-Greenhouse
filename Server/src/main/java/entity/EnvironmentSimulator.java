@@ -294,4 +294,46 @@ public class EnvironmentSimulator {
     }
     this.cycleSecond = second;
   }
+
+  // Actuator control methods
+  public void toggleFan() {
+    this.fanOn = !this.fanOn;
+  }
+
+  public void togglePump() {
+    this.pumpOn = !this.pumpOn;
+  }
+
+  public void toggleCo2Generator() {
+    this.co2On = !this.co2On;
+  }
+
+  public void toggleLight() {
+    this.lightOn = !this.lightOn;
+  }
+
+  public void toggleWindow() {
+    this.windowOpen = !this.windowOpen;
+  }
+
+  // Getter methods for actuator states
+  public boolean isFanOn() {
+    return fanOn;
+  }
+
+  public boolean isPumpOn() {
+    return pumpOn;
+  }
+
+  public boolean isCo2On() {
+    return co2On;
+  }
+
+  public boolean isLightOn() {
+    return lightOn;
+  }
+
+  public boolean isWindowOpen() {
+    return windowOpen;
+  }
 }
