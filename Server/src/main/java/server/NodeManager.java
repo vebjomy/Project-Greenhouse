@@ -26,14 +26,61 @@ public class NodeManager {
     runtimes.put(n.id, new NodeRuntime(n.id));
   }
 
+  // Add a new node and return its assigned ID
   public synchronized String addNode(Topology.Node node) {
+    System.out.println("🔧 [NodeManager] addNode called");
+    System.out.println("   Input node: " + node.name);
+    System.out.println("   Current nodes count: " + nodes.size());
+
     String id = "node-" + (nodes.size() + 1);
     node.id = id;
-    if (node.sensors == null) node.sensors = new ArrayList<>();
-    if (node.actuators == null) node.actuators = new ArrayList<>();
+
+    // Initialize sensors/actuators lists if null
+    if (node.sensors == null) {
+      node.sensors = new ArrayList<>();
+      System.out.println("   ⚠️ Initialized empty sensors list");
+    }
+    if (node.actuators == null) {
+      node.actuators = new ArrayList<>();
+      System.out.println("   ⚠️ Initialized empty actuators list");
+    }
+
+    System.out.println("   Assigned ID: " + id);
+    System.out.println("   Node sensors: " + node.sensors);
+    System.out.println("   Node actuators: " + node.actuators);
+
+    // Add to map
     nodes.put(id, node);
+    System.out.println("   ✅ Node added to map");
+    System.out.println("   New nodes count: " + nodes.size());
+
+    // Create runtime
     runtimes.put(id, new NodeRuntime(id));
+    System.out.println("   ✅ Runtime created");
+
+    // Verification
+    if (nodes.containsKey(id)) {
+      System.out.println("   ✅ Verification: Node IS in map");
+      System.out.println("   ✅ Node details: " + nodes.get(id).name);
+    } else {
+      System.err.println("   ❌ ERROR: Node NOT in map!");
+    }
+
     return id;
+  }
+
+  public List<Topology.Node> getAllNodes() {
+    System.out.println("🔧 [NodeManager] getAllNodes called");
+    System.out.println("   Nodes in map: " + nodes.size());
+
+    List<Topology.Node> result = new ArrayList<>(nodes.values());
+
+    System.out.println("   Returning list with: " + result.size() + " nodes");
+    if (!result.isEmpty()) {
+      System.out.println("   First node: " + result.get(0).name);
+    }
+
+    return result;
   }
 
   public synchronized void updateNode(String nodeId, Map<String,Object> patch) {
@@ -79,7 +126,6 @@ public class NodeManager {
     if (rt != null) rt.intervalMs = Math.max(200, intervalMs);
   }
 
-  public List<Topology.Node> getAllNodes() { return new ArrayList<>(nodes.values()); }
 
   public NodeRuntime getRuntime(String nodeId) { return runtimes.get(nodeId); }
 

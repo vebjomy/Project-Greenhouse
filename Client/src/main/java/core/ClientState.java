@@ -1,7 +1,12 @@
 package core;
 
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
@@ -19,6 +24,12 @@ public class ClientState {
     public final Set<String> actuators = ConcurrentHashMap.newKeySet();
     public final Map<String, Object> last = new ConcurrentHashMap<>();
     public NodeState(String id){ this.nodeId = id; }
+    public final Map<String, Double> sensorValues = new ConcurrentHashMap<>();
+    public final List<Consumer<NodeState>> sensorListeners = new CopyOnWriteArrayList<>();
+    public final StringProperty fanStatus = new SimpleStringProperty("N/A");
+    public final StringProperty pumpStatus = new SimpleStringProperty("N/A");
+    public final StringProperty co2Status = new SimpleStringProperty("N/A");
+    public final StringProperty windowStatus = new SimpleStringProperty("N/A");
   }
 
   private final Map<String, NodeState> nodes = new ConcurrentHashMap<>();
@@ -47,10 +58,30 @@ public class ClientState {
     if (n != null) notifyNodeChange(n);
   }
 
-  public void updateSensors(String nodeId, Map<String,Object> data){
-    NodeState n = upsertNode(nodeId);
-    n.last.putAll(data);
-    notifySensor(n);
+  public void updateSensors(String nodeId, Map<String, Object> data) {
+    NodeState ns = nodes.get(nodeId);
+    if (ns == null) return;
+
+    // Update sensor values on the JavaFX Application Thread
+    Platform.runLater(() -> {
+      data.forEach((key, value) -> {
+        switch (key) {
+          case "fan" -> ns.fanStatus.set(String.valueOf(value));
+          case "water_pump" -> ns.pumpStatus.set(String.valueOf(value));
+          case "co2" -> ns.co2Status.set(String.valueOf(value));
+          case "window" -> ns.windowStatus.set(String.valueOf(value));
+          default -> {
+            // Other sensors as double values
+            if (value instanceof Number num) {
+              ns.sensorValues.put(key, num.doubleValue());
+            }
+          }
+        }
+      });
+    });
+
+    // Notify listeners
+    ns.sensorListeners.forEach(l -> l.accept(ns));
   }
 
   public void applyLastValues(String nodeId, Map<String,Object> data){

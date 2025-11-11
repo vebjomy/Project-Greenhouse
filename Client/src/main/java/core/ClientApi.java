@@ -62,6 +62,8 @@ public class ClientApi implements AutoCloseable {
   }
 
 
+
+
   // ---------- Listeners for GUI ----------
   public void onSensorUpdate(Consumer<ClientState.NodeState> l){
     state.onSensorUpdate(ns -> Platform.runLater(() -> l.accept(ns)));
@@ -76,17 +78,55 @@ public class ClientApi implements AutoCloseable {
   // ---------- Topology ----------
 
   public CompletableFuture<Topology> getTopology(){
+    System.out.println("📤 [ClientApi] Requesting topology...");
+
     String id = requests.newId();
-    var fut = requests.register(id).thenApply(js -> tcp.codec().mapper().convertValue(js, Topology.class));
+    System.out.println("   Request ID: " + id);
+
+    var fut = requests.register(id).thenApply(js -> {
+      System.out.println("📥 [ClientApi] Raw JSON response:");
+      System.out.println(js.toPrettyString());
+
+      try {
+        Topology topology = tcp.codec().mapper().convertValue(js, Topology.class);
+        System.out.println("   ✅ Parsed Topology object");
+        System.out.println("   - Type: " + topology.type);
+        System.out.println("   - Nodes field null? " + (topology.nodes == null));
+
+        if (topology.nodes != null) {
+          System.out.println("   - Nodes count: " + topology.nodes.size());
+          for (int i = 0; i < topology.nodes.size(); i++) {
+            var n = topology.nodes.get(i);
+            System.out.println("   - Node[" + i + "]: " + n.name + " (id=" + n.id + ")");
+          }
+        } else {
+          System.err.println("   ⚠️ WARNING: nodes field is NULL after parsing!");
+        }
+
+        return topology;
+      } catch (Exception e) {
+        System.err.println("   ❌ Failed to parse topology: " + e.getMessage());
+        e.printStackTrace();
+        throw e;
+      }
+    });
+
     var msg = new SimpleIdMessage(MessageTypes.GET_TOPOLOGY, id);
     send(msg);
 
     return fut.thenApply(topology -> {
+      System.out.println("🔧 [ClientApi] Processing topology in state...");
+
       if (topology.nodes != null){
+        System.out.println("   Updating state with " + topology.nodes.size() + " nodes");
         for (var n : topology.nodes){
+          System.out.println("   - Patching node: " + n.id + " (" + n.name + ")");
           state.patchNode(n.id, n.name, n.location, n.ip, n.sensors, n.actuators);
         }
+      } else {
+        System.err.println("   ⚠️ Skipping state update - nodes is null");
       }
+
       return topology;
     });
   }
@@ -111,11 +151,36 @@ public class ClientApi implements AutoCloseable {
   }
 
   // ---------- Node management ----------
+  // В ClientApi.java
+
   public CompletableFuture<String> createNode(Topology.Node node){
+    System.out.println("📤 [ClientApi] createNode called");
+    System.out.println("   Name: " + node.name);
+    System.out.println("   Location: " + node.location);
+    System.out.println("   IP: " + node.ip);
+    System.out.println("   Sensors: " + node.sensors);
+    System.out.println("   Actuators: " + node.actuators);
+
     String id = requests.newId();
-    var fut = requests.register(id).thenApply(js -> js.has("nodeId") ? js.get("nodeId").asText() : null);
+    System.out.println("   Request ID: " + id);
+
+    var fut = requests.register(id).thenApply(js -> {
+      System.out.println("📥 [ClientApi] Server response received");
+      System.out.println("   Response: " + js.toPrettyString());
+      return js.has("nodeId") ? js.get("nodeId").asText() : null;
+    });
+
     CreateNode msg = new CreateNode();
-    msg.id = id; msg.node = node;
+    msg.id = id;
+    msg.node = node;
+
+    try {
+      String jsonMsg = tcp.codec().toJsonLine(msg);
+      System.out.println("📡 [ClientApi] Sending JSON: " + jsonMsg);
+    } catch (Exception e) {
+      System.err.println("❌ [ClientApi] Failed to serialize: " + e.getMessage());
+    }
+
     send(msg);
     return fut;
   }

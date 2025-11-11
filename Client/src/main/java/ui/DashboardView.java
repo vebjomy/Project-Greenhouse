@@ -104,6 +104,16 @@ public class DashboardView {
     Button usersBtn = new Button("  Users");
     Button statsBtn = new Button("  Statistics");
     Button logoutBtn = new Button("  Log out");
+    Button testButton = new Button("🧪 Test Server");
+    testButton.setOnAction(e -> {
+      System.out.println("=== TESTING SERVER CONNECTION ===");
+      clientApi.ping().thenAccept(response -> {
+        System.out.println("✅ Ping successful: " + response);
+      }).exceptionally(ex -> {
+        System.err.println("❌ Ping failed: " + ex.getMessage());
+        return null;
+      });
+    });
     VBox.setMargin(logoutBtn, new Insets(550, 0, 0, 0));
     Button[] navButtons = {dashboardBtn, usersBtn, statsBtn, logoutBtn};
     // --- Logic for switching views ---
@@ -354,6 +364,8 @@ public class DashboardView {
     toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; " +
         "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
 
+
+
     // --- Logic for Auto-Refresh ---
     final String startText = "Start Auto-Refresh";
     final String stopText = "Stop Auto-Refresh";
@@ -436,4 +448,5 @@ public class DashboardView {
   public void initNetwork(core.ClientApi api) {
     controller.setApi(api);
   }
+
 }

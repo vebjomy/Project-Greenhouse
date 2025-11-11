@@ -21,9 +21,12 @@ import java.util.List;
 public class MainApp extends Application {
   private Stage primaryStage;
   private LoginScreenView loginScreenView;
-  private DashboardView dashboardView; // <-- Field for the dashboard
+  private DashboardView dashboardView;
+  private Scene dashboardScene; // Cache the dashboard scene
+
   private static final double SCENE_WIDTH = 1480;
   private static final double SCENE_HEIGHT = 1000;
+
   private ClientApi api;
   private boolean isConnected = false;
   private final String SERVER_ADDRESS = "127.0.0.1";
@@ -31,25 +34,40 @@ public class MainApp extends Application {
 
   @Override
   public void start(Stage stage) {
-    api = new ClientApi(); // First, create the api
+    api = new ClientApi();
 
-    // Create the dashboard view ONCE and store it
-    dashboardView = new DashboardView(this, api); // Then, pass it
+    // Create the dashboard view ONCE
+    dashboardView = new DashboardView(this, api);
 
-    // Use the port constant
+    // Create the dashboard scene ONCE and cache it
+    dashboardScene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
+
+    // Connect to server with proper timing
     api.connect(SERVER_ADDRESS, SERVER_PORT).thenRun(() -> {
-      Platform.runLater(() -> {
-        api.getTopology();
-        api.subscribe(List.of("*"), List.of("sensor_update", "node_change"));
-        System.out.println("Subscribed for live updates");
-      });
-      System.out.println("Connected to server");
+      System.out.println("✅ Connected to server");
       isConnected = true;
-      if (loginScreenView != null) {
-        Platform.runLater(() -> loginScreenView.updateServerStatus(true));
-      }
+
+      // ВАЖНО: Сначала подписываемся, ПОТОМ запрашиваем topology
+      Platform.runLater(() -> {
+        // Subscribe to updates FIRST
+        api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
+                .thenRun(() -> {
+                  System.out.println("✅ Subscribed to updates");
+
+                  // THEN get topology
+                  api.getTopology().thenAccept(topology -> {
+                    System.out.println("✅ Initial topology loaded: " +
+                            (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
+                  });
+                });
+
+        // Update login screen status
+        if (loginScreenView != null) {
+          loginScreenView.updateServerStatus(true);
+        }
+      });
     }).exceptionally(ex -> {
-      System.err.println("Failed to connect to server: " + ex.getMessage());
+      System.err.println("❌ Failed to connect to server: " + ex.getMessage());
       isConnected = false;
       if (loginScreenView != null) {
         Platform.runLater(() -> loginScreenView.updateServerStatus(false));
@@ -57,13 +75,17 @@ public class MainApp extends Application {
       return null;
     });
 
-    dashboardView.initNetwork(api); // Initialize the network for the dashboard
+    dashboardView.initNetwork(api);
+
     this.primaryStage = stage;
     primaryStage.setTitle("Green House Control");
     primaryStage.centerOnScreen();
     primaryStage.setMaximized(true);
 
-    Font customFont = Font.loadFont(getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10);
+    // Load custom font
+    Font customFont = Font.loadFont(
+            getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10
+    );
     if (customFont == null) {
       System.err.println("Error loading font");
     } else {
@@ -106,13 +128,11 @@ public class MainApp extends Application {
    * Displays the login screen view.
    */
   public void showLoginScreen() {
-    // Initialize the loginScreenView field
+    // Create NEW instance of login screen each time
+    // (since it's lightweight and doesn't hold state)
     loginScreenView = new LoginScreenView(this);
-
-    // Update the server status
     loginScreenView.updateServerStatus(isConnected);
 
-    // Set up the scene and stage
     Scene scene = new Scene(loginScreenView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
     primaryStage.setScene(scene);
     primaryStage.setTitle("Green House Control - Login");
@@ -128,12 +148,12 @@ public class MainApp extends Application {
   }
 
   /**
-   * Displays the dashboard view.
+   * Displays the dashboard view by reusing the cached scene.
+   * This prevents "already set as root" error.
    */
   public void showDashboard() {
-    // Use the *existing* dashboardView instance
-    Scene scene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
-    primaryStage.setScene(scene);
+    // Simply switch to the cached dashboard scene
+    primaryStage.setScene(dashboardScene);
     primaryStage.setTitle("Smart Farm Control");
     primaryStage.setMaximized(true);
   }
