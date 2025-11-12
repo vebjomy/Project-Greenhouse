@@ -117,7 +117,12 @@ public class ClientHandler implements Runnable {
     System.out.println("   ✅ Topology sent (no separate ACK)");
   }
 
-  // Handle create_node request and send ack with new node ID
+  /**
+   * Handle create_node request.
+   *
+   * @param msg The JSON message.
+   * @throws Exception If an error occurs.
+   */
   private void handleCreateNode(JsonNode msg) throws Exception {
     System.out.println("📥 [Server] Received create_node request");
     System.out.println("   Raw JSON: " + msg.toPrettyString());
@@ -146,21 +151,51 @@ public class ClientHandler implements Runnable {
 
     // Verify node was added
     System.out.println("   📊 Total nodes now: " + nodeManager.getAllNodes().size());
+
+    // broadcast node_change added
+    NodeChange nc = new NodeChange();
+    nc.op = "added";
+    nc.node = cn.node;
+    nc.node.id = id;
+    registry.broadcast(nc);
+
+
   }
 
+  /**
+   * Handle update_node request.
+   *
+   * @param msg The JSON message.
+   * @throws Exception If an error occurs.
+   */
   private void handleUpdateNode(JsonNode msg) throws Exception {
     UpdateNode m = codec.fromJson(msg.toString(), UpdateNode.class);
     nodeManager.updateNode(m.nodeId, m.patch);
     ack(msg, "ok");
-    // TODO: broadcast node_change updated
+    // broadcast node_change updated
+    NodeChange nc = new NodeChange();
+    nc.op = "updated";
+    nc.node = nodeManager.getAllNodes().stream().filter(n -> n.id.equals(m.nodeId)).findFirst().orElse(null);
+    registry.broadcast(nc);
   }
 
+  /**
+   * Handle delete_node request.
+   *
+   * @param msg The JSON message.
+   * @throws Exception
+   */
   private void handleDeleteNode(JsonNode msg) throws Exception {
     DeleteNode m = codec.fromJson(msg.toString(), DeleteNode.class);
     nodeManager.deleteNode(m.nodeId);
     engine.onNodeRemoved(m.nodeId);
     ack(msg, "ok");
-    // TODO: broadcast node_change removed
+    // broadcast node_change deleted
+    NodeChange nc = new NodeChange();
+    nc.op = "deleted";
+    nc.node = new Topology.Node();
+    nc.node.id = m.nodeId;
+    registry.broadcast(nc);
   }
 
   private void handleAddComponent(JsonNode msg) throws Exception {

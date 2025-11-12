@@ -1,6 +1,7 @@
 package server;
 
 import dto.Command;
+import dto.SensorUpdate;
 import dto.Topology;
 
 import java.util.*;
@@ -172,6 +173,12 @@ public class NodeManager {
       }
       default -> System.out.println("Unknown actuator: " + cmd.target);
     }
+    SensorUpdate immediate = new SensorUpdate();
+    immediate.nodeId = cmd.nodeId;
+    immediate.timestamp = System.currentTimeMillis();
+    immediate.data = snapshot(cmd.nodeId);
+
+
   }
 
   private boolean asBool(Object v) {

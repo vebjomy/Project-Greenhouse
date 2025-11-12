@@ -17,6 +17,9 @@ import java.util.List;
  * The `MainApp` class serves as the entry point for the Green House Control application.
  * It initializes the JavaFX application, manages the primary stage, and provides methods
  * to navigate between different views such as the splash screen, login screen, registration screen, and dashboard.
+ *
+ * @author Green House Control Team
+ * @version 3.0
  */
 public class MainApp extends Application {
   private Stage primaryStage;
@@ -46,6 +49,8 @@ public class MainApp extends Application {
     api.connect(SERVER_ADDRESS, SERVER_PORT).thenRun(() -> {
       System.out.println("✅ Connected to server");
       isConnected = true;
+
+      // IMPORTANT: First subscribe, THEN request topology
       Platform.runLater(() -> {
         // Subscribe to updates FIRST
         api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
@@ -73,6 +78,7 @@ public class MainApp extends Application {
       return null;
     });
 
+    // Initialize network AFTER UI is set up
     dashboardView.initNetwork(api);
 
     this.primaryStage = stage;
@@ -127,7 +133,6 @@ public class MainApp extends Application {
    */
   public void showLoginScreen() {
     // Create NEW instance of login screen each time
-    // (since it's lightweight and doesn't hold state)
     loginScreenView = new LoginScreenView(this);
     loginScreenView.updateServerStatus(isConnected);
 

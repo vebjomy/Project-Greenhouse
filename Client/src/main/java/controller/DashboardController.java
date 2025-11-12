@@ -7,58 +7,84 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
-import model.*;
+import model.Node;
 import ui.AddComponentDialog;
 import ui.AddNodeDialog;
 import ui.DashboardView;
+import ui.components.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Controller class for managing the dashboard view and its interactions in the Green House Control application.
+ * Controller class for managing the dashboard view and its interactions.
  *
  * <p>This controller handles the complete lifecycle of greenhouse nodes, including:
  * <ul>
  *   <li>Creating, updating, and deleting nodes on the server</li>
  *   <li>Managing sensors and actuators for each node</li>
- *   <li>Synchronizing local UI state with server data</li>
- *   <li>Auto-refresh functionality for real-time updates</li>
+ *   <li>Synchronizing local UI state with server data via real-time updates</li>
+ *   <li>Auto-refresh functionality for periodic updates</li>
  *   <li>Activity logging and user session management</li>
  * </ul>
  *
- * <p>The controller communicates with the server through {@link ClientApi} and maintains
- * a local cache of nodes for UI rendering. All node operations are synchronized with the
- * server to ensure data consistency.
+ * <p><b>Architecture:</b> This controller follows the MVC pattern where:
+ * <ul>
+ *   <li>Model: {@link Node} (stores data received from server)</li>
+ *   <li>View: {@link DashboardView} + UI component classes</li>
+ *   <li>Controller: This class (handles business logic and server communication)</li>
+ * </ul>
+ *
+ * <p><b>Data Flow:</b>
+ * <pre>
+ * Server → ClientApi → ClientState → DashboardController → Node → UI Components
+ * UI → DashboardController → ClientApi → Server
+ * </pre>
  *
  * @author Green House Control Team
- * @version 2.0
+ * @version 3.0
  * @since 1.0
  * @see DashboardView
  * @see ClientApi
  * @see Node
  */
 public class DashboardController {
+
+  // ========== Dependencies ==========
+
   /** The associated dashboard view */
   private final DashboardView view;
 
   /** Reference to the main application for navigation */
   private final MainApp mainApp;
 
-  /** Local cache of all greenhouse nodes */
-  private final List<Node> nodes = new ArrayList<>();
+  /** API client for server communication */
+  private ClientApi api;
+
+  // ========== Data Storage ==========
+
+  /**
+   * Local cache of all greenhouse nodes (keyed by node ID).
+   * This map is synchronized with the server via topology and node_change messages.
+   */
+  private final Map<String, Node> nodes = new HashMap<>();
+
+  /**
+   * UI cards for each node (keyed by node ID).
+   * Allows efficient updates without full dashboard redraw.
+   */
+  private final Map<String, VBox> nodeCards = new HashMap<>();
+
+  // ========== UI Components ==========
 
   /** UI container for displaying node cards */
   private FlowPane nodesPane;
@@ -72,8 +98,7 @@ public class DashboardController {
   /** Text area for displaying command line output */
   private TextArea commandOutputArea;
 
-  /** API client for server communication */
-  private ClientApi api;
+  // ========== Auto-Refresh ==========
 
   /** Timeline for scheduling automatic data refreshes */
   private Timeline refreshTimeline;
@@ -81,50 +106,48 @@ public class DashboardController {
   /** Auto-refresh interval in seconds (0 = disabled) */
   private long refreshIntervalSeconds = 0;
 
+  // ========== Time Formatters ==========
+
   /** Time formatter for log entries (HH:mm:ss) */
-  private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+  private static final DateTimeFormatter TIME_FORMATTER =
+          DateTimeFormatter.ofPattern("HH:mm:ss");
 
   /** Time formatter for full timestamps (HH:mm:ss dd.MM.yyyy) */
-  private static final DateTimeFormatter FULL_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
+  private static final DateTimeFormatter FULL_TIME_FORMATTER =
+          DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
 
-  /**
-   * Sets the ClientApi instance and registers sensor update listeners.
-   *
-   * <p>This method configures the controller to receive real-time sensor updates
-   * from the server. When sensor data changes, the dashboard is automatically refreshed.
-   *
-   * @param api The ClientApi instance to be used for server communication
-   * @throws NullPointerException if api is null
-   */
-  public void setApi(ClientApi api) {
-    this.api = api;
-    this.api.onSensorUpdate(ns -> {
-      refreshData();
-    });
-  }
+  // ========== Constructor ==========
 
   /**
    * Constructs a new DashboardController with the specified dependencies.
    *
    * <p>Initializes the controller with references to the view, main application,
-   * and API client. Sets up the auto-refresh timeline with a default 1-second interval.
+   * and API client. Sets up the auto-refresh timeline with a default interval.
    *
    * @param view The DashboardView instance this controller manages
    * @param mainApp The main application instance for navigation operations
-   * @param api The ClientApi instance for server communication
-   * @throws NullPointerException if any parameter is null
+   * @param api The ClientApi instance for server communication (can be null initially)
+   * @throws NullPointerException if view or mainApp is null
    */
   public DashboardController(DashboardView view, MainApp mainApp, ClientApi api) {
+    if (view == null || mainApp == null) {
+      throw new NullPointerException("View and MainApp cannot be null");
+    }
+
     this.view = view;
     this.mainApp = mainApp;
     this.api = api;
-    System.out.println("DashboardController initialized.");
 
+    // Initialize auto-refresh timeline (not started by default)
     refreshTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(1), e -> refreshData())
+            new KeyFrame(Duration.seconds(1), e -> manualRefresh())
     );
     refreshTimeline.setCycleCount(Timeline.INDEFINITE);
+
+    System.out.println("DashboardController initialized.");
   }
+
+  // ========== Initialization ==========
 
   /**
    * Sets the UI components that the controller will manage and update.
@@ -137,7 +160,8 @@ public class DashboardController {
    * @param logContent The VBox container for activity log entries
    * @param commandOutputArea The TextArea for command line output display
    */
-  public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel, VBox logContent, TextArea commandOutputArea) {
+  public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel,
+                              VBox logContent, TextArea commandOutputArea) {
     this.nodesPane = nodesPane;
     this.lastUpdateLabel = lastUpdateLabel;
     this.logContent = logContent;
@@ -145,21 +169,119 @@ public class DashboardController {
   }
 
   /**
-   * Logs an activity to the dashboard's activity log with timestamp and source.
+   * Sets the ClientApi instance and registers real-time update listeners.
    *
-   * <p>Log entries are added to the top of the log view (most recent first) and include
-   * a formatted timestamp. This method is thread-safe and can be called from any thread.
+   * <p>This method configures the controller to receive real-time updates from the server:
+   * <ul>
+   *   <li>sensor_update: Updates sensor readings and actuator states</li>
+   *   <li>node_change: Handles node additions, updates, and removals</li>
+   * </ul>
    *
-   * @param source The source or origin of the activity (e.g., node name or "System")
-   * @param message The descriptive message about the activity
+   * <p>All updates are processed on the JavaFX Application Thread for thread safety.
+   *
+   * @param api The ClientApi instance to be used for server communication
+   * @throws NullPointerException if api is null
    */
-  public void logActivity(String source, String message) {
-    Platform.runLater(() -> {
-      String currentTime = LocalDateTime.now().format(FORMATTER);
-      HBox entry = view.createLogEntry(currentTime, source, message);
-      logContent.getChildren().add(0, entry);
+  public void setApi(ClientApi api) {
+    if (api == null) {
+      throw new NullPointerException("ClientApi cannot be null");
+    }
+
+    this.api = api;
+
+    // Register listener for sensor updates
+    this.api.onSensorUpdate(nodeState -> {
+      Platform.runLater(() -> updateNodeData(nodeState));
     });
+
+    // Register listener for node changes (add/update/remove)
+    this.api.onNodeChange(nodeState -> {
+      Platform.runLater(() -> handleNodeChange(nodeState));
+    });
+
+    System.out.println("✅ ClientApi configured with update listeners");
   }
+
+  // ========== Server Data Synchronization ==========
+
+  /**
+   * Updates node data from a sensor_update message received from the server.
+   *
+   * <p>This method is called automatically when the ClientApi receives a sensor_update.
+   * It updates the local Node model and triggers a UI refresh for the affected node card.
+   *
+   * <p><b>Thread-safety:</b> This method must run on the JavaFX Application Thread.
+   *
+   * @param nodeState The state object containing updated sensor and actuator data
+   */
+  private void updateNodeData(core.ClientState.NodeState nodeState) {
+    Node node = nodes.get(nodeState.nodeId);
+    if (node == null) {
+      System.err.println("⚠️ Received update for unknown node: " + nodeState.nodeId);
+      return;
+    }
+
+    // Build data map combining sensors and actuators
+    Map<String, Object> data = new HashMap<>();
+
+    // Add sensor readings (numeric values)
+    nodeState.sensorValues.forEach(data::put);
+
+    // Add actuator states (string values)
+    data.put("fan", nodeState.fanStatus.get());
+    data.put("water_pump", nodeState.pumpStatus.get());
+    data.put("co2", nodeState.co2Status.get());
+    data.put("window", nodeState.windowStatus.get());
+
+    // Update the model
+    node.updateFromServer(data, System.currentTimeMillis());
+
+    // Refresh the UI card for this node
+    refreshNodeCard(node);
+  }
+
+  /**
+   * Handles node addition, update, or removal events from the server.
+   *
+   * <p>This method is called when the ClientApi receives a node_change message.
+   * It creates new node cards, updates existing ones, or removes deleted nodes.
+   *
+   * <p><b>Operations:</b>
+   * <ul>
+   *   <li>If nodeState.name is present: Node was added or updated</li>
+   *   <li>If nodeState.name is null: Node was removed</li>
+   * </ul>
+   *
+   * @param nodeState The state object containing node information
+   */
+  private void handleNodeChange(core.ClientState.NodeState nodeState) {
+    if (nodeState.name != null) {
+      // Node was added or updated
+      Node node = nodes.computeIfAbsent(nodeState.nodeId, id -> {
+        System.out.println("➕ Creating new node: " + nodeState.name);
+        return new Node(
+                id,
+                nodeState.name,
+                nodeState.location,
+                nodeState.ip,
+                new ArrayList<>(nodeState.sensors),
+                new ArrayList<>(nodeState.actuators)
+        );
+      });
+
+      // Create UI card if it doesn't exist
+      if (!nodeCards.containsKey(nodeState.nodeId)) {
+        createNodeCard(node);
+        logActivity(node.getName(), "Node added to dashboard");
+      }
+    } else {
+      // Node was removed
+      System.out.println("➖ Removing node: " + nodeState.nodeId);
+      removeNodeCard(nodeState.nodeId);
+    }
+  }
+
+  // ========== Node Management (CRUD Operations) ==========
 
   /**
    * Opens a dialog to create a new greenhouse node and synchronizes it with the server.
@@ -167,10 +289,10 @@ public class DashboardController {
    * <p>This method performs the following operations:
    * <ol>
    *   <li>Displays an {@link AddNodeDialog} for user input</li>
+   *   <li>Validates user input</li>
    *   <li>Converts UI component selections to protocol format</li>
    *   <li>Sends node creation request to server via {@link ClientApi#createNode}</li>
    *   <li>Creates local Node representation with server-assigned ID</li>
-   *   <li>Adds components (sensors/actuators) to the local node</li>
    *   <li>Updates the UI and logs the activity</li>
    * </ol>
    *
@@ -186,11 +308,12 @@ public class DashboardController {
       logActivity("System", "ERROR: API not initialized");
       return;
     }
+
     AddNodeDialog dialog = new AddNodeDialog();
     Optional<AddNodeDialog.NodeCreationResult> result = dialog.showAndWait();
 
     result.ifPresent(nodeData -> {
-      System.out.println("🔧 [DEBUG] Creating node: " + nodeData.name);
+      System.out.println("🔧 Creating node: " + nodeData.name);
 
       // Create DTO for server
       Topology.Node serverNode = new Topology.Node();
@@ -206,45 +329,37 @@ public class DashboardController {
         if (component.endsWith("Sensor")) {
           String sensorType = component.replace(" Sensor", "").toLowerCase();
           serverNode.sensors.add(sensorType);
-          System.out.println("🔧 [DEBUG] Added sensor: " + sensorType);
+          System.out.println("   📡 Added sensor: " + sensorType);
         } else {
           String actuatorType = mapActuatorName(component);
           serverNode.actuators.add(actuatorType);
-          System.out.println("🔧 [DEBUG] Added actuator: " + actuatorType);
+          System.out.println("   🎛️  Added actuator: " + actuatorType);
         }
       }
 
-      System.out.println("🔧 [DEBUG] Sending to server...");
-      System.out.println("🔧 [DEBUG] Node DTO: name=" + serverNode.name +
-              ", location=" + serverNode.location +
-              ", ip=" + serverNode.ip);
-
       // Send to server
       api.createNode(serverNode).thenAccept(nodeId -> {
-        System.out.println("✅ [DEBUG] Server responded with nodeId: " + nodeId);
-        Platform.runLater(() -> {
-          // Create local node with server-assigned ID
-          Node newNode = new Node(serverNode.name, serverNode.location);
-          addComponentsToNode(newNode, nodeData.components);
-          nodes.add(newNode);
-          redrawDashboard();
+        System.out.println("✅ Server responded with nodeId: " + nodeId);
 
+        Platform.runLater(() -> {
           String componentSummary = String.format(
-                  "%d sensor(s), %d actuator(s).",
+                  "%d sensor(s), %d actuator(s)",
                   serverNode.sensors.size(),
                   serverNode.actuators.size()
           );
 
-          logActivity(newNode.getName(), String.format(
-                  "Node created on server (ID: %s). Location: %s. IP: %s. Components: %s",
-                  nodeId, serverNode.location, serverNode.ip, componentSummary
+          logActivity("System", String.format(
+                  "Node '%s' created (ID: %s). Location: %s. IP: %s. Components: %s",
+                  serverNode.name, nodeId, serverNode.location,
+                  serverNode.ip, componentSummary
           ));
         });
       }).exceptionally(ex -> {
-        System.err.println("❌ [DEBUG] Server error: " + ex.getMessage());
+        System.err.println("❌ Server error: " + ex.getMessage());
         ex.printStackTrace();
+
         Platform.runLater(() -> {
-          logActivity("System", "Failed to create node on server: " + ex.getMessage());
+          logActivity("System", "Failed to create node: " + ex.getMessage());
         });
         return null;
       });
@@ -258,7 +373,7 @@ public class DashboardController {
    * the server protocol. It converts human-readable names to protocol-compliant
    * identifiers.
    *
-   * <p>Supported mappings:
+   * <p><b>Supported mappings:</b>
    * <ul>
    *   <li>"Water Pump" → "water_pump"</li>
    *   <li>"CO2 Generator" → "co2"</li>
@@ -286,6 +401,9 @@ public class DashboardController {
    * sensors or actuators. The dashboard is automatically refreshed to reflect
    * the changes, and the activity is logged.
    *
+   * <p><b>Note:</b> This currently only updates the local UI. Server-side
+   * component addition should be implemented via {@link ClientApi#addComponent}.
+   *
    * @param node The node to which components will be added
    * @throws NullPointerException if node is null
    * @see AddComponentDialog
@@ -296,202 +414,409 @@ public class DashboardController {
 
     result.ifPresent(componentsToAdd -> {
       if (!componentsToAdd.isEmpty()) {
-        int addedCount = addComponentsToNode(node, componentsToAdd);
-        redrawDashboard();
-
         String componentList = componentsToAdd.stream()
-                .map(c -> c.replace(" Sensor", "(S)").replace(" Pump", "(A)")
-                        .replace(" Generator", "(A)").replace(" Window", "(A)").replace(" Fan", "(A)"))
+                .map(c -> c.replace(" Sensor", "(S)")
+                        .replace(" Pump", "(A)")
+                        .replace(" Generator", "(A)")
+                        .replace(" Window", "(A)")
+                        .replace(" Fan", "(A)"))
                 .collect(Collectors.joining(", "));
 
-        String logMessage = String.format(
-                "%d component(s) added. New items: %s. Total components: %d.",
-                addedCount, componentList,
-                node.getSensors().size() + node.getActuators().size()
-        );
-        logActivity(node.getName(), logMessage);
+        logActivity(node.getName(), String.format(
+                "Component addition requested: %s (implementation pending)",
+                componentList
+        ));
+
+        // TODO: Send add_component request to server
+        // api.addComponent(node.getId(), ...);
       }
     });
   }
 
   /**
-   * Adds multiple components to a node based on their display names.
+   * Removes a node from the dashboard and the server.
    *
-   * <p>This helper method instantiates and adds sensor or actuator objects
-   * to the specified node. It supports all standard greenhouse components
-   * including temperature, light, humidity, and pH sensors, as well as
-   * fans, water pumps, CO2 generators, and window controllers.
+   * <p>This method removes the node from the local cache, the UI, and
+   * sends a delete request to the server. The deletion is logged for audit purposes.
    *
-   * @param node The node to which components will be added
-   * @param componentNames A list of component display names to add
-   * @return The number of sensors added (actuators are not counted)
-   * @throws NullPointerException if node or componentNames is null
+   * @param node The node to be deleted
+   * @throws NullPointerException if node is null
    */
-  private int addComponentsToNode(Node node, List<String> componentNames) {
-    int sensorsAdded = 0;
-    for (String componentName : componentNames) {
-      switch (componentName) {
-        case "Temperature Sensor" -> {
-          node.addSensor(new TemperatureSensor());
-          sensorsAdded++;
-        }
-        case "Light Sensor" -> {
-          node.addSensor(new LightSensor());
-          sensorsAdded++;
-        }
-        case "Humidity Sensor" -> {
-          node.addSensor(new HumiditySensor());
-          sensorsAdded++;
-        }
-        case "PH Sensor" -> {
-          node.addSensor(new PHSensor());
-          sensorsAdded++;
-        }
-        case "Water Pump" -> node.addActuator(new WaterPump());
-        case "CO2 Generator" -> node.addActuator(new CO2Generator());
-        case "Fan" -> node.addActuator(new Fan());
-        case "Window" -> node.addActuator(new Window());
-        default -> System.err.println("Unknown component: " + componentName);
-      }
+  public void deleteNode(Node node) {
+    if (api == null) {
+      logActivity("System", "Cannot delete node: API not initialized");
+      return;
     }
-    return sensorsAdded;
-  }
 
+    String nodeId = node.getId();
+    String nodeName = node.getName();
 
-  /**
-   * Synchronizes the dashboard with the server topology and displays the result.
-   *
-   * <p>This method fetches the current topology from the server and displays
-   * a detailed report in both the activity log and a popup dialog. It's useful
-   * for verifying that nodes were successfully created on the server.
-   *
-   * <p>The report includes:
-   * <ul>
-   *   <li>Total number of nodes on the server</li>
-   *   <li>Detailed information for each node (name, IP, location)</li>
-   *   <li>Comparison with local node count</li>
-   * </ul>
-   */
-  public void syncWithServer() {
-    logActivity("System", "Fetching topology from server...");
-
-    api.getTopology().thenAccept(topology -> {
+    // Send delete request to server
+    api.deleteNode(nodeId).thenRun(() -> {
       Platform.runLater(() -> {
-        if (topology.nodes == null || topology.nodes.isEmpty()) {
-          logActivity("System", "⚠️ Server has no nodes!");
-          showTopologyDialog(0, "No nodes found on server");
-          return;
-        }
-
-        // Log summary
+        removeNodeCard(nodeId);
         logActivity("System", String.format(
-                "✅ Server topology: %d nodes (Local: %d nodes)",
-                topology.nodes.size(),
-                nodes.size()
+                "Node '%s' (ID: %s) deleted from server",
+                nodeName, nodeId
         ));
-
-        // Build detailed report
-        StringBuilder report = new StringBuilder();
-        report.append(String.format("Server nodes: %d\n", topology.nodes.size()));
-        report.append(String.format("Local nodes: %d\n\n", nodes.size()));
-        report.append("═══════════════════════════\n\n");
-
-        for (var node : topology.nodes) {
-          report.append(String.format("🏠 %s\n", node.name));
-          report.append(String.format("   ID: %s\n", node.id));
-          report.append(String.format("   IP: %s\n", node.ip));
-          report.append(String.format("   Location: %s\n", node.location));
-          report.append(String.format("   Sensors: %d\n",
-                  node.sensors != null ? node.sensors.size() : 0));
-          report.append(String.format("   Actuators: %d\n",
-                  node.actuators != null ? node.actuators.size() : 0));
-          report.append("\n");
-        }
-
-        showTopologyDialog(topology.nodes.size(), report.toString());
       });
     }).exceptionally(ex -> {
       Platform.runLater(() -> {
-        logActivity("System", "❌ Failed to fetch topology: " + ex.getMessage());
-        showErrorDialog("Topology Error",
-                "Failed to fetch topology from server:\n" + ex.getMessage());
+        logActivity("System", "Failed to delete node: " + ex.getMessage());
       });
       return null;
     });
   }
 
+  // ========== UI Card Management ==========
+
   /**
-   * Displays a dialog with topology information.
+   * Creates a visual card for a node and adds it to the dashboard.
    *
-   * @param nodeCount The total number of nodes on the server
-   * @param details Detailed information about all nodes
+   * <p>This method generates a Material Design-inspired card with:
+   * <ul>
+   *   <li>Title bar with node name and action menu</li>
+   *   <li>Node information: ID, IP address, and location</li>
+   *   <li>Container for sensor visualizations</li>
+   *   <li>Container for actuator controls</li>
+   *   <li>Action menu with options to add components, edit, or delete</li>
+   * </ul>
+   *
+   * <p>The card uses a clean, modern design with rounded corners, subtle shadows,
+   * and a neutral color palette for optimal readability.
+   *
+   * @param node The node to visualize
    */
-  private void showTopologyDialog(int nodeCount, String details) {
-    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-            javafx.scene.control.Alert.AlertType.INFORMATION
+  private void createNodeCard(Node node) {
+    VBox card = new VBox(10);
+    card.getStyleClass().add("node-card");
+    card.setStyle(
+            "-fx-background-color: #ffffff;" +
+                    "-fx-background-radius: 12;" +
+                    "-fx-border-radius: 12;" +
+                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.1, 0, 2);" +
+                    "-fx-padding: 0;" +
+                    "-fx-min-width: 280;" +
+                    "-fx-max-width: 280;"
     );
-    alert.setTitle("Server Topology");
-    alert.setHeaderText(String.format("📊 Server has %d node(s)", nodeCount));
-    alert.setContentText(details);
 
-    // Make dialog resizable for long lists
-    alert.setResizable(true);
-    alert.getDialogPane().setPrefWidth(500);
+    // === Title Bar ===
+    Label nodeTitle = new Label(node.getName());
+    nodeTitle.setStyle(
+            "-fx-font-size: 16px;" +
+                    "-fx-font-weight: bold;" +
+                    "-fx-text-fill: #202124;"
+    );
 
-    alert.showAndWait();
+    // Action menu (three-dot menu)
+    MenuButton actionsMenu = new MenuButton("⋮");
+    actionsMenu.setStyle(
+            "-fx-background-color: transparent;" +
+                    "-fx-font-size: 18px;" +
+                    "-fx-text-fill: #5f6368;" +
+                    "-fx-cursor: hand;" +
+                    "-fx-padding: 2 8;"
+    );
+
+    MenuItem addComponentItem = new MenuItem("+ Add Component");
+    addComponentItem.setOnAction(e -> showAddComponentDialog(node));
+
+    MenuItem editNodeItem = new MenuItem("✏️ Edit Node");
+    editNodeItem.setOnAction(e ->
+            logActivity(node.getName(), "Edit dialog opened (not implemented)")
+    );
+
+    MenuItem deleteNodeItem = new MenuItem("🗑️ Delete Node");
+    deleteNodeItem.setOnAction(e -> deleteNode(node));
+
+    actionsMenu.getItems().addAll(addComponentItem, editNodeItem, deleteNodeItem);
+
+    Region spacer = new Region();
+    HBox.setHgrow(spacer, Priority.ALWAYS);
+
+    HBox titleBar = new HBox(10, nodeTitle, spacer, actionsMenu);
+    titleBar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+    titleBar.setPadding(new Insets(10, 10, 5, 15));
+    titleBar.setStyle(
+            "-fx-background-color: #f1f3f4;" +
+                    "-fx-background-radius: 12 12 0 0;"
+    );
+
+    // === Node Info ===
+    Label idLabel = new Label("ID: " + node.getId());
+    idLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #5f6368;");
+
+    Label ipLabel = new Label("IP: " + node.getIpAddress());
+    ipLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #5f6368;");
+
+    Label locationLabel = new Label("📍 " + node.getLocation());
+    locationLabel.setStyle(
+            "-fx-font-size: 11px; -fx-text-fill: #5f6368; -fx-font-style: italic;"
+    );
+
+    VBox nodeInfoBox = new VBox(2, idLabel, ipLabel, locationLabel);
+    nodeInfoBox.setPadding(new Insets(5, 15, 5, 15));
+
+    // === Sensors Container ===
+    VBox sensorsBox = new VBox(10);
+    sensorsBox.setId("sensors-" + node.getId());
+    sensorsBox.setPadding(new Insets(10, 15, 5, 15));
+
+    // === Actuators Container ===
+    VBox actuatorsBox = new VBox(10);
+    actuatorsBox.setId("actuators-" + node.getId());
+    actuatorsBox.setPadding(new Insets(5, 15, 10, 15));
+
+    // === Assemble Card ===
+    card.getChildren().addAll(titleBar, nodeInfoBox, sensorsBox, actuatorsBox);
+
+    // Store reference and add to dashboard
+    nodeCards.put(node.getId(), card);
+    nodesPane.getChildren().add(card);
+
+    // Initial render of sensors and actuators
+    refreshNodeCard(node);
+
+    System.out.println("✅ Node card created for: " + node.getName());
   }
 
   /**
-   * Displays an error dialog.
+   * Refreshes a node's card by redrawing sensors and actuators.
    *
-   * @param title The dialog title
-   * @param message The error message
+   * <p>This method clears and recreates the sensor and actuator visualizations
+   * based on the current data in the Node model. It's called whenever sensor_update
+   * messages are received from the server.
+   *
+   * <p><b>Performance:</b> This method performs a full redraw of the card's content.
+   * For better performance with frequent updates, consider using JavaFX property binding.
+   *
+   * @param node The node whose card should be refreshed
    */
-  private void showErrorDialog(String title, String message) {
-    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-            javafx.scene.control.Alert.AlertType.ERROR
-    );
-    alert.setTitle(title);
-    alert.setHeaderText(null);
-    alert.setContentText(message);
-    alert.showAndWait();
+  private void refreshNodeCard(Node node) {
+    VBox card = nodeCards.get(node.getId());
+    if (card == null) {
+      System.err.println("⚠️ Cannot refresh card: not found for node " + node.getId());
+      return;
+    }
+
+    VBox sensorsBox = (VBox) card.lookup("#sensors-" + node.getId());
+    VBox actuatorsBox = (VBox) card.lookup("#actuators-" + node.getId());
+
+    if (sensorsBox == null || actuatorsBox == null) {
+      System.err.println("⚠️ Cannot refresh card: containers not found");
+      return;
+    }
+
+    // === Redraw Sensors ===
+    sensorsBox.getChildren().clear();
+
+    if (node.getSensorTypes().contains("temperature")) {
+      Double temp = node.getTemperature();
+      if (temp != null) {
+        sensorsBox.getChildren().add(
+                TemperatureSensorView.create("Temperature", temp, "°C")
+        );
+      }
+    }
+
+    if (node.getSensorTypes().contains("humidity")) {
+      Double humidity = node.getHumidity();
+      if (humidity != null) {
+        sensorsBox.getChildren().add(
+                HumiditySensorView.create("Humidity", humidity, "%")
+        );
+      }
+    }
+
+    if (node.getSensorTypes().contains("light")) {
+      Double light = node.getLight();
+      if (light != null) {
+        sensorsBox.getChildren().add(
+                LightSensorView.create("Light", light, "lx")
+        );
+      }
+    }
+
+    if (node.getSensorTypes().contains("ph")) {
+      Double ph = node.getPh();
+      if (ph != null) {
+        sensorsBox.getChildren().add(
+                PhSensorView.create("pH Level", ph, "pH")
+        );
+      }
+    }
+
+    // === Redraw Actuators ===
+    actuatorsBox.getChildren().clear();
+
+    if (node.getActuatorTypes().contains("fan")) {
+      actuatorsBox.getChildren().add(
+              FanActuatorView.create(
+                      "Fan",
+                      node.getFanState(),
+                      on -> sendCommand(node.getId(), "fan", on)
+              )
+      );
+    }
+
+    if (node.getActuatorTypes().contains("water_pump")) {
+      actuatorsBox.getChildren().add(
+              WaterPumpActuatorView.create(
+                      "Water Pump",
+                      node.getPumpState(),
+                      on -> sendCommand(node.getId(), "water_pump", on)
+              )
+      );
+    }
+
+    if (node.getActuatorTypes().contains("co2")) {
+      actuatorsBox.getChildren().add(
+              Co2ActuatorView.create(
+                      "CO₂ Generator",
+                      node.getCo2State(),
+                      on -> sendCommand(node.getId(), "co2", on)
+              )
+      );
+    }
+
+    if (node.getActuatorTypes().contains("window")) {
+      actuatorsBox.getChildren().add(
+              WindowActuatorView.create(
+                      "Window",
+                      node.getWindowState(),
+                      level -> sendWindowCommand(node.getId(), level)
+              )
+      );
+    }
   }
 
   /**
-   * Manually refreshes all dashboard data and updates the last update timestamp.
+   * Removes a node card from the dashboard.
    *
-   * <p>This method is called both manually by the user and automatically by the
-   * refresh timeline. It updates the displayed timestamp and redraws all node
-   * visualizations. If auto-refresh is enabled, the activity is logged.
-   *
-   * <p>Thread-safe: Can be called from any thread via Platform.runLater.
+   * @param nodeId The ID of the node whose card should be removed
    */
-  public void refreshData() {
-    if (nodesPane == null) return;
+  private void removeNodeCard(String nodeId) {
+    VBox card = nodeCards.remove(nodeId);
+    if (card != null) {
+      nodesPane.getChildren().remove(card);
+    }
+    nodes.remove(nodeId);
 
+    System.out.println("🗑️ Node card removed: " + nodeId);
+  }
+
+  // ========== Command Sending ==========
+
+  /**
+   * Sends a control command to an actuator on the server.
+   *
+   * <p>This method constructs a command message and sends it via ClientApi.
+   * The result is logged, and activity is recorded for the user.
+   *
+   * <p><b>Protocol:</b> Sends a "command" message with:
+   * <pre>
+   * {
+   *   "type": "command",
+   *   "nodeId": "node-1",
+   *   "target": "fan",
+   *   "action": "set",
+   *   "params": {"on": true}
+   * }
+   * </pre>
+   *
+   * @param nodeId ID of the node containing the actuator
+   * @param actuator Name of the actuator (e.g., "fan", "water_pump")
+   * @param on Desired state: true for ON, false for OFF
+   */
+  private void sendCommand(String nodeId, String actuator, boolean on) {
+    if (api == null) {
+      logActivity("System", "Cannot send command: API not initialized");
+      return;
+    }
+
+    Map<String, Object> params = Map.of("on", on);
+
+    api.sendCommand(nodeId, actuator, "set", params)
+            .thenRun(() -> {
+              String action = on ? "ON" : "OFF";
+              System.out.println("✅ Command sent: " + actuator + " = " + action);
+
+              Platform.runLater(() -> {
+                Node node = nodes.get(nodeId);
+                String nodeName = node != null ? node.getName() : nodeId;
+                logActivity(nodeName, String.format(
+                        "%s turned %s",
+                        capitalize(actuator.replace("_", " ")),
+                        action
+                ));
+              });
+            })
+            .exceptionally(ex -> {
+              System.err.println("❌ Command failed: " + ex.getMessage());
+              Platform.runLater(() -> {
+                logActivity("System", "Failed to send command: " + ex.getMessage());
+              });
+              return null;
+            });
+  }
+
+  /**
+   * Sends a window control command with a specific level.
+   *
+   * <p>Window commands use a different parameter format than boolean actuators.
+   *
+   * @param nodeId ID of the node containing the window
+   * @param level Window level: "CLOSED", "HALF", or "OPEN"
+   */
+  private void sendWindowCommand(String nodeId, String level) {
+    if (api == null) {
+      logActivity("System", "Cannot send command: API not initialized");
+      return;
+    }
+
+    Map<String, Object> params = Map.of("level", level);
+
+    api.sendCommand(nodeId, "window", "set", params)
+            .thenRun(() -> {
+              System.out.println("✅ Command sent: window = " + level);
+
+              Platform.runLater(() -> {
+                Node node = nodes.get(nodeId);
+                String nodeName = node != null ? node.getName() : nodeId;
+                logActivity(nodeName, "Window set to " + level);
+              });
+            })
+            .exceptionally(ex -> {
+              System.err.println("❌ Command failed: " + ex.getMessage());
+              Platform.runLater(() -> {
+                logActivity("System", "Failed to send command: " + ex.getMessage());
+              });
+              return null;
+            });
+  }
+
+  // ========== Data Refresh ==========
+
+  /**
+   * Manually refreshes the dashboard by updating the timestamp.
+   *
+   * <p>This method is called:
+   * <ul>
+   *   <li>When the user clicks the "Refresh" button</li>
+   *   <li>Periodically by the auto-refresh timeline</li>
+   * </ul>
+   *
+   * <p><b>Note:</b> Actual data updates come from sensor_update messages,
+   * not from this method. This only updates the "Last update" timestamp.
+   */
+  public void manualRefresh() {
     if (lastUpdateLabel != null) {
-      String currentTime = LocalDateTime.now().format(FULL_FORMATTER);
+      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
       lastUpdateLabel.setText("Last update: " + currentTime);
     }
-    redrawDashboard();
 
     if (refreshIntervalSeconds > 0) {
-      logActivity("System", "Auto-refresh: Data update OK.");
-    }
-  }
-
-  /**
-   * Redraws the entire dashboard by clearing and recreating all node visualizations.
-   *
-   * <p>This private method is called whenever the node list changes or data is refreshed.
-   * It efficiently updates the UI by removing all existing node cards and creating
-   * new ones from the current node list.
-   */
-  private void redrawDashboard() {
-    if (nodesPane == null) return;
-    nodesPane.getChildren().clear();
-    for (Node node : nodes) {
-      nodesPane.getChildren().add(createNodeView(node));
+      logActivity("System", "Auto-refresh: Dashboard timestamp updated");
     }
   }
 
@@ -511,16 +836,21 @@ public class DashboardController {
    * @throws IllegalArgumentException if seconds is negative
    */
   public void setAutoRefreshInterval(long seconds) {
+    if (seconds < 0) {
+      throw new IllegalArgumentException("Refresh interval cannot be negative");
+    }
+
     this.refreshIntervalSeconds = seconds;
     refreshTimeline.stop();
+
     if (seconds > 0) {
       refreshTimeline.getKeyFrames().setAll(
-              new KeyFrame(Duration.seconds(seconds), e -> refreshData())
+              new KeyFrame(Duration.seconds(seconds), e -> manualRefresh())
       );
       refreshTimeline.play();
-      logActivity("System", "Auto-refresh started every " + seconds + " seconds.");
+      logActivity("System", "Auto-refresh started: every " + seconds + " second(s)");
     } else {
-      logActivity("System", "Auto-refresh stopped.");
+      logActivity("System", "Auto-refresh stopped");
     }
   }
 
@@ -533,6 +863,42 @@ public class DashboardController {
     return refreshIntervalSeconds;
   }
 
+  // ========== Activity Logging ==========
+
+  /**
+   * Logs an activity to the dashboard's activity log with timestamp and source.
+   *
+   * <p>Log entries are added to the top of the log view (most recent first) and include
+   * a formatted timestamp. This method is thread-safe and can be called from any thread.
+   *
+   * <p><b>Format:</b>
+   * <pre>
+   * [HH:mm:ss] Source: Message
+   * </pre>
+   *
+   * @param source The source or origin of the activity (e.g., node name or "System")
+   * @param message The descriptive message about the activity
+   */
+  public void logActivity(String source, String message) {
+    Platform.runLater(() -> {
+      if (logContent == null) {
+        System.err.println("⚠️ Cannot log: logContent is null");
+        return;
+      }
+
+      String currentTime = LocalDateTime.now().format(TIME_FORMATTER);
+      HBox entry = view.createLogEntry(currentTime, source, message);
+      logContent.getChildren().add(0, entry);
+
+      // Limit log size to prevent memory issues
+      if (logContent.getChildren().size() > 100) {
+        logContent.getChildren().remove(100, logContent.getChildren().size());
+      }
+    });
+  }
+
+  // ========== Session Management ==========
+
   /**
    * Logs out the current user and returns to the login screen.
    *
@@ -543,136 +909,40 @@ public class DashboardController {
    *   <li>Navigates to the login screen</li>
    * </ul>
    *
-   * <p>Note: Node data is preserved in memory and will be available
+   * <p><b>Note:</b> Node data is preserved in memory and will be available
    * if the user logs back in during the same application session.
    */
   public void logout() {
     refreshTimeline.stop();
-    logActivity("User", "User logged out.");
+    logActivity("User", "User logged out");
     mainApp.showLoginScreen();
+
+    System.out.println("👋 User logged out");
   }
 
+  // ========== Getters ==========
+
   /**
-   * Returns an immutable view of all nodes managed by this controller.
+   * Returns an unmodifiable view of all nodes managed by this controller.
    *
-   * @return The list of all greenhouse nodes in the dashboard
+   * @return Unmodifiable collection of all greenhouse nodes in the dashboard
    */
-  public List<Node> getNodes() {
-    return nodes;
+  public Collection<Node> getNodes() {
+    return Collections.unmodifiableCollection(nodes.values());
   }
 
-  /**
-   * Removes a node from the dashboard and updates the UI.
-   *
-   * <p>This method removes the node from the local cache and redraws
-   * the dashboard. The deletion is logged for audit purposes.
-   *
-   * <p>Note: This currently only removes the node from the local UI.
-   * Future implementation should also delete the node from the server.
-   *
-   * @param node The node to be deleted
-   * @throws NullPointerException if node is null
-   * @see #addNode()
-   */
-  public void deleteNode(Node node) {
-    nodes.remove(node);
-    redrawDashboard();
-    logActivity(node.getName(), "Node deleted from the system.");
-  }
+  // ========== Utility Methods ==========
 
   /**
-   * Creates a visual representation (card) for a single greenhouse node.
+   * Capitalizes the first letter of a string.
    *
-   * <p>This method generates a Material Design-inspired card with:
-   * <ul>
-   *   <li>Title bar with node name and action menu (dropdown)</li>
-   *   <li>Node information: ID, IP address, and location</li>
-   *   <li>Visual representations of all attached sensors</li>
-   *   <li>Visual representations of all attached actuators</li>
-   *   <li>Action menu with options to add components, edit, or delete the node</li>
-   * </ul>
-   *
-   * <p>The card uses a clean, modern design with rounded corners, subtle shadows,
-   * and a neutral color palette for optimal readability.
-   *
-   * @param node The node to visualize
-   * @return A Pane containing the complete visual representation of the node
-   * @throws NullPointerException if node is null
+   * @param str The string to capitalize
+   * @return The capitalized string, or empty string if input is null/empty
    */
-  private Pane createNodeView(Node node) {
-    Label nodeTitle = new Label(node.getName());
-    nodeTitle.setStyle(
-            "-fx-font-size: 16px;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-text-fill: #202124;"
-    );
-
-    Label idLabel = new Label("ID: " + node.getId());
-    idLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #5f6368;");
-
-    Label ipLabel = new Label("IP: " + node.getIpAddress());
-    ipLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #5f6368;");
-
-    Label nodeLocation = new Label(node.getLocation());
-    nodeLocation.setStyle("-fx-font-size: 12px; -fx-text-fill: #5f6368; -fx-font-style: italic;");
-
-    VBox nodeInfoBox = new VBox(2, idLabel, ipLabel, nodeLocation);
-    nodeInfoBox.setStyle("-fx-padding: 0 0 0 5;");
-
-    MenuButton actionsMenu = new MenuButton("⋮");
-    actionsMenu.setStyle(
-            "-fx-background-color: transparent;" +
-                    "-fx-font-size: 18px;" +
-                    "-fx-text-fill: #5f6368;" +
-                    "-fx-cursor: hand;" +
-                    "-fx-padding: 2 8;"
-    );
-
-    MenuItem addComponentItem = new MenuItem("+ Add Component");
-    addComponentItem.setOnAction(e -> showAddComponentDialog(node));
-
-    MenuItem editNodeItem = new MenuItem("Edit Node");
-    editNodeItem.setOnAction(e -> logActivity(node.getName(), "Edit dialog opened."));
-
-    MenuItem deleteNodeItem = new MenuItem("Delete Node");
-    deleteNodeItem.setOnAction(e -> deleteNode(node));
-
-    actionsMenu.getItems().addAll(addComponentItem, editNodeItem, deleteNodeItem);
-
-    HBox titleBar = new HBox();
-    titleBar.setSpacing(10);
-    titleBar.setPadding(new Insets(5, 10, 5, 10));
-    titleBar.setStyle(
-            "-fx-alignment: center-left;" +
-                    "-fx-background-color: #f1f3f4;" +
-                    "-fx-background-radius: 12 12 0 0;"
-    );
-
-    Region spacer = new Region();
-    HBox.setHgrow(spacer, Priority.ALWAYS);
-    titleBar.getChildren().addAll(nodeTitle, spacer, actionsMenu);
-
-    VBox sensorsContainer = new VBox(10);
-    node.getSensors().forEach(sensor ->
-            sensorsContainer.getChildren().add(sensor.getVisualRepresentation()));
-    node.getActuators().forEach(actuator ->
-            sensorsContainer.getChildren().add(actuator.getVisualRepresentation()));
-    sensorsContainer.setPadding(new Insets(10, 15, 10, 15));
-
-    VBox contentBox = new VBox(8, nodeInfoBox, sensorsContainer);
-    contentBox.setPadding(new Insets(10, 10, 10, 10));
-
-    VBox nodePane = new VBox(titleBar, contentBox);
-    nodePane.setStyle(
-            "-fx-background-color: #ffffff;" +
-                    "-fx-background-radius: 12;" +
-                    "-fx-border-radius: 12;" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.1, 0, 2);" +
-                    "-fx-border-color: transparent;"
-    );
-    nodePane.setPrefWidth(250);
-    nodePane.setMinWidth(250);
-
-    return nodePane;
+  private String capitalize(String str) {
+    if (str == null || str.isEmpty()) {
+      return "";
+    }
+    return str.substring(0, 1).toUpperCase() + str.substring(1);
   }
 }

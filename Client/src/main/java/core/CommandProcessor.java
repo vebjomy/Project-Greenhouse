@@ -43,6 +43,12 @@ public class CommandProcessor {
     }
   }
 
+  /**
+   * Handle 'connect' command to connect to server.
+   *
+   * @param parts Command parts.
+   * @return Future with result message.
+   */
   private CompletableFuture<String> handleConnect(String[] parts) {
     String host;
     int port;
@@ -72,7 +78,8 @@ public class CommandProcessor {
   }
 
   /**
-   * FIXED: Proper topology response handling
+   * Handle 'topology' command to get network topology.
+   *
    */
   private CompletableFuture<String> handleGetTopology() {
     System.out.println("🔧 [CommandProcessor] Getting topology...");
@@ -119,7 +126,7 @@ public class CommandProcessor {
 
   private CompletableFuture<String> handleCreateNode(String[] parts) {
     if (parts.length < 2) {
-      return CompletableFuture.completedFuture("Usage: create_node <name>");
+      return CompletableFuture.completedFuture("❌ Usage: create_node <name>");
     }
 
     var node = new Topology.Node();

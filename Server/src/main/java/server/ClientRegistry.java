@@ -1,6 +1,7 @@
 package server;
 
 
+import dto.NodeChange;
 import net.MessageCodec;
 import dto.SensorUpdate;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -14,6 +15,18 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * Thread-safe and designed for multi-client broadcasting.
  */
 public class ClientRegistry {
+
+  public void broadcast(NodeChange nc) {
+    try {
+      String line = codec.toJsonLine(nc);
+      for (Session s : sessions.values()) {
+        // Node id may be inside payload; we route on event only
+        if (s.interestedIn("node_change", "*")) {
+          s.send(line);
+        }
+      }
+    } catch (Exception e) { e.printStackTrace(); }
+  }
 
   /** Represents one client session */
   public static final class Session {

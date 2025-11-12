@@ -1,117 +1,180 @@
 package model;
 
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
-import java.util.Collection;
-import java.util.concurrent.atomic.AtomicInteger;
+import javafx.collections.ObservableMap;
+import java.util.*;
 
 /**
- * Represents a Node that contains Sensors and Actuators.
- * Each Node has a name, location, and stable IP address.
- * @version 1.2
+ * Client-side Node representation: stores only data received from the server.
+ * Does NOT contain simulation logic - that's handled by the server.
+ *
+ * This class acts as a pure data model that receives updates via sensor_update
+ * messages and provides observable properties for UI binding.
+ *
+ * @author Green House Control Team
+ * @version 2.0
+ * @since 1.0
  */
 public class Node {
-  private static final AtomicInteger ipCounter = new AtomicInteger(50); // Start from 192.168.1.50
-
-  private final ObservableList<Sensor> sensors;
-  private final ObservableList<Actuator> actuators;
+  private final String id;
   private final String name;
   private final String location;
-  private final String ipAddress; // Now stored as final field
+  private final String ipAddress;
+
+  // Lists of available component types (from topology)
+  private final List<String> sensorTypes;
+  private final List<String> actuatorTypes;
+
+  // Live DATA from sensor_update (current values)
+  private final ObservableMap<String, Double> sensorData =
+          FXCollections.observableHashMap();
+  private final ObservableMap<String, String> actuatorStates =
+          FXCollections.observableHashMap();
+
+  // Timestamp of last update
+  private final LongProperty lastUpdate = new SimpleLongProperty(0);
 
   /**
-   * Main constructor with location
+   * Constructs a new Node with the specified parameters.
+   *
+   * @param id Unique node identifier (e.g., "node-1")
+   * @param name Human-readable node name (e.g., "Greenhouse A-1")
+   * @param location Physical location description
+   * @param ip IP address of the node
+   * @param sensors List of sensor types this node supports
+   * @param actuators List of actuator types this node supports
    */
-  public Node(String name, String location, Collection<Sensor> initialSensors, Collection<Actuator> initialActuators) {
+  public Node(String id, String name, String location, String ip,
+              List<String> sensors, List<String> actuators) {
+    this.id = id;
     this.name = name;
     this.location = location;
-    this.ipAddress = generateStableIp(); // Generate once and store
+    this.ipAddress = ip;
+    this.sensorTypes = new ArrayList<>(sensors);
+    this.actuatorTypes = new ArrayList<>(actuators);
 
-    this.sensors = FXCollections.observableArrayList();
-    if (initialSensors != null) {
-      this.sensors.addAll(initialSensors);
-    }
-
-    this.actuators = FXCollections.observableArrayList();
-    if (initialActuators != null) {
-      this.actuators.addAll(initialActuators);
-    }
+    // Initialize with default values
+    sensors.forEach(s -> sensorData.put(s, 0.0));
+    actuators.forEach(a -> actuatorStates.put(a, "UNKNOWN"));
   }
 
   /**
-   * Simplified constructor for convenience
+   * Updates node data from a sensor_update message received from the server.
+   * This method distinguishes between sensor readings (numeric values) and
+   * actuator states (string values like "ON"/"OFF").
+   *
+   * @param data Map containing both sensor readings and actuator states
+   * @param timestamp Unix timestamp (milliseconds) of the update
    */
-  public Node(String name, String location) {
-    this(name, location, null, null);
+  public void updateFromServer(Map<String, Object> data, long timestamp) {
+    data.forEach((key, value) -> {
+      if (value instanceof Number) {
+        // This is a sensor reading
+        sensorData.put(key, ((Number) value).doubleValue());
+      } else {
+        // This is an actuator state
+        actuatorStates.put(key, String.valueOf(value));
+      }
+    });
+    lastUpdate.set(timestamp);
   }
+
+  // === Getters for basic properties ===
+
+  public String getId() { return id; }
+  public String getName() { return name; }
+  public String getLocation() { return location; }
+  public String getIpAddress() { return ipAddress; }
 
   /**
-   * Generate a stable IP address that increments for each new node
+   * Returns an immutable list of sensor types supported by this node.
+   * @return List of sensor type names (e.g., ["temperature", "humidity"])
    */
-  private static String generateStableIp() {
-    int lastOctet = ipCounter.getAndIncrement();
-    // Wrap around if we exceed 254
-    if (lastOctet > 254) {
-      lastOctet = 50;
-      ipCounter.set(51);
-    }
-    return "192.168.1." + lastOctet;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public String getId() {
-    return name.replaceAll("\\s+", "_").toLowerCase();
-  }
+  public List<String> getSensorTypes() { return Collections.unmodifiableList(sensorTypes); }
 
   /**
-   * Returns the stable IP address assigned at creation
+   * Returns an immutable list of actuator types supported by this node.
+   * @return List of actuator type names (e.g., ["fan", "water_pump"])
    */
-  public String getIpAddress() {
-    return ipAddress;
-  }
+  public List<String> getActuatorTypes() { return Collections.unmodifiableList(actuatorTypes); }
 
-  public String getLocation() {
-    return location;
-  }
+  /**
+   * Returns the observable map of sensor data for UI binding.
+   * Keys are sensor types (e.g., "temperature"), values are current readings.
+   * @return Observable map of sensor data
+   */
+  public ObservableMap<String, Double> getSensorData() { return sensorData; }
 
-  public void addActuator(Actuator actuator) {
-    this.actuators.add(actuator);
-  }
+  /**
+   * Returns the observable map of actuator states for UI binding.
+   * Keys are actuator types (e.g., "fan"), values are states (e.g., "ON", "OFF").
+   * @return Observable map of actuator states
+   */
+  public ObservableMap<String, String> getActuatorStates() { return actuatorStates; }
 
-  public void addSensor(Sensor sensor) {
-    this.sensors.add(sensor);
-  }
+  /**
+   * Returns the property tracking the timestamp of the last update.
+   * Useful for displaying "last updated" information in the UI.
+   * @return LongProperty containing the last update timestamp
+   */
+  public LongProperty lastUpdateProperty() { return lastUpdate; }
 
-  public ObservableList<Sensor> getSensors() {
-    return sensors;
-  }
+  // === Convenience methods for common sensors ===
 
-  public ObservableList<Actuator> getActuators() {
-    return actuators;
-  }
+  /**
+   * Gets the current temperature reading.
+   * @return Temperature in Celsius, or null if not available
+   */
+  public Double getTemperature() { return sensorData.get("temperature"); }
 
-  public void removeActuator(Actuator actuator) {
-    this.actuators.remove(actuator);
-  }
+  /**
+   * Gets the current humidity reading.
+   * @return Humidity percentage (0-100), or null if not available
+   */
+  public Double getHumidity() { return sensorData.get("humidity"); }
 
-  public void removeSensor(Sensor sensor) {
-    this.sensors.remove(sensor);
-  }
+  /**
+   * Gets the current light level reading.
+   * @return Light level in lux, or null if not available
+   */
+  public Double getLight() { return sensorData.get("light"); }
+
+  /**
+   * Gets the current pH reading.
+   * @return pH level (0-14), or null if not available
+   */
+  public Double getPh() { return sensorData.get("ph"); }
+
+  // === Convenience methods for common actuators ===
+
+  /**
+   * Gets the current fan state.
+   * @return "ON", "OFF", or "UNKNOWN"
+   */
+  public String getFanState() { return actuatorStates.getOrDefault("fan", "UNKNOWN"); }
+
+  /**
+   * Gets the current water pump state.
+   * @return "ON", "OFF", or "UNKNOWN"
+   */
+  public String getPumpState() { return actuatorStates.getOrDefault("water_pump", "UNKNOWN"); }
+
+  /**
+   * Gets the current CO2 generator state.
+   * @return "ON", "OFF", or "UNKNOWN"
+   */
+  public String getCo2State() { return actuatorStates.getOrDefault("co2", "UNKNOWN"); }
+
+  /**
+   * Gets the current window state.
+   * @return "CLOSED", "HALF", "OPEN", or "UNKNOWN"
+   */
+  public String getWindowState() { return actuatorStates.getOrDefault("window", "UNKNOWN"); }
 
   @Override
   public String toString() {
-    return String.format("Node{name='%s', location='%s', ip='%s', sensors=%d, actuators=%d}",
-            name, location, ipAddress, sensors.size(), actuators.size());
-  }
-
-  /**
-   * Reset the IP counter (useful for testing)
-   */
-  public static void resetIpCounter() {
-    ipCounter.set(50);
+    return String.format("Node{id='%s', name='%s', location='%s', ip='%s', sensors=%d, actuators=%d}",
+            id, name, location, ipAddress, sensorTypes.size(), actuatorTypes.size());
   }
 }
