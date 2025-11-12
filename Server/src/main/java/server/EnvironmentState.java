@@ -11,7 +11,7 @@ public class EnvironmentState {
   public double temperatureC = 22.0;  // °C
   public double humidityPct = 55.0;   // % RH
   public int lightLux = 420;          // lux
-  public double ph = 6.4;             // pH
+  public double ph = 36.4;             // pH
 
   // External environment assumptions (can be extended or randomized)
   public double outsideTempC = 12.0;  // °C

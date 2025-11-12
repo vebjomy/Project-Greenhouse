@@ -20,7 +20,7 @@
   "role" : "Operator"
 }, {
   "id" : 6,
-  "username" : "arkadii",
-  "password" : "123456",
+  "username" : "admin",
+  "password" : "111111",
   "role" : "Operator"
 } ]

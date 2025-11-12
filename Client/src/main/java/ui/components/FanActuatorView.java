@@ -4,24 +4,34 @@ import javafx.animation.RotateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.effect.BlurType;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
 import java.util.function.Consumer;
 
 /**
- * Visual component for displaying and controlling a fan actuator with rotation animation.
- * Uses the fan.png icon from resources.
+ * Visual component for displaying and controlling a fan actuator in a modern card style.
+ * LAYOUT MODIFIED: Separates Name/Status from Icon/Controls. Button text size reduced.
  *
  * @author Green House Control Team
- * @version 2.0
+ * @version 3.1 (Layout modified to separate status display from controls, button text smaller)
  */
 public class FanActuatorView {
+
+  // Visual constants
+  private static final double CARD_WIDTH = 280.0;
+  private static final double ICON_SIZE = 50.0;
+  private static final Color CARD_BORDER_COLOR = Color.web("#CCCCCC"); // Light gray border
 
   /**
    * Creates a visual representation of a fan actuator with control buttons and animation.
@@ -29,7 +39,7 @@ public class FanActuatorView {
    * @param name Display name for the actuator (e.g., "Fan")
    * @param state Current state from server ("ON", "OFF", or "UNKNOWN")
    * @param onToggle Callback function to handle button clicks.
-   *                 Called with true for ON button, false for OFF button.
+   * Called with true for ON button, false for OFF button.
    * @return A Pane containing the complete actuator visualization and controls
    */
   public static Pane create(String name, String state, Consumer<Boolean> onToggle) {
@@ -39,15 +49,15 @@ public class FanActuatorView {
 
     try {
       Image image = new Image(
-              FanActuatorView.class.getResourceAsStream("/icons/fan.png")
+          FanActuatorView.class.getResourceAsStream("/icons/fan.png")
       );
       fanIcon = new ImageView(image);
-      fanIcon.setFitWidth(50);
-      fanIcon.setFitHeight(50);
+      fanIcon.setFitWidth(ICON_SIZE);
+      fanIcon.setFitHeight(ICON_SIZE);
       fanIcon.setPreserveRatio(true);
 
       // Create rotation animation
-      rotation = new RotateTransition(Duration.seconds(2), fanIcon);
+      rotation = new RotateTransition(Duration.seconds(1.5), fanIcon); // Faster rotation
       rotation.setByAngle(360);
       rotation.setCycleCount(RotateTransition.INDEFINITE);
       rotation.setAutoReverse(false);
@@ -55,121 +65,193 @@ public class FanActuatorView {
       System.err.println("⚠️ Could not load fan icon: " + e.getMessage());
     }
 
-    // === Color coding and animation based on state ===
-    Color statusColor;
+    // === 1. Determine Status Color, Text, and Animation ===
+    Color baseColor;
+    Color darkColor;
+    Color activeIndicatorColor;
     String statusText;
     boolean isOn = "ON".equalsIgnoreCase(state);
 
     if (isOn) {
-      statusColor = Color.web("#4CAF50"); // Green - Active
-      statusText = "ON";
+      baseColor = Color.web("#4CAF50"); // Green - Active
+      darkColor = Color.web("#388E3C"); // Dark Green
+      activeIndicatorColor = Color.web("#4CAF50");
+      statusText = "RUNNING";
       if (rotation != null) {
         rotation.play(); // Start spinning
       }
     } else if ("OFF".equalsIgnoreCase(state)) {
-      statusColor = Color.web("#757575"); // Gray - Inactive
+      baseColor = Color.web("#B0BEC5"); // Light Gray - Inactive
+      darkColor = Color.web("#757575"); // Dark Gray
+      activeIndicatorColor = Color.web("#9E9E9E");
       statusText = "OFF";
       if (rotation != null) {
         rotation.stop(); // Stop spinning
       }
     } else {
-      statusColor = Color.web("#FF9800"); // Orange - Unknown
+      baseColor = Color.web("#FFCC80"); // Light Orange - Unknown
+      darkColor = Color.web("#F57C00"); // Dark Orange
+      activeIndicatorColor = Color.web("#F57C00");
       statusText = "UNKNOWN";
       if (rotation != null) {
         rotation.stop();
       }
     }
 
-    // === Labels ===
-    Label nameLabel = new Label(name);
-    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-    nameLabel.setTextFill(Color.web("#202124"));
+    Color lightTextColor = Color.WHITE; // Status bar text color
 
-    Label statusLabel = new Label(statusText);
-    statusLabel.setFont(Font.font("System", FontWeight.BOLD, 20));
-    statusLabel.setTextFill(statusColor);
+    // === 2. Content Layout - Modified Structure ===
 
-    // === Layout ===
-    VBox textBox = new VBox(0, nameLabel, statusLabel);
-    textBox.setAlignment(Pos.CENTER_LEFT);
-
-    HBox topPane = new HBox(10);
-    if (fanIcon != null) {
-      topPane.getChildren().add(fanIcon);
+    // --- Active/Enabled Indicator (Circle) ---
+    Circle activeIndicator = new Circle(4);
+    activeIndicator.setFill(activeIndicatorColor);
+    activeIndicator.setStroke(Color.WHITE);
+    activeIndicator.setStrokeWidth(1.5);
+    if (isOn) {
+      activeIndicator.setEffect(new DropShadow(BlurType.GAUSSIAN, activeIndicatorColor, 8, 0.7, 0, 0));
     }
-    topPane.getChildren().add(textBox);
-    topPane.setAlignment(Pos.CENTER_LEFT);
 
-    // === Control buttons ===
-    Button onButton = new Button("ON");
+    // --- Status Label (e.g., "RUNNING") ---
+    Label mainStatusLabel = new Label(statusText);
+    mainStatusLabel.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+    mainStatusLabel.setTextFill(darkColor);
+
+    // --- Name Label (e.g., "Fan") ---
+    Label nameLabel = new Label(name);
+    nameLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 16));
+    nameLabel.setTextFill(Color.web("#555555"));
+
+    // VBox for Name, Indicator, and Status (The main information block)
+    VBox infoBlock = new VBox(5);
+    infoBlock.setAlignment(Pos.TOP_LEFT);
+
+    HBox titleAndIndicator = new HBox(5, nameLabel, activeIndicator);
+    titleAndIndicator.setAlignment(Pos.CENTER_LEFT);
+
+    infoBlock.getChildren().addAll(titleAndIndicator, mainStatusLabel);
+
+
+    // --- 3. Control Buttons (Smaller Text) ---
+    Button onButton = new Button("SET ON");
     onButton.setStyle(
-            "-fx-background-color: #4CAF50; " +
-                    "-fx-text-fill: white; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-padding: 8 20; " +
-                    "-fx-cursor: hand; " +
-                    "-fx-background-radius: 5;"
+        "-fx-background-color: #388E3C; " + // Use darker active color for button
+            "-fx-text-fill: white; " +
+            "-fx-font-weight: bold; " +
+            "-fx-font-size: 11px; " + // Smaller font size
+            "-fx-padding: 8 10; " + // Adjusted padding
+            "-fx-cursor: hand; " +
+            "-fx-background-radius: 5;"
     );
 
+    // Retain existing logic
     final RotateTransition finalRotation = rotation;
     onButton.setOnAction(e -> {
       if (onToggle != null) {
         onToggle.accept(true);
       }
+      // Visual update logic remains here
       if (finalRotation != null) {
         finalRotation.play();
       }
-      statusLabel.setText("ON");
-      statusLabel.setTextFill(Color.web("#4CAF50"));
+      // Note: Immediate visual feedback for the button handler (retained logic)
+      mainStatusLabel.setText("ON");
+      mainStatusLabel.setTextFill(Color.web("#388E3C"));
     });
 
-    Button offButton = new Button("OFF");
+    Button offButton = new Button("SET OFF");
     offButton.setStyle(
-            "-fx-background-color: #757575; " +
-                    "-fx-text-fill: white; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-padding: 8 20; " +
-                    "-fx-cursor: hand; " +
-                    "-fx-background-radius: 5;"
+        "-fx-background-color: #757575; " +
+            "-fx-text-fill: white; " +
+            "-fx-font-weight: bold; " +
+            "-fx-font-size: 11px; " + // Smaller font size
+            "-fx-padding: 8 10; " + // Adjusted padding
+            "-fx-cursor: hand; " +
+            "-fx-background-radius: 5;"
     );
+    // Retain existing logic
     offButton.setOnAction(e -> {
       if (onToggle != null) {
         onToggle.accept(false);
       }
+      // Visual update logic remains here
       if (finalRotation != null) {
         finalRotation.stop();
       }
-      statusLabel.setText("OFF");
-      statusLabel.setTextFill(Color.web("#757575"));
+      // Note: Immediate visual feedback for the button handler (retained logic)
+      mainStatusLabel.setText("OFF");
+      mainStatusLabel.setTextFill(Color.web("#757575"));
     });
 
-    HBox controls = new HBox(8, onButton, offButton);
-    controls.setAlignment(Pos.CENTER);
-    controls.setPadding(new Insets(10, 0, 0, 0));
+    HBox controlsBox = new HBox(8, onButton, offButton);
+    controlsBox.setAlignment(Pos.CENTER_RIGHT);
 
-    // === Final assembly ===
-    VBox layout = new VBox(10, topPane, controls);
-    layout.setPadding(new Insets(10));
-    layout.setAlignment(Pos.TOP_LEFT);
-    layout.setStyle(
-            "-fx-background-color: #f8f9fa;" +
-                    "-fx-background-radius: 8;" +
-                    "-fx-border-color: " + toHexString(statusColor) + ";" +
-                    "-fx-border-width: 2;" +
-                    "-fx-border-radius: 8;"
-    );
+    // --- Icon Box ---
+    VBox iconBox = new VBox();
+    iconBox.setAlignment(Pos.CENTER);
+    if (fanIcon != null) {
+      iconBox.getChildren().add(fanIcon);
+    }
+
+    // --- HBox Combining Icon and Controls ---
+    HBox iconAndControls = new HBox(20);
+    iconAndControls.setAlignment(Pos.CENTER_LEFT);
+    HBox.setHgrow(controlsBox, Priority.ALWAYS); // Push controls to the right
+    iconAndControls.getChildren().addAll(iconBox, controlsBox);
+
+    // --- 4. Main Content Layout ---
+    VBox contentBox = new VBox(20, infoBlock, iconAndControls);
+    contentBox.setAlignment(Pos.TOP_LEFT);
+    contentBox.setPadding(new Insets(15, 20, 20, 20));
+
+
+    // --- 5. Status Bar and Menu Button (Card Top) ---
+    Label indicatorLabel = new Label("ACTUATOR STATUS");
+    indicatorLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+    indicatorLabel.setTextFill(lightTextColor);
+
+    HBox statusBar = new HBox();
+    statusBar.setAlignment(Pos.CENTER_LEFT);
+    statusBar.setPadding(new Insets(5, 10, 5, 10));
+    statusBar.setBackground(new Background(new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
+
+    HBox statusBox = new HBox(indicatorLabel);
+    statusBox.setAlignment(Pos.CENTER_LEFT);
+    HBox.setHgrow(statusBox, Priority.ALWAYS);
+
+    // Delete Menu Button
+    Circle dot1 = new Circle(2.5, Color.web("#ffffff"));
+    Circle dot2 = new Circle(2.5, Color.web("#ffffff"));
+    Circle dot3 = new Circle(2.5, Color.web("#ffffff"));
+    HBox dots = new HBox(3, dot1, dot2, dot3);
+    dots.setAlignment(Pos.CENTER);
+
+    Button menuButton = new Button();
+    menuButton.setGraphic(dots);
+    menuButton.setStyle("-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
+
+    ContextMenu contextMenu = new ContextMenu();
+    MenuItem deleteItem = new MenuItem("Delete this actuator");
+    deleteItem.setStyle("-fx-text-fill: #0d0c0c;");
+    contextMenu.getItems().add(deleteItem);
+
+    menuButton.setOnMouseClicked(event -> {
+      contextMenu.show(menuButton, event.getScreenX(), event.getScreenY());
+    });
+
+    statusBar.getChildren().addAll(statusBox, menuButton);
+
+    // --- 6. Final Assembly (Card Style) ---
+    VBox layout = new VBox();
+    layout.getChildren().addAll(statusBar, contentBox);
+    layout.setAlignment(Pos.TOP_CENTER);
+
+    layout.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
+    layout.setBorder(new Border(new BorderStroke(CARD_BORDER_COLOR, BorderStrokeStyle.SOLID, new CornerRadii(8), new BorderWidths(1))));
+    layout.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.1), 10, 0, 0, 5));
+    layout.setPrefWidth(CARD_WIDTH);
+    layout.setMaxWidth(CARD_WIDTH);
 
     return layout;
-  }
-
-  /**
-   * Converts a Color to hex string format.
-   */
-  private static String toHexString(Color color) {
-    return String.format("#%02X%02X%02X",
-            (int)(color.getRed() * 255),
-            (int)(color.getGreen() * 255),
-            (int)(color.getBlue() * 255));
   }
 
   /**
