@@ -3,42 +3,28 @@ package ui.components;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * Visual component for displaying pH sensor readings.
- *
- * Provides a simple icon-based visualization with color-coded indicators:
- * - Blue: Acidic (< 6.5)
- * - Green: Neutral/Optimal (6.5-8.5)
- * - Orange: Alkaline (> 8.5)
+ * Visual component for displaying pH sensor readings with icon.
+ * Uses the Ph.png icon from resources.
  *
  * @author Green House Control Team
- * @version 1.0
+ * @version 2.0
  */
 public class PhSensorView {
 
   // pH thresholds for color coding
-  private static final double PH_ACIDIC_THRESHOLD = 6.5;
-  private static final double PH_ALKALINE_THRESHOLD = 8.5;
-
-  // SVG path for pH/water drop icon (Material Design)
-  private static final String PH_ICON_PATH =
-          "M12,2C15.31,2 18,4.66 18,7.95C18,12.41 12,19 12,19C12,19 6,12.41 6,7.95C6,4.66 8.69," +
-                  "2 12,2M12,4A3.5,3.5 0 0,0 8.5,7.5A3.5,3.5 0 0,0 12,11A3.5,3.5 0 0,0 15.5,7.5A3.5,3.5 " +
-                  "0 0,0 12,4M12,5.5A2,2 0 0,1 14,7.5A2,2 0 0,1 12,9.5A2,2 0 0,1 10,7.5A2,2 0 0,1 12,5.5Z";
+  private static final double PH_ACIDIC_THRESHOLD = 6.0;
+  private static final double PH_ALKALINE_THRESHOLD = 7.5;
 
   /**
-   * Creates a visual representation of a pH sensor.
-   *
-   * The visualization includes:
-   * - A water drop icon
-   * - Color-coded display based on pH level
-   * - Numeric value with pH unit
+   * Creates a visual representation of a pH sensor with icon.
    *
    * @param name Display name for the sensor (e.g., "pH Level")
    * @param value Current pH value (0-14)
@@ -46,43 +32,80 @@ public class PhSensorView {
    * @return A Pane containing the complete sensor visualization
    */
   public static Pane create(String name, double value, String unit) {
-    // Clamp value to valid pH range
+    // Clamp value to valid range
     double clampedValue = Math.max(0, Math.min(14, value));
 
-    // --- Icon ---
-    SVGPath phIcon = new SVGPath();
-    phIcon.setContent(PH_ICON_PATH);
-    phIcon.setScaleX(1.2);
-    phIcon.setScaleY(1.2);
-
-    // --- Color coding based on pH level ---
-    Color statusColor;
-    if (clampedValue < PH_ACIDIC_THRESHOLD) {
-      statusColor = Color.web("#4FC3F7"); // Light Blue - Acidic
-    } else if (clampedValue > PH_ALKALINE_THRESHOLD) {
-      statusColor = Color.web("#FF7043"); // Orange - Alkaline
-    } else {
-      statusColor = Color.web("#81C784"); // Light Green - Optimal
+    // === Icon ===
+    ImageView icon = null;
+    try {
+      Image image = new Image(
+              PhSensorView.class.getResourceAsStream("/icons/Ph.png")
+      );
+      icon = new ImageView(image);
+      icon.setFitWidth(40);
+      icon.setFitHeight(40);
+      icon.setPreserveRatio(true);
+    } catch (Exception e) {
+      System.err.println("⚠️ Could not load pH icon: " + e.getMessage());
     }
-    phIcon.setFill(statusColor);
 
-    // --- Labels ---
+    // === Color coding based on pH ===
+    Color statusColor;
+    String statusText;
+    if (clampedValue < PH_ACIDIC_THRESHOLD) {
+      statusColor = Color.web("#FF7043"); // Deep Orange - Acidic
+      statusText = "ACIDIC";
+    } else if (clampedValue > PH_ALKALINE_THRESHOLD) {
+      statusColor = Color.web("#7E57C2"); // Purple - Alkaline
+      statusText = "ALKALINE";
+    } else {
+      statusColor = Color.web("#81C784"); // Light Green - Neutral
+      statusText = "NEUTRAL";
+    }
+
+    // === Labels ===
     Label nameLabel = new Label(name);
-    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+    nameLabel.setTextFill(Color.web("#202124"));
 
-    Label valueLabel = new Label(String.format("%.2f %s", clampedValue, unit));
-    valueLabel.setFont(Font.font("System", FontWeight.NORMAL, 20));
+    Label valueLabel = new Label(String.format("%.1f %s", clampedValue, unit));
+    valueLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
     valueLabel.setTextFill(statusColor);
 
-    // --- Layout assembly ---
-    VBox titleBox = new VBox(-2, nameLabel, valueLabel);
-    titleBox.setAlignment(Pos.CENTER_LEFT);
+    Label statusLabel = new Label(statusText);
+    statusLabel.setFont(Font.font("System", FontWeight.NORMAL, 10));
+    statusLabel.setTextFill(statusColor);
 
-    HBox topPane = new HBox(10, phIcon, titleBox);
-    topPane.setAlignment(Pos.CENTER_LEFT);
-    topPane.setPadding(new Insets(10));
+    // === Layout ===
+    VBox textBox = new VBox(0, nameLabel, valueLabel, statusLabel);
+    textBox.setAlignment(Pos.CENTER_LEFT);
 
-    return topPane;
+    HBox layout = new HBox(10);
+    if (icon != null) {
+      layout.getChildren().add(icon);
+    }
+    layout.getChildren().add(textBox);
+    layout.setAlignment(Pos.CENTER_LEFT);
+    layout.setPadding(new Insets(8, 10, 8, 10));
+    layout.setStyle(
+            "-fx-background-color: #f8f9fa;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-border-color: " + toHexString(statusColor) + ";" +
+                    "-fx-border-width: 2;" +
+                    "-fx-border-radius: 8;"
+    );
+
+    return layout;
+  }
+
+  /**
+   * Converts a Color to hex string format.
+   */
+  private static String toHexString(Color color) {
+    return String.format("#%02X%02X%02X",
+            (int)(color.getRed() * 255),
+            (int)(color.getGreen() * 255),
+            (int)(color.getBlue() * 255));
   }
 
   /**

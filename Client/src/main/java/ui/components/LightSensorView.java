@@ -3,87 +3,106 @@ package ui.components;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * Visual component for displaying light sensor readings.
- *
- * Provides a simple icon-based visualization with color-coded indicators:
- * - Blue: Low light (< 200 lux)
- * - Green: Normal light (200-700 lux)
- * - Yellow: High light (> 700 lux)
+ * Visual component for displaying light sensor readings with icon.
+ * Uses the light_sensor.png icon from resources.
  *
  * @author Green House Control Team
- * @version 1.0
+ * @version 2.0
  */
 public class LightSensorView {
 
   // Light level thresholds for color coding (lux)
   private static final double LIGHT_LOW_THRESHOLD = 200.0;
-  private static final double LIGHT_HIGH_THRESHOLD = 700.0;
-
-  // SVG path for light bulb icon (Material Design)
-  private static final String LIGHT_ICON_PATH =
-          "M12,6A6,6 0 0,1 18,12C18,14.22 16.79,16.16 15,17.2V19A1,1 0 0,1 14,20H10A1,1 0 0,1 " +
-                  "9,19V17.2C7.21,16.16 6,14.22 6,12A6,6 0 0,1 12,6M14,21V22A1,1 0 0,1 13,23H11A1,1 0 " +
-                  "0,1 10,22V21H14M20,11H23V13H20V11M1,11H4V13H1V11M13,1V4H11V1H13M4.92,3.5L7.05,5.64L5.63," +
-                  "7.05L3.5,4.93L4.92,3.5M16.95,5.63L19.07,3.5L20.5,4.93L18.37,7.05L16.95,5.63Z";
+  private static final double LIGHT_HIGH_THRESHOLD = 1000.0;
 
   /**
-   * Creates a visual representation of a light sensor.
-   *
-   * The visualization includes:
-   * - A light bulb icon
-   * - Color-coded display based on light intensity
-   * - Numeric value with lux unit
+   * Creates a visual representation of a light sensor with icon.
    *
    * @param name Display name for the sensor (e.g., "Light")
-   * @param value Current light level in lux
+   * @param value Current light value in lux
    * @param unit Unit string to display (e.g., "lx")
    * @return A Pane containing the complete sensor visualization
    */
   public static Pane create(String name, double value, String unit) {
-    // Clamp value to reasonable range
-    double clampedValue = Math.max(0, Math.min(200_000, value));
+    // === Icon ===
+    ImageView icon = null;
+    try {
+      Image image = new Image(
+              LightSensorView.class.getResourceAsStream("/icons/light_sensor.png")
+      );
+      icon = new ImageView(image);
+      icon.setFitWidth(40);
+      icon.setFitHeight(40);
+      icon.setPreserveRatio(true);
+    } catch (Exception e) {
+      System.err.println("⚠️ Could not load light icon: " + e.getMessage());
+    }
 
-    // --- Icon ---
-    SVGPath lightIcon = new SVGPath();
-    lightIcon.setContent(LIGHT_ICON_PATH);
-    lightIcon.setScaleX(1.2);
-    lightIcon.setScaleY(1.2);
-
-    // --- Color coding based on light level ---
+    // === Color coding based on light level ===
     Color statusColor;
-    if (clampedValue < LIGHT_LOW_THRESHOLD) {
-      statusColor = Color.web("#4FC3F7"); // Light Blue - Low light
-    } else if (clampedValue > LIGHT_HIGH_THRESHOLD) {
-      statusColor = Color.web("#FFD54F"); // Yellow - High light
+    String statusText;
+    if (value < LIGHT_LOW_THRESHOLD) {
+      statusColor = Color.web("#5C6BC0"); // Indigo - Dark
+      statusText = "DARK";
+    } else if (value > LIGHT_HIGH_THRESHOLD) {
+      statusColor = Color.web("#FFD54F"); // Yellow - Bright
+      statusText = "BRIGHT";
     } else {
       statusColor = Color.web("#81C784"); // Light Green - Normal
+      statusText = "NORMAL";
     }
-    lightIcon.setFill(statusColor);
 
-    // --- Labels ---
+    // === Labels ===
     Label nameLabel = new Label(name);
-    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
+    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+    nameLabel.setTextFill(Color.web("#202124"));
 
-    Label valueLabel = new Label(String.format("%.0f %s", clampedValue, unit));
-    valueLabel.setFont(Font.font("System", FontWeight.NORMAL, 20));
+    Label valueLabel = new Label(String.format("%.0f %s", value, unit));
+    valueLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
     valueLabel.setTextFill(statusColor);
 
-    // --- Layout assembly ---
-    VBox titleBox = new VBox(-2, nameLabel, valueLabel);
-    titleBox.setAlignment(Pos.CENTER_LEFT);
+    Label statusLabel = new Label(statusText);
+    statusLabel.setFont(Font.font("System", FontWeight.NORMAL, 10));
+    statusLabel.setTextFill(statusColor);
 
-    HBox topPane = new HBox(10, lightIcon, titleBox);
-    topPane.setAlignment(Pos.CENTER_LEFT);
-    topPane.setPadding(new Insets(10));
+    // === Layout ===
+    VBox textBox = new VBox(0, nameLabel, valueLabel, statusLabel);
+    textBox.setAlignment(Pos.CENTER_LEFT);
 
-    return topPane;
+    HBox layout = new HBox(10);
+    if (icon != null) {
+      layout.getChildren().add(icon);
+    }
+    layout.getChildren().add(textBox);
+    layout.setAlignment(Pos.CENTER_LEFT);
+    layout.setPadding(new Insets(8, 10, 8, 10));
+    layout.setStyle(
+            "-fx-background-color: #f8f9fa;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-border-color: " + toHexString(statusColor) + ";" +
+                    "-fx-border-width: 2;" +
+                    "-fx-border-radius: 8;"
+    );
+
+    return layout;
+  }
+
+  /**
+   * Converts a Color to hex string format.
+   */
+  private static String toHexString(Color color) {
+    return String.format("#%02X%02X%02X",
+            (int)(color.getRed() * 255),
+            (int)(color.getGreen() * 255),
+            (int)(color.getBlue() * 255));
   }
 
   /**

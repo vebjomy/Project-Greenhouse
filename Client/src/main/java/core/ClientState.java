@@ -78,10 +78,11 @@ public class ClientState {
           }
         }
       });
-    });
 
-    // Notify listeners
-    ns.sensorListeners.forEach(l -> l.accept(ns));
+      // Notify both local and global listeners
+      ns.sensorListeners.forEach(l -> l.accept(ns));
+      notifySensor(ns);
+    });
   }
 
   public void applyLastValues(String nodeId, Map<String,Object> data){
@@ -105,5 +106,6 @@ public class ClientState {
   public Collection<NodeState> allNodes(){ return nodes.values(); }
   public NodeState get(String id){ return nodes.get(id); }
 }
+
 
 

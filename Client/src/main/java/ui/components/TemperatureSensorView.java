@@ -3,40 +3,28 @@ package ui.components;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Arc;
-import javafx.scene.shape.ArcType;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * Visual component for displaying temperature sensor readings.
- * Does NOT contain data - only rendering logic.
- *
- * This is a stateless utility class that creates JavaFX UI components
- * based on provided values. The actual data is stored in the Node model.
+ * Visual component for displaying temperature sensor readings with icon.
+ * Uses the temp_sensor.png icon from resources.
  *
  * @author Green House Control Team
- * @version 1.0
+ * @version 2.0
  */
 public class TemperatureSensorView {
 
   // Temperature ranges for color coding (Celsius)
   private static final double TEMP_COLD_THRESHOLD = 5.0;
   private static final double TEMP_HOT_THRESHOLD = 28.0;
-  private static final double TEMP_MIN = -10.0;
-  private static final double TEMP_MAX = 40.0;
 
   /**
-   * Creates a visual representation of a temperature sensor.
-   *
-   * The visualization includes:
-   * - A circular arc gauge showing the temperature
-   * - Color-coded display (blue=cold, green=normal, red=hot)
-   * - Numeric value with unit label
+   * Creates a visual representation of a temperature sensor with icon.
    *
    * @param name Display name for the sensor (e.g., "Temperature")
    * @param value Current temperature value in Celsius
@@ -44,54 +32,77 @@ public class TemperatureSensorView {
    * @return A Pane containing the complete sensor visualization
    */
   public static Pane create(String name, double value, String unit) {
-    // --- Background circle ---
-    Circle backgroundCircle = new Circle(40);
-    backgroundCircle.setFill(Color.web("#f0f0f0"));
+    // === Icon ===
+    ImageView icon = null;
+    try {
+      Image image = new Image(
+              TemperatureSensorView.class.getResourceAsStream("/icons/temp_sensor.png")
+      );
+      icon = new ImageView(image);
+      icon.setFitWidth(40);
+      icon.setFitHeight(40);
+      icon.setPreserveRatio(true);
+    } catch (Exception e) {
+      System.err.println("⚠️ Could not load temperature icon: " + e.getMessage());
+    }
 
-    // --- Temperature arc (gauge) ---
-    // Normalize value to 0-100 range for arc calculation
-    double normalizedValue = Math.max(TEMP_MIN, Math.min(TEMP_MAX, value));
-    double percentage = ((normalizedValue - TEMP_MIN) / (TEMP_MAX - TEMP_MIN)) * 100;
-    double arcLength = 3.6 * percentage; // 360° * (percentage/100)
-    double startAngle = 90 - arcLength;  // Start from bottom
-
-    Arc tempArc = new Arc(0, 0, 36, 36, startAngle, arcLength);
-    tempArc.setType(ArcType.OPEN);
-    tempArc.setStrokeWidth(8);
-    tempArc.setFill(null);
-    tempArc.setStrokeLineCap(StrokeLineCap.ROUND);
-
-    // --- Color coding based on temperature ---
+    // === Color coding based on temperature ===
     Color statusColor;
+    String statusText;
     if (value < TEMP_COLD_THRESHOLD) {
       statusColor = Color.web("#4FC3F7"); // Light Blue - Cold
+      statusText = "COLD";
     } else if (value > TEMP_HOT_THRESHOLD) {
       statusColor = Color.web("#E57373"); // Light Red - Hot
+      statusText = "HOT";
     } else {
       statusColor = Color.web("#81C784"); // Light Green - Normal
+      statusText = "NORMAL";
     }
-    tempArc.setStroke(statusColor);
 
-    // --- Labels ---
+    // === Labels ===
     Label nameLabel = new Label(name);
-    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
-    nameLabel.setAlignment(Pos.CENTER);
+    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+    nameLabel.setTextFill(Color.web("#202124"));
 
-    Label valueLabel = new Label(String.format("%.1f %s", value, unit));
-    valueLabel.setFont(Font.font("System", FontWeight.NORMAL, 20));
+    Label valueLabel = new Label(String.format("%.1f%s", value, unit));
+    valueLabel.setFont(Font.font("System", FontWeight.BOLD, 24));
     valueLabel.setTextFill(statusColor);
-    valueLabel.setAlignment(Pos.CENTER);
 
-    // --- Layout assembly ---
-    StackPane circlePane = new StackPane(backgroundCircle, tempArc, valueLabel);
-    circlePane.setPrefSize(80, 80);
-    circlePane.setPadding(new Insets(10));
+    Label statusLabel = new Label(statusText);
+    statusLabel.setFont(Font.font("System", FontWeight.NORMAL, 10));
+    statusLabel.setTextFill(statusColor);
 
-    VBox layout = new VBox(5, nameLabel, circlePane);
-    layout.setPadding(new Insets(10));
-    layout.setAlignment(Pos.CENTER);
+    // === Layout ===
+    VBox textBox = new VBox(0, nameLabel, valueLabel, statusLabel);
+    textBox.setAlignment(Pos.CENTER_LEFT);
+
+    HBox layout = new HBox(10);
+    if (icon != null) {
+      layout.getChildren().add(icon);
+    }
+    layout.getChildren().add(textBox);
+    layout.setAlignment(Pos.CENTER_LEFT);
+    layout.setPadding(new Insets(8, 10, 8, 10));
+    layout.setStyle(
+            "-fx-background-color: #f8f9fa;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-border-color: " + toHexString(statusColor) + ";" +
+                    "-fx-border-width: 2;" +
+                    "-fx-border-radius: 8;"
+    );
 
     return layout;
+  }
+
+  /**
+   * Converts a Color to hex string format.
+   */
+  private static String toHexString(Color color) {
+    return String.format("#%02X%02X%02X",
+            (int)(color.getRed() * 255),
+            (int)(color.getGreen() * 255),
+            (int)(color.getBlue() * 255));
   }
 
   /**

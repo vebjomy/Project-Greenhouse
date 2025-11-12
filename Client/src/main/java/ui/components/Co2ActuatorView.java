@@ -4,31 +4,22 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.util.function.Consumer;
 
 /**
  * Visual component for displaying and controlling a CO₂ generator actuator.
- *
- * This component provides:
- * - Visual indication of current CO₂ generator state
- * - ON/OFF control buttons
- * - Callback mechanism to send commands to the server
+ * Uses the ceo2.png icon from resources.
  *
  * @author Green House Control Team
- * @version 1.0
+ * @version 2.0
  */
 public class Co2ActuatorView {
-
-  // SVG path for CO₂/gas cylinder icon (Material Design)
-  private static final String CO2_ICON_PATH =
-          "M18,20H6V18H18V20M14,2V5C14,6.66 12.66,8 11,8C9.34,8 8,6.66 8,5V2H6V5C6,7.76 8.24," +
-                  "10 11,10C13.76,10 16,7.76 16,5V2H14M11,12C7.31,12 4,15.14 4,19H18C18,15.14 14.69," +
-                  "12 11,12Z";
 
   /**
    * Creates a visual representation of a CO₂ generator actuator with control buttons.
@@ -40,47 +31,63 @@ public class Co2ActuatorView {
    * @return A Pane containing the complete actuator visualization and controls
    */
   public static Pane create(String name, String state, Consumer<Boolean> onToggle) {
-    // --- Icon ---
-    SVGPath co2Icon = new SVGPath();
-    co2Icon.setContent(CO2_ICON_PATH);
-    co2Icon.setScaleX(1.2);
-    co2Icon.setScaleY(1.2);
-
-    // --- Labels ---
-    Label nameLabel = new Label(name);
-    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 14));
-
-    Label statusLabel = new Label(state != null ? state : "UNKNOWN");
-    statusLabel.setFont(Font.font("System", FontWeight.NORMAL, 20));
-
-    // --- Color coding based on state ---
-    Color statusColor;
-    if ("ON".equalsIgnoreCase(state)) {
-      statusColor = Color.web("#FF5722"); // Deep Orange - Active/Generating
-    } else if ("OFF".equalsIgnoreCase(state)) {
-      statusColor = Color.web("#B0BEC5"); // Gray - Inactive
-    } else {
-      statusColor = Color.web("#FF9800"); // Orange - Unknown
+    // === Icon ===
+    ImageView co2Icon = null;
+    try {
+      Image image = new Image(
+              Co2ActuatorView.class.getResourceAsStream("/icons/ceo2.png")
+      );
+      co2Icon = new ImageView(image);
+      co2Icon.setFitWidth(50);
+      co2Icon.setFitHeight(50);
+      co2Icon.setPreserveRatio(true);
+    } catch (Exception e) {
+      System.err.println("⚠️ Could not load CO2 icon: " + e.getMessage());
     }
 
-    co2Icon.setFill(statusColor);
+    // === Color coding based on state ===
+    Color statusColor;
+    String statusText;
+    boolean isOn = "ON".equalsIgnoreCase(state);
+
+    if (isOn) {
+      statusColor = Color.web("#FF7043"); // Deep Orange - Active/Generating
+      statusText = "ON";
+    } else if ("OFF".equalsIgnoreCase(state)) {
+      statusColor = Color.web("#757575"); // Gray - Inactive
+      statusText = "OFF";
+    } else {
+      statusColor = Color.web("#FF9800"); // Orange - Unknown
+      statusText = "UNKNOWN";
+    }
+
+    // === Labels ===
+    Label nameLabel = new Label(name);
+    nameLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
+    nameLabel.setTextFill(Color.web("#202124"));
+
+    Label statusLabel = new Label(statusText);
+    statusLabel.setFont(Font.font("System", FontWeight.BOLD, 20));
     statusLabel.setTextFill(statusColor);
 
-    // --- Top section layout ---
-    VBox titleBox = new VBox(-2, nameLabel, statusLabel);
-    titleBox.setAlignment(Pos.CENTER_LEFT);
+    // === Layout ===
+    VBox textBox = new VBox(0, nameLabel, statusLabel);
+    textBox.setAlignment(Pos.CENTER_LEFT);
 
-    HBox topPane = new HBox(10, co2Icon, titleBox);
+    HBox topPane = new HBox(10);
+    if (co2Icon != null) {
+      topPane.getChildren().add(co2Icon);
+    }
+    topPane.getChildren().add(textBox);
     topPane.setAlignment(Pos.CENTER_LEFT);
-    topPane.setPadding(new Insets(0, 0, 10, 0));
 
-    // --- Control buttons ---
+    // === Control buttons ===
     Button onButton = new Button("ON");
     onButton.setStyle(
-            "-fx-background-color: #FF5722; " +
+            "-fx-background-color: #FF7043; " +
                     "-fx-text-fill: white; " +
                     "-fx-font-weight: bold; " +
-                    "-fx-padding: 5 15; " +
+                    "-fx-padding: 8 20; " +
                     "-fx-cursor: hand; " +
                     "-fx-background-radius: 5;"
     );
@@ -88,6 +95,8 @@ public class Co2ActuatorView {
       if (onToggle != null) {
         onToggle.accept(true);
       }
+      statusLabel.setText("ON");
+      statusLabel.setTextFill(Color.web("#FF7043"));
     });
 
     Button offButton = new Button("OFF");
@@ -95,7 +104,7 @@ public class Co2ActuatorView {
             "-fx-background-color: #757575; " +
                     "-fx-text-fill: white; " +
                     "-fx-font-weight: bold; " +
-                    "-fx-padding: 5 15; " +
+                    "-fx-padding: 8 20; " +
                     "-fx-cursor: hand; " +
                     "-fx-background-radius: 5;"
     );
@@ -103,18 +112,37 @@ public class Co2ActuatorView {
       if (onToggle != null) {
         onToggle.accept(false);
       }
+      statusLabel.setText("OFF");
+      statusLabel.setTextFill(Color.web("#757575"));
     });
 
-    HBox controls = new HBox(5, onButton, offButton);
+    HBox controls = new HBox(8, onButton, offButton);
     controls.setAlignment(Pos.CENTER);
+    controls.setPadding(new Insets(10, 0, 0, 0));
 
-    // --- Final layout assembly ---
+    // === Final assembly ===
     VBox layout = new VBox(10, topPane, controls);
     layout.setPadding(new Insets(10));
-    layout.setAlignment(Pos.TOP_CENTER);
-    layout.setMinWidth(200);
+    layout.setAlignment(Pos.TOP_LEFT);
+    layout.setStyle(
+            "-fx-background-color: #f8f9fa;" +
+                    "-fx-background-radius: 8;" +
+                    "-fx-border-color: " + toHexString(statusColor) + ";" +
+                    "-fx-border-width: 2;" +
+                    "-fx-border-radius: 8;"
+    );
 
     return layout;
+  }
+
+  /**
+   * Converts a Color to hex string format.
+   */
+  private static String toHexString(Color color) {
+    return String.format("#%02X%02X%02X",
+            (int)(color.getRed() * 255),
+            (int)(color.getGreen() * 255),
+            (int)(color.getBlue() * 255));
   }
 
   /**
