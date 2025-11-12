@@ -39,7 +39,7 @@ public class FanActuatorView {
 
     try {
       Image image = new Image(
-              FanActuatorView.class.getResourceAsStream("/icons/fan.png")
+              FanActuatorView.class.getResourceAsStream("/icons/fan2.png")
       );
       fanIcon = new ImageView(image);
       fanIcon.setFitWidth(50);
