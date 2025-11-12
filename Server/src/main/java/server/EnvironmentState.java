@@ -11,11 +11,22 @@ public class EnvironmentState {
   public double temperatureC = 22.0;  // °C
   public double humidityPct = 55.0;   // % RH
   public int lightLux = 420;          // lux
-  public double ph = 36.4;             // pH
+  public double ph = 8.4;             // pH
 
   // External environment assumptions (can be extended or randomized)
   public double outsideTempC = 12.0;  // °C
   public int daytimeLightLux = 10000; // lux when "daylight" (demo)
+
+  // CO2 heating effect parameters
+  private static final double CO2_HEATING_RATE = 0.25; // °C per second when CO2 is on
+  private static final double MAX_CO2_TEMP_INCREASE = 5.0; // Maximum temperature increase from CO2
+
+  // Light parameters
+  private static final double LIGHT_INCREASE_OPEN = 25.0;   // lux/sec when window open
+  private static final double LIGHT_INCREASE_HALF = 12.0;   // lux/sec when window half open
+  private static final double LIGHT_DECREASE_CLOSED = 8.0;  // lux/sec when window closed
+  private static final int LIGHT_MIN = 50;
+  private static final int LIGHT_MAX = 20000;
 
   // --- Simple noise helper ---
   private double noise(double amplitude) {
@@ -30,7 +41,17 @@ public class EnvironmentState {
     // --- Temperature dynamics ---
     double towardOutside = (window == WindowLevel.OPEN) ? 0.15 : (window == WindowLevel.HALF ? 0.08 : 0.03);
     double fanCooling = fanOn ? 0.10 : 0.0;  // fan pushes toward outside temp too
+
+    // CO2 heating effect - increases temperature when CO2 is on
+    double co2Heating = co2On ? CO2_HEATING_RATE : 0.0;
+
     double targetTemp = outsideTempC + (temperatureC - outsideTempC) * (1.0 - (towardOutside + fanCooling));
+
+    // Apply CO2 heating effect
+    if (co2On && temperatureC < outsideTempC + MAX_CO2_TEMP_INCREASE) {
+      targetTemp += co2Heating * dtSeconds;
+    }
+
     temperatureC += (targetTemp - temperatureC) * 0.10 * dtSeconds + noise(0.02);
 
     // --- Humidity dynamics ---
@@ -40,9 +61,29 @@ public class EnvironmentState {
     humidityPct = Math.max(0.0, Math.min(100.0, humidityPct));
 
     // --- Light dynamics ---
-    // For demo: light drifts slightly; you could model time-of-day instead
-    lightLux += (int) Math.round(noise(5));
-    lightLux = Math.max(0, Math.min(200_000, lightLux));
+    // Light depends on window state: closed = decreasing, open = increasing
+    double lightChange = 0.0;
+
+    switch (window) {
+      case OPEN:
+        // Moderate increase when window fully open
+        lightChange = LIGHT_INCREASE_OPEN;
+        break;
+      case HALF:
+        // Small increase when half open
+        lightChange = LIGHT_INCREASE_HALF;
+        break;
+      case CLOSED:
+        // Slow decrease when closed (no external light)
+        lightChange = -LIGHT_DECREASE_CLOSED;
+        break;
+    }
+
+    // Apply the light change with some noise
+    lightLux += lightChange * dtSeconds + noise(5);
+
+    // Ensure light stays within reasonable bounds
+    lightLux = Math.max(LIGHT_MIN, Math.min(LIGHT_MAX, lightLux));
 
     // --- pH dynamics ---
     // Very simplified: pump slightly increases pH toward 7, CO2 slightly lowers toward 6.0
@@ -56,4 +97,3 @@ public class EnvironmentState {
   /** Window openness enum aligned with protocol CLOSED/HALF/OPEN */
   public enum WindowLevel { CLOSED, HALF, OPEN }
 }
-
