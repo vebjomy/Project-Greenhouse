@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GreenhHouse start" type="CompoundRunConfigurationType">
+    <toRun name="MainApp" type="Application" />
+    <toRun name="ServerApp" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>
