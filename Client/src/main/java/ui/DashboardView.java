@@ -373,13 +373,15 @@ public class DashboardView {
     HBox refreshControls = new HBox(10, intervalLabel, intervalComboBox, toggleRefreshBtn);
     refreshControls.setAlignment(Pos.CENTER_LEFT);
 
-    HBox controlsBar = new HBox(30, addNodeBtn, refreshControls);
+    HBox controlsBar = new HBox(30, addNodeBtn);
     controlsBar.setAlignment(Pos.CENTER_LEFT);
 
-    lastUpdateLabel = new Label("Last update: -");
+    lastUpdateLabel = new Label("Time and Date");
     lastUpdateLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666666;");
+    Region spacer = new Region();
+    HBox.setHgrow(spacer, Priority.ALWAYS);
 
-    HBox headerRow = new HBox(30, controlsBar, lastUpdateLabel);
+    HBox headerRow = new HBox(controlsBar, spacer, lastUpdateLabel);
     headerRow.setPadding(new Insets(0, 0, 10, 0));
     headerRow.setAlignment(Pos.CENTER_LEFT);
 

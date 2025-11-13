@@ -10,6 +10,9 @@ import ui.DashboardView;
 import ui.LoginScreenView;
 import ui.RegistrationView;
 import ui.SplashScreenView;
+import javafx.scene.control.Alert;
+import javafx.scene.control.TextInputDialog;
+import java.util.Optional;
 
 import java.util.List;
 
@@ -32,51 +35,18 @@ public class MainApp extends Application {
 
   private ClientApi api;
   private boolean isConnected = false;
-  private final String SERVER_ADDRESS = "127.0.0.1";
   private final int SERVER_PORT = 5555;
+  private String dynamicServerAddress;
 
   @Override
   public void start(Stage stage) {
     api = new ClientApi();
 
-    // Create the dashboard view ONCE
+    // Create the dashboard view
     dashboardView = new DashboardView(this, api);
 
     // Create the dashboard scene ONCE and cache it
     dashboardScene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
-
-    // Connect to server with proper timing
-    api.connect(SERVER_ADDRESS, SERVER_PORT).thenRun(() -> {
-      System.out.println("✅ Connected to server");
-      isConnected = true;
-
-      // IMPORTANT: First subscribe, THEN request topology
-      Platform.runLater(() -> {
-        // Subscribe to updates FIRST
-        api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
-                .thenRun(() -> {
-                  System.out.println("✅ Subscribed to updates");
-
-                  // THEN get topology
-                  api.getTopology().thenAccept(topology -> {
-                    System.out.println("✅ Initial topology loaded: " +
-                            (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
-                  });
-                });
-
-        // Update login screen status
-        if (loginScreenView != null) {
-          loginScreenView.updateServerStatus(true);
-        }
-      });
-    }).exceptionally(ex -> {
-      System.err.println("❌ Failed to connect to server: " + ex.getMessage());
-      isConnected = false;
-      if (loginScreenView != null) {
-        Platform.runLater(() -> loginScreenView.updateServerStatus(false));
-      }
-      return null;
-    });
 
     // Initialize network AFTER UI is set up
     dashboardView.initNetwork(api);
@@ -88,7 +58,7 @@ public class MainApp extends Application {
 
     // Load custom font
     Font customFont = Font.loadFont(
-            getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10
+        getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10
     );
     if (customFont == null) {
       System.err.println("Error loading font");
@@ -96,10 +66,87 @@ public class MainApp extends Application {
       System.out.println("Font is loaded: " + customFont.getFamily());
     }
 
-    showSplashScreen();
+    // Initiate the connection loop. This method will handle showing the first screen upon success.
+    attemptInitialConnection(stage);
+
+    // Show the stage immediately (it will be mostly empty until showSplashScreen is called)
     primaryStage.setMinHeight(SCENE_HEIGHT);
     primaryStage.setMinWidth(SCENE_WIDTH);
     primaryStage.show();
+  }
+
+  /**
+   * Shows a dialog to get the IP address and attempts connection.
+   * Recursively calls itself on connection failure, creating a loop until success or cancellation.
+   */
+  private void attemptInitialConnection(Stage stage) {
+    // 1. Show IP input dialog
+    TextInputDialog ipDialog = new TextInputDialog("127.0.0.1");
+    ipDialog.setTitle("Server Connection Setup");
+    ipDialog.setHeaderText("Enter Server IP Address");
+    ipDialog.setContentText("IP:");
+
+    Optional<String> result = ipDialog.showAndWait();
+    String serverAddress = result.orElse(null);
+
+    // Handle cancellation or empty input by exiting the application
+    if (serverAddress == null || serverAddress.trim().isEmpty()) {
+      Platform.exit();
+      return;
+    }
+
+    // 2. Attempt connection
+    api.connect(serverAddress, SERVER_PORT).thenRun(() -> {
+      // SUCCESS: Connection established
+      System.out.println("✅ Connected to server at " + serverAddress);
+      isConnected = true;
+      this.dynamicServerAddress = serverAddress;
+
+      // UI updates (showSplashScreen, subscribe, getTopology) must run on FX thread
+      Platform.runLater(() -> {
+        // Subscribe and get topology only after successful connection
+        api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
+            .thenRun(() -> {
+              System.out.println("✅ Subscribed to updates");
+
+              api.getTopology().thenAccept(topology -> {
+                System.out.println("✅ Initial topology loaded: " +
+                    (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
+              });
+            });
+
+        // Show the first view (Splash Screen)
+        showSplashScreen();
+
+        // Update login status (if LoginScreen is shown later)
+        if (loginScreenView != null) {
+          loginScreenView.updateServerStatus(true);
+        }
+      });
+
+    }).exceptionally(ex -> {
+      // FAILURE: Connection failed
+      String errorMsg = "Failed to connect to server (" + serverAddress + "). " +
+          "Please check the IP address and ensure the server is running.";
+
+      System.err.println("❌ Failed to connect to server: " + ex.getMessage());
+      isConnected = false;
+
+      Platform.runLater(() -> {
+        // Show Error Alert
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Connection Error");
+        alert.setHeaderText("Server Unavailable! Re-enter IP.");
+        alert.setContentText(errorMsg);
+
+        // Blocks until the user closes the alert
+        alert.showAndWait();
+
+        // 3. Loop: Call the function again to prompt for IP
+        attemptInitialConnection(stage);
+      });
+      return null;
+    });
   }
 
   public int getServerPort() {
@@ -146,8 +193,11 @@ public class MainApp extends Application {
     return isConnected;
   }
 
+  /**
+   * Returns the dynamically entered server address.
+   */
   public String getServerAddress() {
-    return SERVER_ADDRESS;
+    return dynamicServerAddress;
   }
 
   /**
