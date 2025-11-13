@@ -49,7 +49,7 @@ public class FanActuatorView {
 
     try {
       Image image = new Image(
-          FanActuatorView.class.getResourceAsStream("/icons/fan.png")
+          FanActuatorView.class.getResourceAsStream("/icons/fan2.png")
       );
       fanIcon = new ImageView(image);
       fanIcon.setFitWidth(ICON_SIZE);
@@ -58,7 +58,7 @@ public class FanActuatorView {
 
       // Create rotation animation
       rotation = new RotateTransition(Duration.seconds(1.5), fanIcon); // Faster rotation
-      rotation.setByAngle(360);
+      rotation.setByAngle(2000);
       rotation.setCycleCount(RotateTransition.INDEFINITE);
       rotation.setAutoReverse(false);
     } catch (Exception e) {
