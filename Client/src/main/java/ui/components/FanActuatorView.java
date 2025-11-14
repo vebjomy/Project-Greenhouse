@@ -58,7 +58,7 @@ public class FanActuatorView {
 
       // Create rotation animation
       rotation = new RotateTransition(Duration.seconds(1.5), fanIcon); // Faster rotation
-      rotation.setByAngle(2000);
+      rotation.setByAngle(1500);
       rotation.setCycleCount(RotateTransition.INDEFINITE);
       rotation.setAutoReverse(false);
     } catch (Exception e) {
