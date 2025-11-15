@@ -98,19 +98,28 @@ public class LoginScreenView {
 // Login Button
     Button loginButton = new Button("LOG IN");
     loginButton.getStyleClass().add("login-button");
+
+    controller.LoginController loginController = new controller.LoginController(
+            this,
+            mainApp.getClientApi(),
+            mainApp
+    );
+
+    loginButton.setOnAction(e -> loginController.handleLogin());
+
     HBox buttonContainer = new HBox(loginButton);
     buttonContainer.setAlignment(Pos.CENTER);
 // Login Button Action
-    loginButton.setOnAction(e -> {
-      // define login action here
-      String ipAddress = mainApp.getServerAddress(); // adjust as needed
-      if (mainApp.isConnected()) { // check server connection
-        System.out.println("Attempting login to: " + ipAddress);
-        mainApp.showDashboard();
-      } else {
-        new Alert(Alert.AlertType.ERROR, "Server is offline. Cannot log in.").showAndWait();
-      }
-    });
+//    loginButton.setOnAction(e -> {
+//      // define login action here
+//      String ipAddress = mainApp.getServerAddress(); // adjust as needed
+//      if (mainApp.isConnected()) { // check server connection
+//        System.out.println("Attempting login to: " + ipAddress);
+//        mainApp.showDashboard();
+//      } else {
+//        new Alert(Alert.AlertType.ERROR, "Server is offline. Cannot log in.").showAndWait();
+//      }
+//    });
 
 // Assemble Left Pane
     pane.getChildren().addAll(
@@ -245,11 +254,19 @@ public class LoginScreenView {
     return root;
   }
 
-  public AbstractButton getUsernameField() {
-    return null;
+  public TextField getUsernameField() {
+    return usernameField;
   }
 
-  public AbstractButton getPasswordField() {
-    return null;
+  public PasswordField getPasswordField() {
+    return passwordField;
   }
+
+//  public AbstractButton getUsernameField() {
+//    return null;
+//  }
+//
+//  public AbstractButton getPasswordField() {
+//    return null;
+//  }
 }

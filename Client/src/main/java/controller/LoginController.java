@@ -1,8 +1,11 @@
 package controller;
 
+import App.MainApp;
 import javafx.scene.control.Alert;
 import service.AuthenticationService;
 import ui.LoginScreenView;
+import core.ClientApi;
+import javafx.application.Platform;
 
 /**
  * Controller for the LoginScreenView
@@ -10,32 +13,51 @@ import ui.LoginScreenView;
 public class LoginController {
     private final LoginScreenView view;
     private final AuthenticationService authService;
+    private final ClientApi clientApi;
+    private final MainApp mainApp;
 
-    public LoginController(LoginScreenView view) {
+    public LoginController(LoginScreenView view, ClientApi clientApi, MainApp mainApp) {
         this.view = view;
+        this.clientApi = clientApi;
         this.authService = new AuthenticationService();
+        this.authService.setClientApi(clientApi);
+        this.mainApp = mainApp;
     }
 
     /**
      * Handles user login
      * @return true if login successful, false otherwise
      */
-    public boolean handleLogin() {
+    public void handleLogin() {
         String username = view.getUsernameField().getText().trim();
         String password = view.getPasswordField().getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            showAlert("Error", "Please enter both username and password.");
-            return false;
+            showError("Username and password are required.");
+            return;
         }
 
-        if (authService.login(username, password)) {
-            showAlert("Success", "Login successful! Welcome, " + username);
-            return true;
-        } else {
-            showAlert("Error", "Invalid username or password.");
-            return false;
+        // Check server connection
+        if (!mainApp.isConnected()) {
+            showError("Server is offline. Cannot log in.");
+            return;
         }
+
+        authService.login(username, password).thenAccept(response -> {
+            Platform.runLater(() -> {
+                if (response.success) {
+                    System.out.println("✅ Login successful - Role: " + response.getRole());
+                    mainApp.showDashboard(); // ✅ Navigate to dashboard
+                } else {
+                    showError(response.getMessage());
+                }
+            });
+        }).exceptionally(ex -> {
+            Platform.runLater(() -> {
+                showError("Login failed: " + ex.getMessage());
+            });
+            return null;
+        });
     }
 
     /**
@@ -45,9 +67,9 @@ public class LoginController {
         return authService;
     }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(title.equals("Success") ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
-        alert.setTitle(title);
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Login Error");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
