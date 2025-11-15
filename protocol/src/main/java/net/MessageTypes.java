@@ -5,6 +5,10 @@ package net;
  */
 public final class MessageTypes {
   public static final String HELLO = "hello";
+  public static final String AUTH = "auth";
+  public static final String AUTH_RESPONSE = "auth_response";
+  public static final String REGISTER = "register";
+  public static final String REGISTER_RESPONSE = "register_response";
   public static final String WELCOME = "welcome";
   public static final String PING = "ping";
   public static final String PONG = "pong";
