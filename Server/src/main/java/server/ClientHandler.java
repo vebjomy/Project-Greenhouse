@@ -17,16 +17,18 @@ public class ClientHandler implements Runnable {
   private final NodeManager nodeManager;
   private final ClientRegistry registry;
   private final SensorEngine engine;
+  private final UserService userService;
   private final MessageCodec codec = new MessageCodec();
 
   private PrintWriter out;
   private ClientRegistry.Session session;
 
-  public ClientHandler(Socket socket, NodeManager nodeManager, ClientRegistry registry, SensorEngine engine) {
+  public ClientHandler(Socket socket, NodeManager nodeManager, ClientRegistry registry, SensorEngine engine, UserService userService) {
     this.socket = socket;
     this.nodeManager = nodeManager;
     this.registry = registry;
     this.engine = engine;
+    this.userService = userService;
   }
 
   @Override
@@ -59,6 +61,8 @@ public class ClientHandler implements Runnable {
       String type = root.path("type").asText("");
       switch (type) {
         case "hello" -> handleHello(root);
+        case "auth" -> handleAuth(root);
+        case "register" -> handleRegister(root);
         case "get_topology" -> handleGetTopology(root);
         case "create_node" -> handleCreateNode(root);
         case "update_node" -> handleUpdateNode(root);
@@ -116,6 +120,59 @@ public class ClientHandler implements Runnable {
 
     System.out.println("   ✅ Topology sent (no separate ACK)");
   }
+
+  private void handleAuth(JsonNode msg) throws Exception {
+    System.out.println("📥 [Server] Received auth request");
+    Auth auth = codec.fromJson(msg.toString(), Auth.class);
+
+    System.out.println("   Username: " + auth.getUsername());
+
+    boolean isValid = userService.validateUser(auth.getUsername(), auth.getPassword());
+
+    AuthResponse response = new AuthResponse();
+    response.id = auth.getId();
+    response.success = isValid;
+
+    if (isValid) {
+      response.userId = userService.getUserId(auth.getUsername());
+      response.role = userService.getUserRole(auth.getUsername());
+      response.message = "Authentication successful";
+      System.out.println("   ✅ Authentication successful - Role: " + response.role);
+    } else {
+      response.message = "Invalid username or password";
+      System.out.println("   ❌ Authentication failed");
+    }
+
+    send(response);
+  }
+
+  private void handleRegister(JsonNode msg) throws Exception {
+    System.out.println("📥 [Server] Received register request");
+    RegisterRequest req = codec.fromJson(msg.toString(), RegisterRequest.class);
+
+    System.out.println("   Username: " + req.getUsername());
+    System.out.println("   Role: " + req.getRole());
+
+    RegisterResponse response = new RegisterResponse();
+    response.id = req.getId();
+
+    // Check if user already exists
+    if (userService.getUserId(req.getUsername()) != -1) {
+      response.success = false;
+      response.message = "Username already exists";
+      System.out.println("   ❌ Registration failed - User exists");
+    } else {
+      // Register new user
+      int userId = userService.registerUser(req.getUsername(), req.getPassword(), req.getRole());
+      response.success = true;
+      response.userId = userId;
+      response.message = "Registration successful";
+      System.out.println("   ✅ Registration successful - UserID: " + userId);
+    }
+
+    send(response);
+  }
+
 
   /**
    * Handle create_node request.
