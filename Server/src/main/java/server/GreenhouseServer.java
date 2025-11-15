@@ -14,6 +14,7 @@ public class GreenhouseServer {
   private final NodeManager nodeManager = new NodeManager();
   private final ClientRegistry registry = new ClientRegistry();
   private final SensorEngine engine = new SensorEngine(nodeManager, registry::broadcastSensorUpdate);
+  private final UserService userService = new UserService();
 
   public GreenhouseServer(int port) { this.port = port; }
 
@@ -25,7 +26,7 @@ public class GreenhouseServer {
       System.out.println("🌿 Server listening on " + port);
       while (true) {
         Socket client = serverSocket.accept();
-        clientPool.submit(new ClientHandler(client, nodeManager, registry, engine));
+        clientPool.submit(new ClientHandler(client, nodeManager, registry, engine,userService));
       }
     }
   }
