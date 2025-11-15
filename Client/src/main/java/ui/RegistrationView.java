@@ -40,11 +40,14 @@ public class RegistrationView {
     Button registerButton = new Button("Register");
     registerButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 20; -fx-font-size: 16px; -fx-cursor: hand;");
     registerButton.setOnAction(e -> {
-      controller.RegisterController registerController = new controller.RegisterController(this);
-      if (registerController.handleRegister()) {
-        mainApp.showLoginScreen(); // Navigate to login after successful registration
-      }
+      controller.RegisterController registerController = new controller.RegisterController(
+              this,
+              mainApp.getClientApi(),
+              mainApp  // ✅ Pass MainApp
+      );
+      registerController.handleRegister();
     });
+
 
     VBox formBox = new VBox(10, title, usernameField, passwordField,confirmPasswordField ,registerButton);
     formBox.setAlignment(Pos.CENTER);
