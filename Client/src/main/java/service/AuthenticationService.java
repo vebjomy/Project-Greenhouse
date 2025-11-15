@@ -1,53 +1,83 @@
 package service;
 
+import core.ClientApi;
+import dto.Auth;
+import dto.AuthResponse;
+import dto.RegisterRequest;
+import dto.RegisterResponse;
 import model.User;
 import model.UserRegister;
+
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Service class for handling user authentication
  */
 public class AuthenticationService {
-    private final UserRegister userRegister;
+//    private final UserRegister userRegister;
     private User currentUser;
+    private ClientApi clientApi;
 
     public AuthenticationService() {
-        this.userRegister = new UserRegister();
+//        this.userRegister = new UserRegister();
+    }
+
+    public void setClientApi(ClientApi api) {
+        this.clientApi = api;
     }
 
     /**
-     * Attempts to login a user with username and password
-     * @param username the username
-     * @param password the password
-     * @return true if login successful, false otherwise
+     * Authenticates user with server via TCP
      */
-    public boolean login(String username, String password) {
-        for (User user : userRegister.getUserList()) {
-            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
-                currentUser = user;
-                return true;
-            }
+    public CompletableFuture<AuthResponse> login(String username, String password) {
+        if (clientApi == null) {
+            CompletableFuture<AuthResponse> fut = new CompletableFuture<>();
+            fut.completeExceptionally(new IllegalStateException("ClientApi not set"));
+            return fut;
         }
-        return false;
+
+        Auth authRequest = new Auth(UUID.randomUUID().toString(), username, password);
+
+        return clientApi.sendAuthMessage(authRequest).thenApply(response -> {
+            if (response.success) {
+                // Create local user object
+                currentUser = new User(response.userId, username, password, response.role);
+                System.out.println("✅ Login successful - User: " + username);
+            } else {
+                System.out.println("❌ Login failed: " + response.message);
+            }
+            return response;
+        });
     }
 
     /**
-     * Registers a new user
-     * @param username the username
-     * @param password the password
-     * @param role the role (default: "Operator")
-     * @return true if registration successful, false if username already exists
+     * Registers new user with server via TCP
      */
-    public boolean register(String username, String password, String role) {
-        // Check if username already exists
-        for (User user : userRegister.getUserList()) {
-            if (user.getUsername().equals(username)) {
-                return false; // Username already exists
-            }
+    public CompletableFuture<RegisterResponse> register(String username, String password, String role) {
+        if (clientApi == null) {
+            CompletableFuture<RegisterResponse> fut = new CompletableFuture<>();
+            fut.completeExceptionally(new IllegalStateException("ClientApi not set"));
+            return fut;
         }
 
-        // Add new user
-        userRegister.addUser(username, password, role != null ? role : "Operator");
-        return true;
+        RegisterRequest request = new RegisterRequest(
+                UUID.randomUUID().toString(),
+                username,
+                password,
+                role != null ? role : "user"
+        );
+
+        return clientApi.sendRegisterMessage(request).thenApply(response -> {
+            if (response.success) {
+                // Add to local register
+//                userRegister.addUser(username, password, role);
+                System.out.println("✅ Registration successful - UserID: " + response.userId);
+            } else {
+                System.out.println("❌ Registration failed: " + response.message);
+            }
+            return response;
+        });
     }
 
     /**
@@ -73,11 +103,11 @@ public class AuthenticationService {
         return currentUser != null;
     }
 
-    /**
-     * Gets the UserRegister instance for user management
-     * @return the UserRegister instance
-     */
-    public UserRegister getUserRegister() {
-        return userRegister;
-    }
+//    /**
+//     * Gets the UserRegister instance for user management
+//     * @return the UserRegister instance
+//     */
+//    public UserRegister getUserRegister() {
+//        return userRegister;
+//    }
 }
