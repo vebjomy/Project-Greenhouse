@@ -63,6 +63,9 @@ public class ClientHandler implements Runnable {
         case "hello" -> handleHello(root);
         case "auth" -> handleAuth(root);
         case "register" -> handleRegister(root);
+        case "get_users" -> handleGetUsers(root);
+        case "update_user" -> handleUpdateUser(root);
+        case "delete_user" -> handleDeleteUser(root);
         case "get_topology" -> handleGetTopology(root);
         case "create_node" -> handleCreateNode(root);
         case "update_node" -> handleUpdateNode(root);
@@ -173,6 +176,46 @@ public class ClientHandler implements Runnable {
     send(response);
   }
 
+  private void handleGetUsers(JsonNode msg) throws Exception {
+    System.out.println("📥 [Server] Received get_users request");
+    GetUsersRequest req = codec.fromJson(msg.toString(), GetUsersRequest.class);
+
+    UsersListResponse response = new UsersListResponse();
+    response.id = req.id;
+    response.success = true;
+    response.users = userService.getAllUsers();
+
+    System.out.println("   ✅ Returning " + response.users.size() + " users");
+    send(response);
+  }
+
+  private void handleUpdateUser(JsonNode msg) throws Exception {
+    System.out.println("📥 [Server] Received update_user request");
+    UpdateUserRequest req = codec.fromJson(msg.toString(), UpdateUserRequest.class);
+
+    boolean success = userService.updateUser(req.userId, req.username, req.role);
+
+    Ack ack = new Ack();
+    ack.id = req.id;
+    ack.status = success ? "ok" : "error";
+
+    System.out.println("   " + (success ? "✅" : "❌") + " User update: " + req.username);
+    send(ack);
+  }
+
+  private void handleDeleteUser(JsonNode msg) throws Exception {
+    System.out.println("📥 [Server] Received delete_user request");
+    DeleteUserRequest req = codec.fromJson(msg.toString(), DeleteUserRequest.class);
+
+    boolean success = userService.deleteUser(req.userId);
+
+    Ack ack = new Ack();
+    ack.id = req.id;
+    ack.status = success ? "ok" : "error";
+
+    System.out.println("   " + (success ? "✅" : "❌") + " User deleted: ID " + req.userId);
+    send(ack);
+  }
 
   /**
    * Handle create_node request.

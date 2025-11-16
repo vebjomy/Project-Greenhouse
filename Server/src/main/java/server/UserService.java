@@ -3,9 +3,11 @@ package server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dto.UsersListResponse;
 
 import java.io.*;
-import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserService {
     private static final String USERS_FILE = "users.json";
@@ -118,4 +120,47 @@ public class UserService {
         }
         return null;
     }
+
+    public synchronized List<UsersListResponse.UserData> getAllUsers() {
+        List<UsersListResponse.UserData> list = new ArrayList<>();
+        for (int i = 0; i < users.size(); i++) {
+            ObjectNode u = (ObjectNode) users.get(i);
+            UsersListResponse.UserData ud = new UsersListResponse.UserData();
+            ud.id = u.get("id").asInt();
+            ud.username = u.get("username").asText();
+            ud.role = u.get("role").asText();
+            list.add(ud);
+        }
+        return list;
+    }
+
+    public synchronized boolean updateUser(int userId, String newUsername, String newRole) {
+        for (int i = 0; i < users.size(); i++) {
+            ObjectNode u = (ObjectNode) users.get(i);
+            if (u.get("id").asInt() == userId) {
+                u.put("username", newUsername);
+                u.put("role", newRole);
+                saveUsers();
+                System.out.println("✅ Updated user ID " + userId + " -> username: " + newUsername + ", role: " + newRole);
+                return true;
+            }
+        }
+        System.err.println("❌ Update failed: user ID " + userId + " not found");
+        return false;
+    }
+
+    public synchronized boolean deleteUser(int userId) {
+        for (int i = 0; i < users.size(); i++) {
+            ObjectNode u = (ObjectNode) users.get(i);
+            if (u.get("id").asInt() == userId) {
+                users.remove(i);
+                saveUsers();
+                System.out.println("✅ Deleted user ID " + userId);
+                return true;
+            }
+        }
+        System.err.println("❌ Delete failed: user ID " + userId + " not found");
+        return false;
+    }
+
 }
