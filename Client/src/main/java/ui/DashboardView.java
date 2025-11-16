@@ -138,7 +138,7 @@ public class DashboardView {
 
     usersBtn.setOnAction(e -> {
       if (usersContent == null) {
-        usersContent = new UsersView().getView();
+        usersContent = new UsersView(clientApi).getView();
       }
       root.setCenter(usersContent);
       setActiveButton(usersBtn, navButtons, buttonStyle, buttonActiveStyle);

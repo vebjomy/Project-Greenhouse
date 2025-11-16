@@ -11,6 +11,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import model.User;
+import core.ClientApi;
 
 /**
  * The View (UI) for the user management section.
@@ -21,9 +22,10 @@ public class UsersView {
   private final BorderPane view;
   private final UsersController controller;
   private final TableView<User> userTable = new TableView<>();
-/* this class creates the user management view with a table and buttons */
-  public UsersView() {
-    controller = new UsersController(this);
+
+  /* this class creates the user management view with a table and buttons */
+  public UsersView(ClientApi clientApi) {
+    controller = new UsersController(this, clientApi);
     view = createUsersView();
 //    controller.loadUsers();
   }
