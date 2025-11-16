@@ -201,6 +201,14 @@ public class MainApp extends Application {
     }
 
     /**
+     * Gets the ClientApi instance for network operations
+     * @return the ClientApi instance
+     */
+    public ClientApi getClientApi() {
+        return api;
+    }
+
+    /**
      * Displays the dashboard view by reusing the cached scene.
      * This prevents "already set as root" error.
      */

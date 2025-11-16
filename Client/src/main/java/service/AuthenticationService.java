@@ -6,7 +6,6 @@ import dto.AuthResponse;
 import dto.RegisterRequest;
 import dto.RegisterResponse;
 import model.User;
-import model.UserRegister;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -15,13 +14,10 @@ import java.util.concurrent.CompletableFuture;
  * Service class for handling user authentication
  */
 public class AuthenticationService {
-//    private final UserRegister userRegister;
     private User currentUser;
     private ClientApi clientApi;
 
-    public AuthenticationService() {
-//        this.userRegister = new UserRegister();
-    }
+    public AuthenticationService() {}
 
     public void setClientApi(ClientApi api) {
         this.clientApi = api;
@@ -103,11 +99,4 @@ public class AuthenticationService {
         return currentUser != null;
     }
 
-//    /**
-//     * Gets the UserRegister instance for user management
-//     * @return the UserRegister instance
-//     */
-//    public UserRegister getUserRegister() {
-//        return userRegister;
-//    }
 }

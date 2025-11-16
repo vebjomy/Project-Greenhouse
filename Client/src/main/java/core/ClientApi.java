@@ -121,6 +121,15 @@ public class ClientApi implements AutoCloseable {
     });
   }
 
+  public CompletableFuture<RegisterResponse> sendRegisterMessage(RegisterRequest req) {
+    String id = req.getId();
+    var fut = requests.register(id).thenApply(js ->
+            tcp.codec().mapper().convertValue(js, RegisterResponse.class)
+    );
+    send(req);
+    return fut;
+  }
+
   // ---------- Subscriptions ----------
   public CompletableFuture<Void> subscribe(Collection<String> nodes, Collection<String> events){
     String id = requests.newId();
@@ -247,6 +256,50 @@ public class ClientApi implements AutoCloseable {
     return fut;
   }
 
+  public CompletableFuture<AuthResponse> sendAuthMessage(Auth auth) {
+    String id = auth.getId();
+    var fut = requests.register(id).thenApply(js ->
+            tcp.codec().mapper().convertValue(js, AuthResponse.class)
+    );
+    send(auth);
+    return fut;
+  }
+
+  public CompletableFuture<List<UsersListResponse.UserData>> getUsers() {
+    String id = requests.newId();
+    var fut = requests.register(id).thenApply(js -> {
+      UsersListResponse response = tcp.codec().mapper().convertValue(js, UsersListResponse.class);
+      return response.users;
+    });
+
+    var msg = new SimpleIdMessage("get_users", id);
+    send(msg);
+    return fut;
+  }
+
+  public CompletableFuture<Void> updateUser(int userId, String username, String role) {
+    String id = requests.newId();
+    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
+
+    UpdateUserRequest req = new UpdateUserRequest();
+    req.id = id;
+    req.userId = userId;
+    req.username = username;
+    req.role = role;
+    send(req);
+    return fut;
+  }
+
+  public CompletableFuture<Void> deleteUser(int userId) {
+    String id = requests.newId();
+    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
+
+    DeleteUserRequest req = new DeleteUserRequest();
+    req.id = id;
+    req.userId = userId;
+    send(req);
+    return fut;
+  }
 
   // ---------- Incoming processing ----------
   private void handleLine(String line){
@@ -259,6 +312,12 @@ public class ClientApi implements AutoCloseable {
       switch (type) {
         case MessageTypes.WELCOME -> {
           // complete "hello" future if present
+          requests.complete(id, root);
+        }
+        case "register_response" -> {
+          requests.complete(id, root);
+        }
+        case "auth_response" -> {
           requests.complete(id, root);
         }
         case MessageTypes.ACK, MessageTypes.ERROR, MessageTypes.LAST_VALUES, MessageTypes.PONG -> {
