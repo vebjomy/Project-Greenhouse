@@ -51,6 +51,7 @@ public class DashboardView {
     this.mainApp = mainApp;
     this.clientApi = api;
     controller = new DashboardController(this, mainApp, api);
+
     setupUI();
   }
 
@@ -90,7 +91,7 @@ public class DashboardView {
     titledash.getStyleClass().add("title-dash");
 
     // Greeting and additional information
-    userGreetingLabel = new Label("Hello, John Doe!");
+    userGreetingLabel = new Label("Hello + !!username!!" );
     Label additionalInfo = new Label("System Status: Operational");
     userGreetingLabel.setStyle("-fx-font-size: 21px; -fx-font-weight: 500;" +
             " -fx-text-fill: #333333;");
