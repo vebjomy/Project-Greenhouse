@@ -55,12 +55,7 @@ public class EnvironmentState {
     updateLight(dtSeconds, window);
 
     // --- pH dynamics ---
-    // Very simplified: pump slightly increases pH toward 7, CO2 slightly lowers toward 6.0
-    double phTrend = 0.0;
-    if (pumpOn) phTrend += (7.0 - ph) * 0.05;
-    if (co2On) phTrend += (6.0 - ph) * 0.04;
-    ph += phTrend * dtSeconds + noise(0.01);
-    ph = Math.max(0.0, Math.min(14.0, ph));
+    updatePh(dtSeconds, pumpOn, co2On);
   }
 
   /**
@@ -138,6 +133,22 @@ public class EnvironmentState {
 
     // Ensure light stays within reasonable bounds
     lightLux = Math.max(LIGHT_MIN, Math.min(LIGHT_MAX, lightLux));
+  }
+
+  /**
+   * Update the pH level of the environment considering pump and CO2 states. Very simplified: pump
+   * slightly increases pH toward 7, CO2 slightly lowers toward 6.0
+   *
+   * @param dtSeconds seconds elapsed
+   * @param pumpOn the pump state
+   * @param co2On the CO2 state
+   */
+  public void updatePh(double dtSeconds, boolean pumpOn, boolean co2On) {
+    double phTrend = 0.0;
+    if (pumpOn) phTrend += (7.0 - ph) * 0.05;
+    if (co2On) phTrend += (6.0 - ph) * 0.04;
+    ph += phTrend * dtSeconds + noise(0.01);
+    ph = Math.max(0.0, Math.min(14.0, ph));
   }
 
   /** Window openness enum aligned with protocol CLOSED/HALF/OPEN */
