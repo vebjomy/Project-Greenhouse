@@ -2,27 +2,28 @@ package controller;
 
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
-import model.*;
+import model.Node;
 import ui.StatisticsView;
-import java.util.List;
-import java.util.OptionalDouble;
+
+import java.util.Collection;
 
 /**
  * Controller for the StatisticsView. It calculates and populates the
  * statistics based on the current state of the nodes and sensors.
+ *
+ * @version 2.0 - Updated to work with new Node model
  */
 public class StatisticsController {
   private final StatisticsView view;
-  private final List<Node> nodes;
+  private final Collection<Node> nodes;
 
   /**
    * Constructor for StatisticsController.
    *
    * @param view  The StatisticsView instance to control.
-   * @param nodes The list of nodes containing sensors to analyze.
+   * @param nodes The collection of nodes containing sensors to analyze.
    */
-
-  public StatisticsController(StatisticsView view, List<Node> nodes) {
+  public StatisticsController(StatisticsView view, Collection<Node> nodes) {
     this.view = view;
     this.nodes = nodes;
   }
@@ -39,29 +40,26 @@ public class StatisticsController {
     // --- Update Summary Labels ---
     view.getTotalNodesLabel().setText("Total Nodes: " + nodes.size());
 
-    double avgTemp = calculateAverageForSensor(TemperatureSensor.class);
+    double avgTemp = calculateAverageTemperature();
     view.getAvgTempLabel().setText(String.format("Avg. Temperature: %.1f °C", avgTemp));
 
-    double avgHumidity = calculateAverageForSensor(HumiditySensor.class);
+    double avgHumidity = calculateAverageHumidity();
     view.getAvgHumidityLabel().setText(String.format("Avg. Humidity: %.1f %%", avgHumidity));
 
-    double avgLight = calculateAverageForSensor(LightSensor.class);
+    double avgLight = calculateAverageLight();
     view.getAvgLightLabel().setText(String.format("Avg. Light Level: %.1f lx", avgLight));
 
-    double avgPh = calculateAverageForSensor(PHSensor.class);
+    double avgPh = calculateAveragePh();
     view.getAvgPhLevelLabel().setText(String.format("Avg. pH Level: %.2f", avgPh));
 
     // --- Update ALL Bar Charts ---
     updateAllCharts();
-
     applyBarColors();
   }
 
-  /** Applies distinct colors to each bar chart for better visual distinction.
-   * This method sets specific colors for temperature, humidity, light, and pH bar charts.
-   * Each chart is styled using CSS to enhance the user interface.
+  /**
+   * Applies distinct colors to each bar chart for better visual distinction.
    */
-
   private void applyBarColors() {
     setChartBarColor(view.getTempBarChart(), "#ff6f61");
     setChartBarColor(view.getHumidityBarChart(), "#4db8ff");
@@ -75,79 +73,139 @@ public class StatisticsController {
    * @param chart The BarChart to style.
    * @param color The color to apply to the bars (in hex format).
    */
-
   private void setChartBarColor(BarChart<String, Number> chart, String color) {
     chart.lookupAll(".chart-bar").forEach(bar ->
-        bar.setStyle("-fx-bar-fill: " + color + ";")
+            bar.setStyle("-fx-bar-fill: " + color + ";")
     );
-
   }
 
   /**
-   * A generic method to calculate the average value for a specific sensor type
-   * across all nodes.
-   *
-   * @param sensorClass The class of the sensor type to average.
-   * @param <T> The type of the sensor, must extend Sensor.
-   * @return The calculated average, or 0.0 if no such sensors are found.
+   * Calculates the average temperature across all nodes.
    */
-  private <T extends Sensor> double calculateAverageForSensor(Class<T> sensorClass) {
-    OptionalDouble average = nodes.stream()
-        .flatMap(node -> node.getSensors().stream()) // Get all sensors from all nodes
-        .filter(sensorClass::isInstance)             // Filter for the specific sensor type
-        .mapToDouble(Sensor::getCurrentValue) // Get the current value of each sensor
-        .average();                                   // Calculate the average
-
-    return average.orElse(0.0);
+  private double calculateAverageTemperature() {
+    return nodes.stream()
+            .map(Node::getTemperature)
+            .filter(temp -> temp != null)
+            .mapToDouble(Double::doubleValue)
+            .average()
+            .orElse(0.0);
   }
 
   /**
-   * Calls the generic chart update method for all sensor types.
-   * This method updates the bar charts for temperature, humidity,
-   * light, and pH sensors.
+   * Calculates the average humidity across all nodes.
+   */
+  private double calculateAverageHumidity() {
+    return nodes.stream()
+            .map(Node::getHumidity)
+            .filter(humidity -> humidity != null)
+            .mapToDouble(Double::doubleValue)
+            .average()
+            .orElse(0.0);
+  }
+
+  /**
+   * Calculates the average light level across all nodes.
+   */
+  private double calculateAverageLight() {
+    return nodes.stream()
+            .map(Node::getLight)
+            .filter(light -> light != null)
+            .mapToDouble(Double::doubleValue)
+            .average()
+            .orElse(0.0);
+  }
+
+  /**
+   * Calculates the average pH across all nodes.
+   */
+  private double calculateAveragePh() {
+    return nodes.stream()
+            .map(Node::getPh)
+            .filter(ph -> ph != null)
+            .mapToDouble(Double::doubleValue)
+            .average()
+            .orElse(0.0);
+  }
+
+  /**
+   * Updates all bar charts with current node data.
    */
   private void updateAllCharts() {
-    // 1.
-    updateChartForSensor(TemperatureSensor.class, view.getTempBarChart());
-
-    // 2.
-    updateChartForSensor(HumiditySensor.class, view.getHumidityBarChart());
-
-    // 3.
-    updateChartForSensor(LightSensor.class, view.getLightBarChart());
-
-    // 4. pH
-    updateChartForSensor(PHSensor.class, view.getPhBarChart());
+    updateTemperatureChart();
+    updateHumidityChart();
+    updateLightChart();
+    updatePhChart();
   }
-
 
   /**
-   * A generic method to update a BarChart for a specific sensor type.
-   *
-   * @param sensorClass The class of the sensor type to display.
-   * @param chart The BarChart to update.
-   * @param <T> The type of the sensor, must extend Sensor.
+   * Updates the temperature bar chart.
    */
-  private <T extends Sensor> void updateChartForSensor(Class<T> sensorClass, BarChart<String, Number> chart) {
-
-
+  private void updateTemperatureChart() {
     XYChart.Series<String, Number> series = new XYChart.Series<>();
+    series.setName("Temperature");
 
     for (Node node : nodes) {
-
-      node.getSensors().stream()
-          .filter(sensorClass::isInstance)
-          .findFirst()
-          .ifPresent(sensor -> {
-
-            series.getData().add(new XYChart.Data<>(node.getName(), sensor.getCurrentValue()));
-          });
+      Double temp = node.getTemperature();
+      if (temp != null) {
+        series.getData().add(new XYChart.Data<>(node.getName(), temp));
+      }
     }
 
-
-    chart.getData().clear();
-    chart.getData().add(series);
+    view.getTempBarChart().getData().clear();
+    view.getTempBarChart().getData().add(series);
   }
 
+  /**
+   * Updates the humidity bar chart.
+   */
+  private void updateHumidityChart() {
+    XYChart.Series<String, Number> series = new XYChart.Series<>();
+    series.setName("Humidity");
 
+    for (Node node : nodes) {
+      Double humidity = node.getHumidity();
+      if (humidity != null) {
+        series.getData().add(new XYChart.Data<>(node.getName(), humidity));
+      }
+    }
+
+    view.getHumidityBarChart().getData().clear();
+    view.getHumidityBarChart().getData().add(series);
+  }
+
+  /**
+   * Updates the light level bar chart.
+   */
+  private void updateLightChart() {
+    XYChart.Series<String, Number> series = new XYChart.Series<>();
+    series.setName("Light");
+
+    for (Node node : nodes) {
+      Double light = node.getLight();
+      if (light != null) {
+        series.getData().add(new XYChart.Data<>(node.getName(), light));
+      }
+    }
+
+    view.getLightBarChart().getData().clear();
+    view.getLightBarChart().getData().add(series);
+  }
+
+  /**
+   * Updates the pH bar chart.
+   */
+  private void updatePhChart() {
+    XYChart.Series<String, Number> series = new XYChart.Series<>();
+    series.setName("pH Level");
+
+    for (Node node : nodes) {
+      Double ph = node.getPh();
+      if (ph != null) {
+        series.getData().add(new XYChart.Data<>(node.getName(), ph));
+      }
+    }
+
+    view.getPhBarChart().getData().clear();
+    view.getPhBarChart().getData().add(series);
+  }
 }

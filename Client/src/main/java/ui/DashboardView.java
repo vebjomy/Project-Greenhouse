@@ -1,17 +1,26 @@
 package ui;
+
 import App.MainApp;
 import controller.DashboardController;
+import core.ClientApi;
+import core.CommandProcessor;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+
 /**
  * DashboardView sets up the main dashboard UI for the Farm Management System.
  * It includes a top bar, left sidebar for navigation, center content area for nodes,
- * a right panel for activity logs, and a new bottom panel for command input (Terminal Panel).
+ * a right panel for activity logs, and a bottom panel for command input (Terminal Panel).
+ *
+ * @author Green House Control Team
+ * @version 3.0
  */
 public class DashboardView {
   private final BorderPane root = new BorderPane();
+  private final ClientApi clientApi;
   private final DashboardController controller;
   private FlowPane nodesPane;
   private Label lastUpdateLabel;
@@ -23,117 +32,147 @@ public class DashboardView {
   // Field for log content (Activity Log)
   private VBox logContent;
 
-  // NEW FIELD: Text area for command output/history (Command Panel)
+  // Field for command output/history (Command Panel)
   private TextArea commandOutputArea;
 
-  // new field for mainApp reference
+  // Reference to mainApp
   private final MainApp mainApp;
 
-  public DashboardView(MainApp mainApp) { // change constructor to accept MainApp
-    this.mainApp = mainApp; // sacve reference to mainApp
-    controller = new DashboardController(this, mainApp);
+  // Initialization flag
+  private boolean isInitialized = false;
+
+  /**
+   * Constructor for DashboardView.
+   *
+   * @param mainApp Reference to the main application
+   * @param api ClientApi instance for server communication
+   */
+  public DashboardView(MainApp mainApp, ClientApi api) {
+    this.mainApp = mainApp;
+    this.clientApi = api;
+    controller = new DashboardController(this, mainApp, api);
+
     setupUI();
   }
 
-  /** SETUP UI COMPONENTS AND LAYOUT */
+  /**
+   * Sets up all UI components and layout.
+   * Does NOT perform data initialization - that's done in initNetwork().
+   */
   private void setupUI() {
     // --- Overall Styling ---
-    root.setStyle("-fx-background-color: #ffffff;"); // White background for the main area
-
+    root.setStyle("-fx-background-color: #ffffff;");
     root.getStylesheets().add(getClass().getResource("/client.css").toExternalForm());
+
     // --- 1. TOP BAR (Title + Greeting + Info) ---
     root.setTop(createTopBar());
+
     // --- 2. LEFT SIDEBAR (Navigation) ---
     root.setLeft(createLeftSidebar());
+
     // --- 3. CENTER CONTENT (Controls + Nodes) ---
-    VBox centerContainer = createCenterContent();
-    root.setCenter(centerContainer);
+    dashboardContent = createCenterContent();
+    root.setCenter(dashboardContent);
+
     // --- 4. RIGHT PANEL (Status/Log) ---
     root.setRight(createRightPanel());
 
     // --- 5. BOTTOM COMMAND PANEL (Terminal) ---
     root.setBottom(createBottomPanel());
 
-    dashboardContent = createCenterContent();
-    root.setCenter(dashboardContent);
-
-    // --- INITIALIZE CONTROLLER ---
-    // Pass components the controller needs to update, including the new command output area
+    // --- INITIALIZE CONTROLLER WITH UI COMPONENTS ---
     controller.setUiComponents(nodesPane, lastUpdateLabel,
-        logContent, commandOutputArea);
-    controller.refreshData(); // Initial data load
+            logContent, commandOutputArea);
   }
+
   // --- TOP BAR CREATION ---
   private HBox createTopBar() {
     Label titledash = new Label("Green House\nFarm Management System");
     titledash.getStyleClass().add("title-dash");
+
     // Greeting and additional information
-    userGreetingLabel = new Label("Hello, John Doe!");
-    Label additionalInfo = new Label("System Status: Operational (4 Nodes)");
+    userGreetingLabel = new Label("Hello + !!username!!" );
+    Label additionalInfo = new Label("System Status: Operational");
     userGreetingLabel.setStyle("-fx-font-size: 21px; -fx-font-weight: 500;" +
-        " -fx-text-fill: #333333;");
-    additionalInfo.setStyle("-fx-font-size: 14px; -fx-text-fill: #00796b;"); // Teal color for status
+            " -fx-text-fill: #333333;");
+    additionalInfo.setStyle("-fx-font-size: 14px; -fx-text-fill: #00796b;");
+
     VBox userInfo = new VBox(5, userGreetingLabel, additionalInfo);
     userInfo.setAlignment(Pos.CENTER_LEFT);
+
     HBox topBar = new HBox(20, titledash, userInfo);
     topBar.setPadding(new Insets(20));
     topBar.setAlignment(Pos.CENTER_LEFT);
     topBar.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #e0e0e0; " +
-        "-fx-border-width: 0 0 1 0;");
+            "-fx-border-width: 0 0 1 0;");
     return topBar;
   }
-  // --- MODIFIED LEFT SIDEBAR ---
+
+  // --- LEFT SIDEBAR ---
   private VBox createLeftSidebar() {
     VBox sidebar = new VBox(10);
     sidebar.setPadding(new Insets(15, 0, 15, 0));
     sidebar.setPrefWidth(200);
     sidebar.setAlignment(Pos.TOP_CENTER);
     sidebar.setStyle("-fx-background-color: #2c3e50;");
+
     String buttonStyle = "-fx-min-width: 180px; -fx-alignment: CENTER_LEFT; " +
-        "-fx-padding: 10 15; -fx-background-color: transparent; -fx-text-fill: #ecf0f1;" +
-        " -fx-font-size: 14px; -fx-border-width: 0;";
+            "-fx-padding: 10 15; -fx-background-color: transparent; -fx-text-fill: #ecf0f1;" +
+            " -fx-font-size: 14px; -fx-border-width: 0;";
     String buttonHoverStyle = "-fx-background-color: #34495e; -fx-cursor: hand;";
     String buttonActiveStyle = "-fx-background-color: #1a73e8; -fx-text-fill: white;";
+
     Button dashboardBtn = new Button("  Dashboard");
     Button usersBtn = new Button("  Users");
     Button statsBtn = new Button("  Statistics");
     Button logoutBtn = new Button("  Log out");
+
     VBox.setMargin(logoutBtn, new Insets(550, 0, 0, 0));
+
     Button[] navButtons = {dashboardBtn, usersBtn, statsBtn, logoutBtn};
+
     // --- Logic for switching views ---
     dashboardBtn.setOnAction(e -> {
       root.setCenter(dashboardContent);
       setActiveButton(dashboardBtn, navButtons, buttonStyle, buttonActiveStyle);
     });
+
     usersBtn.setOnAction(e -> {
       if (usersContent == null) {
-        usersContent = new UsersView().getView();
+        usersContent = new UsersView(clientApi).getView();
       }
       root.setCenter(usersContent);
       setActiveButton(usersBtn, navButtons, buttonStyle, buttonActiveStyle);
     });
+
     statsBtn.setOnAction(e -> {
-      // Create the view, passing the nodes from the main controller
+      // Create the view, passing the nodes from the controller
       statisticsContent = new StatisticsView(controller.getNodes()).getView();
       root.setCenter(statisticsContent);
       setActiveButton(statsBtn, navButtons, buttonStyle, buttonActiveStyle);
     });
+
     for (Button btn : navButtons) {
       btn.setStyle(buttonStyle);
-      btn.setOnMouseEntered(e -> { if (!btn.getStyle().contains(buttonActiveStyle))
-        btn.setStyle(buttonStyle + buttonHoverStyle); });
-      btn.setOnMouseExited(e -> { if (!btn.getStyle().contains(buttonActiveStyle))
-        btn.setStyle(buttonStyle); });
+      btn.setOnMouseEntered(e -> {
+        if (!btn.getStyle().contains(buttonActiveStyle))
+          btn.setStyle(buttonStyle + buttonHoverStyle);
+      });
+      btn.setOnMouseExited(e -> {
+        if (!btn.getStyle().contains(buttonActiveStyle))
+          btn.setStyle(buttonStyle);
+      });
     }
+
     // --- Logout Logic ---
     logoutBtn.setOnAction(e -> controller.logout());
-
 
     setActiveButton(dashboardBtn, navButtons, buttonStyle, buttonActiveStyle);
 
     sidebar.getChildren().addAll(dashboardBtn, usersBtn, statsBtn, logoutBtn);
     return sidebar;
   }
+
   // --- Helper to change the active button ---
   private void setActiveButton(Button activeButton, Button[] allButtons,
                                String baseStyle, String activeStyle) {
@@ -145,21 +184,22 @@ public class DashboardView {
       }
     }
   }
+
   // --- RIGHT PANEL CREATION ---
   private VBox createRightPanel() {
     VBox rightPanel = new VBox(10);
     rightPanel.setPadding(new Insets(10));
     rightPanel.setPrefWidth(250);
     rightPanel.setStyle("-fx-background-color: #f0f4f8; -fx-border-color: #e0e0e0; " +
-        "-fx-border-width: 0 0 0 1;");
+            "-fx-border-width: 0 0 0 1;");
+
     Label header = new Label("Activity Log");
     header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;" +
-        " -fx-text-fill: #333333;");
+            " -fx-text-fill: #333333;");
 
-    // use the new logContent field
+    // Initialize log content
     logContent = new VBox(5);
-    logContent.setPadding(new Insets(5)
-    );
+    logContent.setPadding(new Insets(5));
 
     ScrollPane scrollLog = new ScrollPane(logContent);
     scrollLog.setFitToWidth(true);
@@ -167,25 +207,28 @@ public class DashboardView {
     scrollLog.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
 
     VBox.setVgrow(scrollLog, Priority.ALWAYS);
-    // create a delete and update button for the log
+
+    // Control buttons
     Button clearLogBtn = new Button("Clear Log");
     clearLogBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white;" +
-        " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+            " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
     clearLogBtn.setOnAction(e -> logContent.getChildren().clear());
+
     Button updateLogBtn = new Button("Update Log");
     updateLogBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white;" +
-        " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-    updateLogBtn.setOnAction(e -> controller.logActivity("System",
-        "Log updated manually")); // use controller method
+            " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    updateLogBtn.setOnAction(e -> controller.logActivity("System", "Log updated manually"));
+
     Button saveLogBtn = new Button("Save Log");
     saveLogBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white;" +
-        " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-    saveLogBtn.setOnAction(e -> controller.logActivity("System",
-        "Save log initiated")); // use controller method
-    rightPanel.getChildren().addAll(header, scrollLog,clearLogBtn, updateLogBtn, saveLogBtn);
+            " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
+    saveLogBtn.setOnAction(e -> controller.logActivity("System", "Save log initiated"));
+
+    rightPanel.getChildren().addAll(header, scrollLog, clearLogBtn, updateLogBtn, saveLogBtn);
     rightPanel.setAlignment(Pos.TOP_LEFT);
     return rightPanel;
   }
+
   /* Helper to create a log entry */
   public HBox createLogEntry(String time, String source, String message) {
     Label timeLabel = new Label(time);
@@ -193,7 +236,6 @@ public class DashboardView {
 
     Label messageLabel = new Label(source + ": " + message);
     messageLabel.setStyle("-fx-font-size: 13px; -fx-text-fill: #555;");
-
     messageLabel.setWrapText(true);
     HBox.setHgrow(messageLabel, Priority.ALWAYS);
 
@@ -203,22 +245,26 @@ public class DashboardView {
     return entry;
   }
 
-  /** NEW METHOD: Creates the bottom command panel (Terminal) */
+  /** Creates the bottom command panel (Terminal) */
   private VBox createBottomPanel() {
+    // Pass mainApp to the CommandProcessor
+    CommandProcessor commandProcessor = new CommandProcessor(clientApi, mainApp);
+
     VBox bottomPanel = new VBox(0);
-    bottomPanel.setPrefHeight(150); // Fixed height for the console area
+    bottomPanel.setPrefHeight(150);
     bottomPanel.setStyle("-fx-background-color: #252526; -fx-border-color: #444444;" +
-        " -fx-border-width: 1 0 0 0;");
+            " -fx-border-width: 1 0 0 0;");
 
     // Console Output Area (TextArea)
     commandOutputArea = new TextArea();
     commandOutputArea.setEditable(false);
     commandOutputArea.setFocusTraversable(false);
     commandOutputArea.setWrapText(true);
-    commandOutputArea.setText("Console initialized. Ready for command input.\n");
-    commandOutputArea.setStyle("-fx-control-inner-background:rgba(255,255,255,0.82);" +
-        " -fx-font-family: 'Consolas'; -fx-text-fill: #000000; -fx-font-size: 12px;");
-    VBox.setVgrow(commandOutputArea, Priority.ALWAYS); // Output area takes all vertical space
+    commandOutputArea.setText("Console initialized. Type 'help' for available commands.\n" +
+            "Auto-connecting to: " + mainApp.getServerAddress() + ":" + mainApp.getServerPort() + "\n");
+    commandOutputArea.setStyle("-fx-control-inner-background: #1e1e1e; " +
+            "-fx-font-family: 'Consolas'; -fx-text-fill: #ffffff; -fx-font-size: 12px;");
+    VBox.setVgrow(commandOutputArea, Priority.ALWAYS);
 
     // Input Bar (HBox)
     Label promptLabel = new Label(">");
@@ -226,37 +272,38 @@ public class DashboardView {
 
     TextField inputField = new TextField();
     inputField.setPromptText("Enter command...");
-    HBox.setHgrow(inputField, Priority.ALWAYS); // Input field stretches
+    HBox.setHgrow(inputField, Priority.ALWAYS);
     inputField.setStyle("-fx-background-color: #333333; -fx-text-fill: #ffffff; " +
-        "-fx-border-color: #555555; -fx-border-width: 0;");
+            "-fx-border-color: #555555; -fx-border-width: 0;");
 
     Button sendButton = new Button("Send");
     sendButton.setStyle("-fx-background-color: #007bff; -fx-text-fill: white; " +
-        "-fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 3; -fx-cursor: hand;");
+            "-fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 3; -fx-cursor: hand;");
 
     HBox inputBar = new HBox(5, promptLabel, inputField, sendButton);
     inputBar.setAlignment(Pos.CENTER_LEFT);
     inputBar.setPadding(new Insets(5, 10, 5, 10));
 
-    // Command Execution Placeholder Logic (No logic, just output)
-    Runnable processInputPlaceholder = () -> {
-      String command = inputField.getText().trim();
-      if (!command.isEmpty()) {
-        commandOutputArea.appendText("-> " + command + "\n");
-        commandOutputArea.appendText("System: Command received." +
-            " Processing logic is currently disabled.\n");
-        inputField.clear(); // Clear input after sending
-      }
-    };
-    sendButton.setOnAction(e -> processInputPlaceholder.run());
-    inputField.setOnAction(e -> processInputPlaceholder.run()); // Also execute on Enter key press
+    // Command execution
+    sendButton.setOnAction(e -> executeCommand(commandProcessor, inputField, commandOutputArea));
+    inputField.setOnAction(e -> executeCommand(commandProcessor, inputField, commandOutputArea));
 
     bottomPanel.getChildren().addAll(commandOutputArea, inputBar);
-
     return bottomPanel;
   }
 
-  /** New get for get info to logg */
+  private void executeCommand(CommandProcessor commandProcessor, TextField inputField, TextArea commandOutputArea) {
+    String command = inputField.getText().trim();
+    if (!command.isEmpty()) {
+      commandOutputArea.appendText("> " + command + "\n");
+      commandProcessor.execute(command).thenAccept(response -> {
+        Platform.runLater(() -> commandOutputArea.appendText(response + "\n"));
+      });
+      inputField.clear();
+    }
+  }
+
+  /** Getter for log content */
   public VBox getLogContent() {
     return logContent;
   }
@@ -267,19 +314,21 @@ public class DashboardView {
     Button addNodeBtn = new Button("+ Add Node");
     addNodeBtn.setOnAction(e -> controller.addNode());
     addNodeBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white;" +
-        " -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
-    // --- New Auto-Refresh Controls ---
+            " -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+
+    // --- Auto-Refresh Controls ---
     Label intervalLabel = new Label("Auto-Refresh:");
     intervalLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
-    // ComboBox for interval selection with custom styling
-    javafx.scene.control.ComboBox<String> intervalComboBox = new javafx.scene.control.ComboBox<>();
-    intervalComboBox.getItems().addAll("2 sec", "10 sec", "20 sec", "60 sec" , "Manual");
-    intervalComboBox.getSelectionModel().select("Manual"); // Default selection
+
+    ComboBox<String> intervalComboBox = new ComboBox<>();
+    intervalComboBox.getItems().addAll("2 sec", "10 sec", "20 sec", "60 sec", "Manual");
+    intervalComboBox.getSelectionModel().select("Manual");
     intervalComboBox.setStyle("-fx-font-size: 14px; -fx-padding: 5 10; -fx-background-color: #ffffff; " +
-        "-fx-border-color: #d0d0d0; -fx-border-radius: 5; -fx-background-radius: 5;");
+            "-fx-border-color: #d0d0d0; -fx-border-radius: 5; -fx-background-radius: 5;");
+
     Button toggleRefreshBtn = new Button("Start Auto-Refresh");
     toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; " +
-        "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+            "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
 
     // --- Logic for Auto-Refresh ---
     final String startText = "Start Auto-Refresh";
@@ -287,18 +336,15 @@ public class DashboardView {
 
     toggleRefreshBtn.setOnAction(e -> {
       if (controller.getRefreshIntervalSeconds() > 0) {
-        // Currently refreshing, so stop it
         controller.setAutoRefreshInterval(0);
         toggleRefreshBtn.setText(startText);
         toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white; " +
-            "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
-        intervalComboBox.getSelectionModel().select("Manual"); // Visually reset to manual
+                "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+        intervalComboBox.getSelectionModel().select("Manual");
       } else {
-        // Not refreshing, so start it
         String selected = intervalComboBox.getSelectionModel().getSelectedItem();
         if (selected == null || "Manual".equals(selected)) {
-          // If "Manual" is selected, just perform a single refresh
-          controller.refreshData();
+          controller.manualRefresh();
           return;
         }
 
@@ -306,61 +352,75 @@ public class DashboardView {
         controller.setAutoRefreshInterval(seconds);
         toggleRefreshBtn.setText(stopText);
         toggleRefreshBtn.setStyle("-fx-background-color: #EA4335; -fx-text-fill: white; " +
-            "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+                "-fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
       }
     });
 
     intervalComboBox.setOnAction(e -> {
       String selected = intervalComboBox.getSelectionModel().getSelectedItem();
       if (selected == null || "Manual".equals(selected)) {
-        // If manual is selected, stop the auto-refresh and reset button text
         controller.setAutoRefreshInterval(0);
         toggleRefreshBtn.setText(startText);
         toggleRefreshBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white;" +
-            " -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
+                " -fx-font-weight: bold; -fx-padding: 8 15; -fx-background-radius: 5; -fx-cursor: hand;");
       } else {
-        // If a time is selected, the user probably wants to start it right away
-        // The button will handle starting/stopping
         if (controller.getRefreshIntervalSeconds() > 0) {
-          // If it was already running, change the interval immediately
           long seconds = Long.parseLong(selected.split(" ")[0]);
           controller.setAutoRefreshInterval(seconds);
         }
       }
     });
+
     HBox refreshControls = new HBox(10, intervalLabel, intervalComboBox, toggleRefreshBtn);
     refreshControls.setAlignment(Pos.CENTER_LEFT);
-    // Combine Add Node button and Refresh Controls
-    HBox controlsBar = new HBox(30, addNodeBtn, refreshControls);
+
+    HBox controlsBar = new HBox(30, addNodeBtn);
     controlsBar.setAlignment(Pos.CENTER_LEFT);
-    lastUpdateLabel = new Label("Last update: -");
+
+    lastUpdateLabel = new Label("Time and Date");
     lastUpdateLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #666666;");
-    // Combine controls and status on one line
-    HBox headerRow = new HBox(30, controlsBar, lastUpdateLabel);
+    Region spacer = new Region();
+    HBox.setHgrow(spacer, Priority.ALWAYS);
+
+    HBox headerRow = new HBox(controlsBar, spacer, lastUpdateLabel);
     headerRow.setPadding(new Insets(0, 0, 10, 0));
     headerRow.setAlignment(Pos.CENTER_LEFT);
+
     // --- Node Display Area ---
     nodesPane = new FlowPane();
     nodesPane.setVgap(20);
     nodesPane.setHgap(20);
     nodesPane.setAlignment(Pos.TOP_LEFT);
     nodesPane.setPadding(new Insets(20));
-    // Make the FlowPane scrollable
+
     ScrollPane scrollPane = new ScrollPane(nodesPane);
     scrollPane.setFitToWidth(true);
     scrollPane.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-    // --- Final Center Container ---
+
     VBox centerContainer = new VBox(15, headerRow, scrollPane);
     centerContainer.setPadding(new Insets(20));
     centerContainer.setStyle("-fx-background-color: #ffffff;");
     return centerContainer;
   }
+
   /** GETTER FOR ROOT PANE */
   public BorderPane getRoot() {
     return root;
   }
-  /** INITIALIZE NETWORKING */
+
+  /**
+   * Initialize network and perform initial data load.
+   * Should be called after the scene is displayed.
+   */
   public void initNetwork(core.ClientApi api) {
-    controller.setApi(api);
+    if (!isInitialized) {
+      controller.setApi(api);
+
+      // Now it's safe to call manualRefresh
+      controller.manualRefresh();
+      controller.logActivity("System", "Dashboard initialized successfully");
+
+      isInitialized = true;
+    }
   }
 }

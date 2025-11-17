@@ -20,6 +20,13 @@ public class NetworkClient implements AutoCloseable {
   public void setOnLine(Consumer<String> onLine){ this.onLine = onLine; }
   public void setOnError(Consumer<Throwable> onError){ this.onError = onError; }
 
+  /**
+   * Connect to server.
+   *
+   * @param host Server hostname or IP
+   * @param port Server port
+   * @throws IOException on connection error
+   */
   public void connect(String host, int port) throws IOException {
     socket = new Socket(host, port);
     in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
@@ -27,11 +34,18 @@ public class NetworkClient implements AutoCloseable {
     reader.submit(this::readLoop);
   }
 
+  /**
+   * Read loop running in background thread.
+   *
+   */
   private void readLoop() {
     try {
       String line;
       while ((line = in.readLine()) != null) {
         if (onLine != null) onLine.accept(line);
+      }
+      if (onError != null) {
+        onError.accept(new IOException("Connection closed by server"));
       }
     } catch (Throwable t) {
       if (onError != null) onError.accept(t);

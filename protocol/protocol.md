@@ -1,10 +1,68 @@
 # Network protocol documentation
-This document describes the network protocol used in the application.
+## Introduction
+   This document describes the application-layer network protocol for the "Smart Greenhouse" project. It facilitates communication between a central Server (simulating the greenhouse nodes) and one or more Client (control panels).
 
-Transport: TCP, UTF-8, one JSON object per line (\n terminated).
-Model: Asynchronous bidirectional messages (request/notify/response).
-Versioning: New fields are optional; unknown fields must be ignored.
-Multi-client: Multiple clients (farmers) can connect to the same server concurrently.
+## Terminology
+* Server: The central application (`GreenhouseServer.java`) that manages the state of all nodes, runs simulations, and handles communication with clients.
+
+* Client: A control panel application (`ClientApi.java`) used by a "farmer" to view data and control actuators.
+
+* Node: A logical entity representing a single "Sensor/Actuator Node" in a greenhouse. In this architecture, nodes are simulated and managed by the Server.
+
+* Sensor: A component on a Node that provides data (e.g., temperature).
+
+* Actuator: A component on a Node that can be controlled (e.g., fan).
+
+## Underlying Transport
+   Transport: TCP/IP.
+
+Port: 5555
+
+Marshalling: Text-based. Each message is a single JSON object, terminated by a newline character (\n).
+
+Encoding: UTF-8.
+
+### Justification:
+
+* TCP over UDP: TCP was chosen because it guarantees reliable, in-order delivery of messages. This is crucial for commands and configuration, eliminating the need to implement our own reliability layer.
+
+
+* JSON: JSON was chosen for its human-readability and the wide availability of parsers in Java (like Jackson), which simplifies development.
+
+### Overall Architecture
+   Actors: The system has two main actors: the Server and the Client.
+
+Model: The architecture is a Centralized Client-Server model.
+
+The Server is the single source of truth. It holds the state of all nodes, simulates sensor readings, and applies actuator commands.
+
+Multiple Clients (control panels) can connect to this single server simultaneously.
+
+
+Scalability: The protocol supports multiple sensor/actuator types and multiple nodes.
+
+
+### Justification:
+A centralized model simplifies state management and ensures all clients see a consistent view of the system, which meets the project's fundamental requirements.
+
+### Information Flow
+   The protocol uses a hybrid push/pull model:
+
+Pull (Client-initiated): The client pulls the system structure by sending `get_topology`.
+
+Push (Server-initiated): After a client subscribes, the server pushes all `sensor_update` (including actuator status) and `node_change` events to the client. This is more efficient than constant polling.
+
+Push (Client-initiated): The client pushes command messages to the server to control actuators.
+
+### Protocol Type
+   Connection: 
+   * Connection-oriented (built on TCP).
+
+State: 
+* Stateful. The server must maintain the state of each client, specifically their subscription lists (`ClientRegistry.java`).
+
+### Justification: 
+A stateful, connection-oriented protocol is necessary to manage subscriptions. The server needs to know which client to send what updates to.
 
 # 0. Common Structure
 ## 0.1. Message Envelope
@@ -183,10 +241,14 @@ Server responds with ack for both:
   "nodeId":"node-1",
   "timestamp":1730123999000,
   "data":{
-    "temperature":22.6,
-    "humidity":55.2,
-    "light":420,
-    "ph":6.4
+        "temperature": 22.6,
+        "humidity": 55.2,
+        "light": 420,
+        "ph": 6.4,
+        "fan": "ON",
+        "water_pump": "OFF",
+        "co2": "OFF",
+        "window": "CLOSED"
   }
 }
 ```
@@ -304,7 +366,40 @@ Or, if supported:
 | `last_values`      | Server → Client | Return latest telemetry    |
 | `get_history`      | Client → Server | Historical data request    |
 
-# 8. Notes
+# 8. Realistic Scenario
+
+1. Client connects to Server's TCP port.
+
+2. Client sends `{"type":"hello", "id":"c-1"}`.
+
+3. Server responds `{"type":"welcome"}`.
+
+4. Client sends `{"type":"get_topology", "id":"c-2"}` to learn about the system.
+
+5. Server responds `{"type":"topology", "id":"c-2", "nodes":[...]}`.
+
+6. Client (UI) displays the nodes.
+
+7. Client sends `{"type":"subscribe", "id":"c-3", "nodes":["node-1"]}` to get live data for "node-1".
+
+8. Server responds `{"type":"ack", "id":"c-3"}`.
+
+9. Server now starts pushing sensor_update messages to the client every *X* seconds.
+
+10. Client (UI) displays the incoming sensor data and actuator statuses.
+
+11. User clicks the *"Open Window"* button.
+
+12. Client sends `{"type":"command", "id":"c-4", "nodeId":"node-1", "target":"window", "params":{"level":"OPEN"}}`.
+
+13. Server receives the command, updates its simulation state, and responds `{"type":"ack", "id":"c-4"}`.
+
+14. The next sensor_update message from the server will now contain "window": "OPEN" in its data object, automatically updating the client's UI.
+
+# 9. Security
+* No security mechanisms (authentication, authorization, encryption) are implemented in this protocol
+
+# 10. Notes
 * The client generates id for requests; the server echoes it in ack or error.
 * If the client is not subscribed to sensor_update, it won’t receive live updates.
 * Sensor units and ranges are fixed in the spec (see §2.2).

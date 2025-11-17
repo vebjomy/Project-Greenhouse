@@ -5,7 +5,15 @@ package net;
  */
 public final class MessageTypes {
   public static final String HELLO = "hello";
+  public static final String AUTH = "auth";
+  public static final String AUTH_RESPONSE = "auth_response";
+  public static final String REGISTER = "register";
+  public static final String REGISTER_RESPONSE = "register_response";
   public static final String WELCOME = "welcome";
+  public static final String GET_USERS = "get_users";
+  public static final String USERS_LIST = "users_list";
+  public static final String UPDATE_USER = "update_user";
+  public static final String DELETE_USER = "delete_user";
   public static final String PING = "ping";
   public static final String PONG = "pong";
 

@@ -12,6 +12,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.scene.control.TextInputDialog;
+
+import javax.swing.*;
 import java.util.Optional;
 
 
@@ -23,6 +25,8 @@ public class LoginScreenView {
   private final HBox root;
   private final Circle statusIndicator;
   private final Text statusText;
+  private TextField usernameField; // Declare usernameField
+  private PasswordField passwordField; // Declare passwordField
 
   // Constructor to initialize the login screen view
 
@@ -71,11 +75,12 @@ public class LoginScreenView {
   // Input Fields
 
 
-    TextField usernameField = new TextField();
+    // Input Fields
+    usernameField = new TextField();
     usernameField.setPromptText("Username");
     usernameField.getStyleClass().add("text-field");
 
-    PasswordField passwordField = new PasswordField();
+    passwordField = new PasswordField(); // Use the class field, not a new local variable
     passwordField.setPromptText("Password");
     passwordField.getStyleClass().add("password-field");
     VBox.setMargin(passwordField, new Insets(0, 0, 25, 0));
@@ -93,19 +98,28 @@ public class LoginScreenView {
 // Login Button
     Button loginButton = new Button("LOG IN");
     loginButton.getStyleClass().add("login-button");
+
+    controller.LoginController loginController = new controller.LoginController(
+            this,
+            mainApp.getClientApi(),
+            mainApp
+    );
+
+    loginButton.setOnAction(e -> loginController.handleLogin());
+
     HBox buttonContainer = new HBox(loginButton);
     buttonContainer.setAlignment(Pos.CENTER);
 // Login Button Action
-    loginButton.setOnAction(e -> {
-      // define login action here
-      String ipAddress = mainApp.getServerAddress(); // adjust as needed
-      if (mainApp.isConnected()) { // check server connection
-        System.out.println("Attempting login to: " + ipAddress);
-        mainApp.showDashboard();
-      } else {
-        new Alert(Alert.AlertType.ERROR, "Server is offline. Cannot log in.").showAndWait();
-      }
-    });
+//    loginButton.setOnAction(e -> {
+//      // define login action here
+//      String ipAddress = mainApp.getServerAddress(); // adjust as needed
+//      if (mainApp.isConnected()) { // check server connection
+//        System.out.println("Attempting login to: " + ipAddress);
+//        mainApp.showDashboard();
+//      } else {
+//        new Alert(Alert.AlertType.ERROR, "Server is offline. Cannot log in.").showAndWait();
+//      }
+//    });
 
 // Assemble Left Pane
     pane.getChildren().addAll(
@@ -239,4 +253,20 @@ public class LoginScreenView {
   public HBox getRoot() {
     return root;
   }
+
+  public TextField getUsernameField() {
+    return usernameField;
+  }
+
+  public PasswordField getPasswordField() {
+    return passwordField;
+  }
+
+//  public AbstractButton getUsernameField() {
+//    return null;
+//  }
+//
+//  public AbstractButton getPasswordField() {
+//    return null;
+//  }
 }

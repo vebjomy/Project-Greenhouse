@@ -10,7 +10,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import model.Node;
-import java.util.List;
+
+import java.util.Collection;
 
 /**
  * The View (UI) for the statistics page.
@@ -33,69 +34,53 @@ public class StatisticsView {
   private final BarChart<String, Number> lightBarChart;
   private final BarChart<String, Number> phBarChart;
 
-  public StatisticsView(List<Node> nodes) {
-    // --- Common X Axis label for all charts ---
+  public StatisticsView(Collection<Node> nodes) {
+    // === Chart Axes ===
     CategoryAxis xAxisTemp = new CategoryAxis();
-    xAxisTemp.setLabel("Node Location");
-
-    CategoryAxis xAxisHumidity = new CategoryAxis();
-    xAxisHumidity.setLabel("Node Location");
-
-    CategoryAxis xAxisLight = new CategoryAxis();
-    xAxisLight.setLabel("Node Location");
-
-    CategoryAxis xAxisPh = new CategoryAxis();
-    xAxisPh.setLabel("Node Location");
-
-    // --- Temperature Chart ---
+    xAxisTemp.setLabel("Node Name");
     NumberAxis yAxisTemp = new NumberAxis();
     yAxisTemp.setLabel("Temperature (°C)");
     tempBarChart = new BarChart<>(xAxisTemp, yAxisTemp);
     tempBarChart.setTitle("Current Temperature by Node");
     tempBarChart.setLegendVisible(false);
     tempBarChart.setPrefHeight(300);
-    tempBarChart.setStyle("-fx-bar-fill: #ff6f61;");
 
-    // --- Humidity Chart ---
+    CategoryAxis xAxisHumidity = new CategoryAxis();
+    xAxisHumidity.setLabel("Node Name");
     NumberAxis yAxisHumidity = new NumberAxis();
     yAxisHumidity.setLabel("Humidity (%)");
     humidityBarChart = new BarChart<>(xAxisHumidity, yAxisHumidity);
     humidityBarChart.setTitle("Current Humidity by Node");
     humidityBarChart.setLegendVisible(false);
     humidityBarChart.setPrefHeight(300);
-    humidityBarChart.setStyle("-fx-bar-fill: #4db8ff;");
 
-    // --- Light Chart ---
+    CategoryAxis xAxisLight = new CategoryAxis();
+    xAxisLight.setLabel("Node Name");
     NumberAxis yAxisLight = new NumberAxis();
     yAxisLight.setLabel("Light Level (lx)");
     lightBarChart = new BarChart<>(xAxisLight, yAxisLight);
     lightBarChart.setTitle("Current Light Level by Node");
     lightBarChart.setLegendVisible(false);
     lightBarChart.setPrefHeight(300);
-    lightBarChart.setStyle("-fx-bar-fill: #ffd54f;");
 
-    // --- pH Chart ---
+    CategoryAxis xAxisPh = new CategoryAxis();
+    xAxisPh.setLabel("Node Name");
     NumberAxis yAxisPh = new NumberAxis();
     yAxisPh.setLabel("pH Level");
     phBarChart = new BarChart<>(xAxisPh, yAxisPh);
     phBarChart.setTitle("Current pH Level by Node");
     phBarChart.setLegendVisible(false);
     phBarChart.setPrefHeight(300);
-    phBarChart.setStyle("-fx-bar-fill: #81c784;");
 
-    // --- Controller ---
+    // === Controller ===
     controller = new StatisticsController(this, nodes);
 
-    // --- Layout ---
+    // === Layout ===
     view = createStatisticsLayout();
 
-    // --- Initial Update ---
+    // === Initial Update ===
     controller.updateStatistics();
   }
-
-  /** Creates the main layout for the statistics view.
-   * @return A BorderPane containing the entire statistics layout.
-   */
 
   private BorderPane createStatisticsLayout() {
     BorderPane layout = new BorderPane();
@@ -105,13 +90,12 @@ public class StatisticsView {
     Label titleLabel = new Label("System Statistics");
     titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
-    // --- Summary Panel ---
+    // === Summary Panel ===
     HBox summaryBox = new HBox(30, totalNodesLabel, avgTempLabel, avgHumidityLabel, avgLightLabel, avgPhLevelLabel);
     summaryBox.setAlignment(Pos.CENTER_LEFT);
     summaryBox.setPadding(new Insets(15));
     summaryBox.setStyle("-fx-background-color: #ffffff; -fx-border-color: #d0d0d0; -fx-border-radius: 8; -fx-background-radius: 8;");
 
-    // --- Label Styles ---
     String summaryStyle = "-fx-font-size: 16px; -fx-font-weight: 500;";
     totalNodesLabel.setStyle(summaryStyle);
     avgTempLabel.setStyle(summaryStyle);
@@ -119,17 +103,11 @@ public class StatisticsView {
     avgLightLabel.setStyle(summaryStyle);
     avgPhLevelLabel.setStyle(summaryStyle);
 
-    // --- Charts container ---
+    // === Charts Container ===
     VBox chartsBox = new VBox(40);
     chartsBox.setPadding(new Insets(30, 0, 30, 0));
-    chartsBox.getChildren().addAll(
-        tempBarChart,
-        humidityBarChart,
-        lightBarChart,
-        phBarChart
-    );
+    chartsBox.getChildren().addAll(tempBarChart, humidityBarChart, lightBarChart, phBarChart);
 
-    // --- Scroll Pane ---
     ScrollPane scrollPane = new ScrollPane(chartsBox);
     scrollPane.setFitToWidth(true);
     scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -141,19 +119,18 @@ public class StatisticsView {
     return layout;
   }
 
-  // --- Getters for controller ---
+  // === Getters for controller ===
   public Label getTotalNodesLabel() { return totalNodesLabel; }
   public Label getAvgTempLabel() { return avgTempLabel; }
   public Label getAvgHumidityLabel() { return avgHumidityLabel; }
   public Label getAvgLightLabel() { return avgLightLabel; }
   public Label getAvgPhLevelLabel() { return avgPhLevelLabel; }
-  // --- Getters for charts ---
+
   public BarChart<String, Number> getTempBarChart() { return tempBarChart; }
   public BarChart<String, Number> getHumidityBarChart() { return humidityBarChart; }
   public BarChart<String, Number> getLightBarChart() { return lightBarChart; }
   public BarChart<String, Number> getPhBarChart() { return phBarChart; }
-/*  * Returns the root BorderPane of the statistics view.
-   * @return The root BorderPane containing the entire statistics layout.
-   */
+
   public BorderPane getView() { return view; }
 }
+
