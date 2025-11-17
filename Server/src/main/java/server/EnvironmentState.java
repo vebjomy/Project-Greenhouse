@@ -52,29 +52,7 @@ public class EnvironmentState {
     updateHumidity(dtSeconds, pumpOn, fanOn, window);
 
     // --- Light dynamics ---
-    // Light depends on window state: closed = decreasing, open = increasing
-    double lightChange = 0.0;
-
-    switch (window) {
-      case OPEN:
-        // Moderate increase when window fully open
-        lightChange = LIGHT_INCREASE_OPEN;
-        break;
-      case HALF:
-        // Small increase when half open
-        lightChange = LIGHT_INCREASE_HALF;
-        break;
-      case CLOSED:
-        // Slow decrease when closed (no external light)
-        lightChange = -LIGHT_DECREASE_CLOSED;
-        break;
-    }
-
-    // Apply the light change with some noise
-    lightLux += lightChange * dtSeconds + noise(5);
-
-    // Ensure light stays within reasonable bounds
-    lightLux = Math.max(LIGHT_MIN, Math.min(LIGHT_MAX, lightLux));
+    updateLight(dtSeconds, window);
 
     // --- pH dynamics ---
     // Very simplified: pump slightly increases pH toward 7, CO2 slightly lowers toward 6.0
@@ -128,6 +106,38 @@ public class EnvironmentState {
             + (window == WindowLevel.OPEN ? -0.30 : (window == WindowLevel.HALF ? -0.15 : 0.0));
     humidityPct += (evap + ventLoss) * dtSeconds + noise(0.15);
     humidityPct = Math.max(0.0, Math.min(100.0, humidityPct));
+  }
+
+  /**
+   * Update light considering window state.
+   *
+   * @param dtSeconds seconds elapsed
+   * @param window the window openness level
+   */
+  public void updateLight(double dtSeconds, WindowLevel window) {
+    // Light depends on window state: closed = decreasing, open = increasing
+    double lightChange = 0.0;
+
+    switch (window) {
+      case OPEN:
+        // Moderate increase when window fully open
+        lightChange = LIGHT_INCREASE_OPEN;
+        break;
+      case HALF:
+        // Small increase when half open
+        lightChange = LIGHT_INCREASE_HALF;
+        break;
+      case CLOSED:
+        // Slow decrease when closed (no external light)
+        lightChange = -LIGHT_DECREASE_CLOSED;
+        break;
+    }
+
+    // Apply the light change with some noise
+    lightLux += lightChange * dtSeconds + noise(5);
+
+    // Ensure light stays within reasonable bounds
+    lightLux = Math.max(LIGHT_MIN, Math.min(LIGHT_MAX, lightLux));
   }
 
   /** Window openness enum aligned with protocol CLOSED/HALF/OPEN */
