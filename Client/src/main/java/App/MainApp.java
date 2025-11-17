@@ -3,26 +3,26 @@ package App;
 import core.ClientApi;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import ui.DashboardView;
 import ui.LoginScreenView;
 import ui.RegistrationView;
 import ui.SplashScreenView;
-import javafx.scene.control.Alert;
-import javafx.scene.control.TextInputDialog;
-import java.util.Optional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The `MainApp` class serves as the entry point for the Green House Control application.
- * It initializes the JavaFX application, manages the primary stage, and provides methods
- * to navigate between different views such as the splash screen, login screen, registration screen, and dashboard.
  *
  * @author Green House Control Team
- * @version 3.0
+ * @version 3.4
  */
 public class MainApp extends Application {
     private Stage primaryStage;
@@ -58,7 +58,7 @@ public class MainApp extends Application {
 
         // Load custom font
         Font customFont = Font.loadFont(
-                getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10
+            getClass().getResourceAsStream("/fonts/KaiseiDecol-Regular.ttf"), 10
         );
         if (customFont == null) {
             System.err.println("Error loading font");
@@ -66,83 +66,127 @@ public class MainApp extends Application {
             System.out.println("Font is loaded: " + customFont.getFamily());
         }
 
-        // Initiate the connection loop. This method will handle showing the first screen upon success.
+        // Initiate the connection loop.
         attemptInitialConnection(stage);
 
-        // Show the stage immediately (it will be mostly empty until showSplashScreen is called)
+        // Show the stage immediately
         primaryStage.setMinHeight(SCENE_HEIGHT);
         primaryStage.setMinWidth(SCENE_WIDTH);
         primaryStage.show();
     }
 
     /**
-     * Shows a dialog to get the IP address and attempts connection.
-     * Recursively calls itself on connection failure, creating a loop until success or cancellation.
+     * Shows a styled dialog to get the IP address and attempts connection.
      */
     private void attemptInitialConnection(Stage stage) {
-        // 1. Show IP input dialog
-        TextInputDialog ipDialog = new TextInputDialog("127.0.0.1");
+        // --- VISUAL DESIGN START (MATERIAL STYLE) ---
+        Dialog<String> ipDialog = new Dialog<>();
         ipDialog.setTitle("Server Connection Setup");
-        ipDialog.setHeaderText("Enter Server IP Address");
-        ipDialog.setContentText("IP:");
+        ipDialog.setHeaderText(null);
+
+        DialogPane dialogPane = ipDialog.getDialogPane();
+        // Inline CSS for Material Design
+        dialogPane.setStyle(
+            "-fx-background-color: #FFFFFF;" +
+                "-fx-font-family: 'Segoe UI', sans-serif;" +
+                "-fx-font-size: 14px;"
+        );
+
+        // Layout
+        VBox layout = new VBox(15);
+        layout.setPadding(new Insets(20));
+        layout.setStyle("-fx-background-color: #FFFFFF;");
+
+        // Labels
+        Label headerLabel = new Label("Connect to Server");
+        headerLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+        headerLabel.setStyle("-fx-text-fill: #2c3e50;");
+
+        Label descLabel = new Label("Enter the server IP address you want to connect to:");
+        descLabel.setWrapText(true);
+        descLabel.setStyle("-fx-text-fill: #7f8c8d;");
+
+        // Input (Dropdown + Type)
+        ComboBox<String> ipComboBox = new ComboBox<>();
+        ipComboBox.setEditable(true);
+        ipComboBox.getItems().addAll("127.0.0.1", "localhost");
+        ipComboBox.getSelectionModel().selectFirst();
+        ipComboBox.setPrefWidth(350);
+        ipComboBox.setStyle(
+            "-fx-background-color: #fdfdfd;" +
+                "-fx-border-color: #bdc3c7;" +
+                "-fx-border-radius: 4px;"
+        );
+
+        layout.getChildren().addAll(headerLabel, descLabel, ipComboBox);
+        dialogPane.setContent(layout);
+
+        // Buttons
+        ButtonType connectButtonType = new ButtonType("Connect", ButtonBar.ButtonData.OK_DONE);
+        dialogPane.getButtonTypes().addAll(connectButtonType, ButtonType.CANCEL);
+
+        Button connectBtn = (Button) dialogPane.lookupButton(connectButtonType);
+        connectBtn.setStyle(
+            "-fx-background-color: #2980b9;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 4px;" +
+                "-fx-cursor: hand;"
+        );
+
+        ipDialog.setResultConverter(dialogButton -> {
+            if (dialogButton == connectButtonType) {
+                return ipComboBox.getEditor().getText();
+            }
+            return null;
+        });
+        // --- VISUAL DESIGN END ---
 
         Optional<String> result = ipDialog.showAndWait();
         String serverAddress = result.orElse(null);
 
-        // Handle cancellation or empty input by exiting the application
         if (serverAddress == null || serverAddress.trim().isEmpty()) {
             Platform.exit();
             return;
         }
 
-        // 2. Attempt connection
+        // Connection Logic (UNCHANGED)
         api.connect(serverAddress, SERVER_PORT).thenRun(() -> {
-            // SUCCESS: Connection established
             System.out.println("✅ Connected to server at " + serverAddress);
             isConnected = true;
-            this.dynamicServerAddress = serverAddress; // <-- И сохраняется здесь
+            this.dynamicServerAddress = serverAddress;
 
-            // UI updates (showSplashScreen, subscribe, getTopology) must run on FX thread
             Platform.runLater(() -> {
-                // Subscribe and get topology only after successful connection
                 api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
-                        .thenRun(() -> {
-                            System.out.println("✅ Subscribed to updates");
-
-                            api.getTopology().thenAccept(topology -> {
-                                System.out.println("✅ Initial topology loaded: " +
-                                        (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
-                            });
+                    .thenRun(() -> {
+                        System.out.println("✅ Subscribed to updates");
+                        api.getTopology().thenAccept(topology -> {
+                            System.out.println("✅ Initial topology loaded: " +
+                                (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
                         });
+                    });
 
-                // Show the first view (Splash Screen)
                 showSplashScreen();
 
-                // Update login status (if LoginScreen is shown later)
                 if (loginScreenView != null) {
                     loginScreenView.updateServerStatus(true);
                 }
             });
 
         }).exceptionally(ex -> {
-            // FAILURE: Connection failed
             String errorMsg = "Failed to connect to server (" + serverAddress + "). " +
-                    "Please check the IP address and ensure the server is running.";
-
+                "Please check the IP address and ensure the server is running.";
             System.err.println("❌ Failed to connect to server: " + ex.getMessage());
             isConnected = false;
 
             Platform.runLater(() -> {
-                // Show Error Alert
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Connection Error");
-                alert.setHeaderText("Server Unavailable! Re-enter IP.");
+                alert.setHeaderText("Server Unavailable!");
                 alert.setContentText(errorMsg);
-
-                // Blocks until the user closes the alert
+                alert.getDialogPane().setStyle("-fx-font-family: 'Segoe UI', sans-serif;");
                 alert.showAndWait();
 
-                // 3. Loop: Call the function again to prompt for IP
                 attemptInitialConnection(stage);
             });
             return null;
@@ -153,9 +197,6 @@ public class MainApp extends Application {
         return SERVER_PORT;
     }
 
-    /**
-     * Displays the splash screen view.
-     */
     public void showSplashScreen() {
         SplashScreenView splash = new SplashScreenView(this);
         Scene scene = new Scene(splash.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
@@ -164,9 +205,6 @@ public class MainApp extends Application {
         primaryStage.setMaximized(true);
     }
 
-    /**
-     * Displays the registration screen view.
-     */
     public void showRegistrationScreen() {
         RegistrationView registration = new RegistrationView(this);
         Scene scene = new Scene(registration.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
@@ -175,11 +213,7 @@ public class MainApp extends Application {
         primaryStage.setMaximized(true);
     }
 
-    /**
-     * Displays the login screen view.
-     */
     public void showLoginScreen() {
-        // Create NEW instance of login screen each time
         loginScreenView = new LoginScreenView(this);
         loginScreenView.updateServerStatus(isConnected);
 
@@ -193,38 +227,25 @@ public class MainApp extends Application {
         return isConnected;
     }
 
-    /**
-     * Returns the dynamically entered server address.
-     */
     public String getServerAddress() {
         return dynamicServerAddress;
     }
 
-    /**
-     * Gets the ClientApi instance for network operations
-     * @return the ClientApi instance
-     */
     public ClientApi getClientApi() {
         return api;
     }
 
     /**
-     * Displays the dashboard view by reusing the cached scene.
-     * This prevents "already set as root" error.
+     * Displays the dashboard view.
      */
     public void showDashboard(String username) {
-        // Simply switch to the cached dashboard scene
         dashboardView.setUserGreeting(username);
         primaryStage.setScene(dashboardScene);
         primaryStage.setTitle("Smart Farm Control");
         primaryStage.setMaximized(true);
     }
 
-    /**
-     * The main method that launches the JavaFX application.
-     *
-     * @param args Command-line arguments passed to the application.
-     */
+
     public static void main(String[] args) {
         launch(args);
     }

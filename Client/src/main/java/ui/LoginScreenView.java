@@ -65,11 +65,11 @@ public class LoginScreenView {
 
     // Header Texts
 
-    Text subtitle = new Text("Green House\nAn Project can\nchange your live\n");
+    Text subtitle = new Text("Green House\nA Project that can\nchange your life\n");
     subtitle.getStyleClass().add("login-title-subtitle");
-    Text prompt = new Text("Welcome back, please login\nto your account");
+    Text prompt = new Text("Welcome back, please log in\nto your account");
     prompt.getStyleClass().add("login-prompt");
-    TextFlow headerFlow = new TextFlow( subtitle, prompt);
+    TextFlow headerFlow = new TextFlow(subtitle, prompt);
     headerFlow.setTextAlignment(TextAlignment.LEFT);
 
   // Input Fields
@@ -187,9 +187,12 @@ public class LoginScreenView {
     imageView.setFitHeight(850);
     imageView.setPreserveRatio(true);
 // About Project Text
-    Text aboutText = new Text("Our 'Green House Control' project is a modern system for automated " +
-        "greenhouse management. It allows you to monitor and regulate temperature, " +
-        "humidity, lighting, and watering in real time, ensuring optimal conditions for plant growth.");
+    Text aboutText = new Text("Welcome to the Smart Greenhouse Network System – a distributed " +
+        "IoT application designed for real-time greenhouse monitoring and control.\n" +
+        "\n" +
+        "This project is part of the IDATA2304 course at NTNU Ålesund and " +
+        "demonstrates professional network programming practices using a custom " +
+        "TCP-based application-layer protocol.");
     aboutText.setWrappingWidth(480);
     aboutText.setTextAlignment(TextAlignment.JUSTIFY);
     aboutText.setStyle("-fx-font-size: 24px; -fx-line-spacing: 6px; -fx-font-family: 'Kaisei Decol';");
@@ -197,11 +200,10 @@ public class LoginScreenView {
 // Creators Text
     Text creatorsText = new Text(
         "Creators of the 'Green House Control' project:\n\n" +
-            "1. ejob - Project Manager\n" +
-            "2. VB- Lead Developer\n" +
-            "3. Arkadii - UI/UX Designer\n" +
-            "4. VJ - Hardware Specialist\n" +
-            "5. Dmitry - Quality Assurance\n\n" +
+            "1. Vebjørn - Server Lead & Simulation Architect\n" +
+            "2. Dymitri - Network Engineer & Data Lead\n" +
+            "3. Eyob - Documentation Lead & User System\n" +
+            "4. Arkadii - GUI Lead & Client Developer\n\n" +
             "Together, we combined our expertise to create an innovative solution for modern agriculture.");
     creatorsText.setWrappingWidth(480);
     creatorsText.setTextAlignment(TextAlignment.LEFT);

@@ -144,6 +144,11 @@ public class DashboardController {
     );
     refreshTimeline.setCycleCount(Timeline.INDEFINITE);
 
+    Timeline realTimeClock = new Timeline(
+        new KeyFrame(Duration.seconds(1), e -> updateTime())
+    );
+    realTimeClock.setCycleCount(Timeline.INDEFINITE);
+    realTimeClock.play();
     System.out.println("DashboardController initialized.");
   }
 
@@ -167,6 +172,22 @@ public class DashboardController {
     this.logContent = logContent;
     this.commandOutputArea = commandOutputArea;
   }
+
+  /**
+   * Updates the last update label with the current date and time.
+   *
+   * <p>This method is called every second by a Timeline to keep the timestamp
+   * current. It formats the date and time using FULL_TIME_FORMATTER.
+   */
+
+  private void updateTime() {
+    if (lastUpdateLabel != null) {
+      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
+      lastUpdateLabel.setText("Date and time: " + currentTime);
+    }
+  }
+
+
 
   /**
    * Sets the ClientApi instance and registers real-time update listeners.
@@ -810,11 +831,10 @@ public class DashboardController {
    * not from this method. This only updates the "Last update" timestamp.
    */
   public void manualRefresh() {
-    if (lastUpdateLabel != null) {
-      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
-      lastUpdateLabel.setText("Last update: " + currentTime);
-    }
-
+//    if (lastUpdateLabel != null) {
+//      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
+//      lastUpdateLabel.setText("Date and time : " + currentTime);
+//    }
     if (refreshIntervalSeconds > 0) {
       logActivity("System", "Auto-refresh: Dashboard timestamp updated");
     }

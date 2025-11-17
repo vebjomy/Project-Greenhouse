@@ -92,8 +92,8 @@ public class DashboardView {
 
     // Greeting and additional information
     userGreetingLabel = new Label("Hello + !!username!!" );
-    Label additionalInfo = new Label("System Status: Operational");
-    userGreetingLabel.setStyle("-fx-font-size: 21px; -fx-font-weight: 500;" +
+    Label additionalInfo = new Label("System Status:" + " NODE SIZE ");
+    userGreetingLabel.setStyle("-fx-font-size: 31px; -fx-font-weight: 500;" +
             " -fx-text-fill: #333333;");
     additionalInfo.setStyle("-fx-font-size: 14px; -fx-text-fill: #00796b;");
 
