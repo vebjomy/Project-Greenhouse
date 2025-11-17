@@ -56,8 +56,8 @@ public class UserService {
 
   /** Create default users. */
   private void createDefaultUsers() {
-    addUser("admin", "admin123", "admin");
-    addUser("user", "user123", "user");
+    addUser("admin", "admin123", "Admin");
+    addUser("user", "user123", "Viewer");
   }
 
   /**

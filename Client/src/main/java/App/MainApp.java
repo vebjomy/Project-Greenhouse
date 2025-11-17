@@ -212,8 +212,9 @@ public class MainApp extends Application {
      * Displays the dashboard view by reusing the cached scene.
      * This prevents "already set as root" error.
      */
-    public void showDashboard() {
+    public void showDashboard(String username) {
         // Simply switch to the cached dashboard scene
+        dashboardView.setUserGreeting(username);
         primaryStage.setScene(dashboardScene);
         primaryStage.setTitle("Smart Farm Control");
         primaryStage.setMaximized(true);

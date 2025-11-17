@@ -27,7 +27,7 @@ public class UsersView {
   public UsersView(ClientApi clientApi) {
     controller = new UsersController(this, clientApi);
     view = createUsersView();
-    //    controller.loadUsers();
+    controller.loadUsers();
   }
 
   /* creates the user management view layout */
