@@ -43,17 +43,13 @@ public class EnvironmentState {
    * @param co2On the CO2 generator state
    * @param window the window openness level
    */
-  public void step(double dtSeconds, boolean fanOn, boolean pumpOn, boolean co2On, WindowLevel window) {
+  public void step(
+      double dtSeconds, boolean fanOn, boolean pumpOn, boolean co2On, WindowLevel window) {
     // --- Temperature dynamics ---
     updateTemperature(dtSeconds, fanOn, co2On, window);
 
     // --- Humidity dynamics ---
-    double evap = pumpOn ? +0.35 : -0.08; // pump increases humidity, otherwise it slowly drops
-    double ventLoss =
-        (fanOn ? -0.20 : 0.0)
-            + (window == WindowLevel.OPEN ? -0.30 : (window == WindowLevel.HALF ? -0.15 : 0.0));
-    humidityPct += (evap + ventLoss) * dtSeconds + noise(0.15);
-    humidityPct = Math.max(0.0, Math.min(100.0, humidityPct));
+    updateHumidity(dtSeconds, pumpOn, fanOn, window);
 
     // --- Light dynamics ---
     // Light depends on window state: closed = decreasing, open = increasing
@@ -97,7 +93,8 @@ public class EnvironmentState {
    * @param co2On the CO2 state
    * @param window the window openness level
    */
-  public void updateTemperature(double dtSeconds, boolean fanOn, boolean co2On, WindowLevel window) {
+  public void updateTemperature(
+      double dtSeconds, boolean fanOn, boolean co2On, WindowLevel window) {
     double towardOutside =
         (window == WindowLevel.OPEN) ? 0.15 : (window == WindowLevel.HALF ? 0.08 : 0.03);
     double fanCooling = fanOn ? 0.10 : 0.0; // fan pushes toward outside temp too
@@ -114,6 +111,23 @@ public class EnvironmentState {
     }
 
     temperatureC += (targetTemp - temperatureC) * 0.10 * dtSeconds + noise(0.02);
+  }
+
+  /**
+   * Update humidity considering pump, fan and window states.
+   *
+   * @param dtSeconds seconds elapsed
+   * @param pumpOn the pump state
+   * @param fanOn the fan state
+   * @param window the window openness level
+   */
+  public void updateHumidity(double dtSeconds, boolean pumpOn, boolean fanOn, WindowLevel window) {
+    double evap = pumpOn ? +0.35 : -0.08; // pump increases humidity, otherwise it slowly drops
+    double ventLoss =
+        (fanOn ? -0.20 : 0.0)
+            + (window == WindowLevel.OPEN ? -0.30 : (window == WindowLevel.HALF ? -0.15 : 0.0));
+    humidityPct += (evap + ventLoss) * dtSeconds + noise(0.15);
+    humidityPct = Math.max(0.0, Math.min(100.0, humidityPct));
   }
 
   /** Window openness enum aligned with protocol CLOSED/HALF/OPEN */
