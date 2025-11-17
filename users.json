@@ -2,20 +2,20 @@
   "id" : 1,
   "username" : "admin",
   "password" : "admin123",
-  "role" : "admin"
+  "role" : "Admin"
 }, {
   "id" : 2,
   "username" : "user",
   "password" : "user123",
-  "role" : "user"
+  "role" : "Operator"
 }, {
   "id" : 3,
   "username" : "test",
   "password" : "test234",
-  "role" : "user"
+  "role" : "Viewer"
 }, {
   "id" : 4,
   "username" : "eyob",
   "password" : "eyob123",
-  "role" : "admin"
+  "role" : "Admin"
 } ]
