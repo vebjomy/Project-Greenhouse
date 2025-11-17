@@ -81,13 +81,13 @@ public class MainApp extends Application {
      */
     private void attemptInitialConnection(Stage stage) {
         // 1. Show IP input dialog
-        TextInputDialog ipDialog = new TextInputDialog("127.0.0.1"); // <-- Вот ваш дефолтный IP
+        TextInputDialog ipDialog = new TextInputDialog("127.0.0.1");
         ipDialog.setTitle("Server Connection Setup");
         ipDialog.setHeaderText("Enter Server IP Address");
         ipDialog.setContentText("IP:");
 
         Optional<String> result = ipDialog.showAndWait();
-        String serverAddress = result.orElse(null); // <-- Здесь используется введенный IP
+        String serverAddress = result.orElse(null);
 
         // Handle cancellation or empty input by exiting the application
         if (serverAddress == null || serverAddress.trim().isEmpty()) {
@@ -96,7 +96,7 @@ public class MainApp extends Application {
         }
 
         // 2. Attempt connection
-        api.connect(serverAddress, SERVER_PORT).thenRun(() -> { // <-- Он используется здесь
+        api.connect(serverAddress, SERVER_PORT).thenRun(() -> {
             // SUCCESS: Connection established
             System.out.println("✅ Connected to server at " + serverAddress);
             isConnected = true;
@@ -116,7 +116,7 @@ public class MainApp extends Application {
                         });
 
                 // Show the first view (Splash Screen)
-                showSplashScreen(); // <-- Показывает UI *после* успеха
+                showSplashScreen();
 
                 // Update login status (if LoginScreen is shown later)
                 if (loginScreenView != null) {
