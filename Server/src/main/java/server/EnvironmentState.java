@@ -126,6 +126,8 @@ public class EnvironmentState {
         // Slow decrease when closed (no external light)
         lightChange = -LIGHT_DECREASE_CLOSED;
         break;
+      default:
+        lightChange = 0.0;
     }
 
     // Apply the light change with some noise
@@ -145,13 +147,17 @@ public class EnvironmentState {
    */
   public void updatePh(double dtSeconds, boolean pumpOn, boolean co2On) {
     double phTrend = 0.0;
-    if (pumpOn) phTrend += (7.0 - ph) * 0.05;
-    if (co2On) phTrend += (6.0 - ph) * 0.04;
+    if (pumpOn) {
+      phTrend += (7.0 - ph) * 0.05;
+    }
+    if (co2On) {
+      phTrend += (6.0 - ph) * 0.04;
+    }
     ph += phTrend * dtSeconds + noise(0.01);
     ph = Math.max(0.0, Math.min(14.0, ph));
   }
 
-  /** Window openness enum aligned with protocol CLOSED/HALF/OPEN */
+  /** Window openness enum aligned with protocol. CLOSED/HALF/OPEN */
   public enum WindowLevel {
     CLOSED,
     HALF,
