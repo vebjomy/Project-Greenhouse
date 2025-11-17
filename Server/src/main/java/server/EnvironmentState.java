@@ -7,11 +7,11 @@ import java.util.concurrent.ThreadLocalRandom;
  * by actuators.
  */
 public class EnvironmentState {
-  // --- Sensors (public for simplicity; could be getters) ---
-  public double temperatureC = 22.0; // °C
-  public double humidityPct = 55.0; // % RH
-  public int lightLux = 420; // lux
-  public double ph = 8.4; // pH
+  // Sensors
+  private double temperatureC = 22.0; // °C
+  private double humidityPct = 55.0; // % RH
+  private int lightLux = 420; // lux
+  private double ph = 8.4; // pH
 
   // External environment assumptions (can be extended or randomized)
   public double outsideTempC = 12.0; // °C
@@ -156,5 +156,22 @@ public class EnvironmentState {
     CLOSED,
     HALF,
     OPEN
+  }
+
+  // --- Getters ---
+  public double getTemperatureC() {
+    return temperatureC;
+  }
+
+  public double getHumidityPct() {
+    return humidityPct;
+  }
+
+  public int getLightLux() {
+    return lightLux;
+  }
+
+  public double getPh() {
+    return ph;
   }
 }

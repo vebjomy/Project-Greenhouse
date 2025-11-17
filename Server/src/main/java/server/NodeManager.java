@@ -144,10 +144,10 @@ public class NodeManager {
     var env = rt.env;
     // Sensor readings
     Map<String,Object> data = new LinkedHashMap<>();
-    data.put("temperature", env.temperatureC);
-    data.put("humidity", env.humidityPct);
-    data.put("light", env.lightLux);
-    data.put("ph", env.ph);
+    data.put("temperature", env.getTemperatureC());
+    data.put("humidity", env.getHumidityPct());
+    data.put("light", env.getLightLux());
+    data.put("ph", env.getPh());
     // Actuator states
     data.put("fan", rt.fanOn.get() ? "ON" : "OFF");
     data.put("water_pump", rt.pumpOn.get() ? "ON" : "OFF");
