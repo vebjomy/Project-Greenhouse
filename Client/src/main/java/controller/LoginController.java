@@ -8,7 +8,8 @@ import core.ClientApi;
 import javafx.application.Platform;
 
 /**
- * Controller for the LoginScreenView
+ * Controller for handling user login logic and interactions with the LoginScreenView.
+ * Manages user input validation, communicates with the authentication service, and updates the UI.
  */
 public class LoginController {
     private final LoginScreenView view;
@@ -16,6 +17,13 @@ public class LoginController {
     private final ClientApi clientApi;
     private final MainApp mainApp;
 
+    /**
+     * Constructs a LoginController with the given view, API client, and main application reference.
+     *
+     * @param view      the login screen view UI
+     * @param clientApi the client API for server communication
+     * @param mainApp   the main application instance for navigation
+     */
     public LoginController(LoginScreenView view, ClientApi clientApi, MainApp mainApp) {
         this.view = view;
         this.clientApi = clientApi;
@@ -25,7 +33,9 @@ public class LoginController {
     }
 
     /**
-     * Handles user login
+     * Handles the login process by validating user input,
+     * sending login requests, and updating the UI based on the result.
+     *
      * @return true if login successful, false otherwise
      */
     public void handleLogin() {
@@ -47,7 +57,7 @@ public class LoginController {
             Platform.runLater(() -> {
                 if (response.success) {
                     System.out.println("✅ Login successful - Role: " + response.getRole());
-                    mainApp.showDashboard(); // ✅ Navigate to dashboard
+                    mainApp.showDashboard(username); // ✅ Navigate to dashboard
                 } else {
                     showError(response.getMessage());
                 }
@@ -61,12 +71,19 @@ public class LoginController {
     }
 
     /**
-     * Gets the authentication service
+     * Returns the authentication service used for login operations.
+     *
+     * @return the authentication service
      */
     public AuthenticationService getAuthService() {
         return authService;
     }
 
+    /**
+     * Displays an error alert dialog with the specified message.
+     *
+     * @param message the error message to display
+     */
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Login Error");

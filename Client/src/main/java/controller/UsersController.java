@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Controller for managing user-related actions in the client application.
+ * Handles loading, adding, editing, and deleting users via the UI and communicates with the server API.
+ */
 public class UsersController {
   private final UsersView view;
   private final ClientApi clientApi;
@@ -25,6 +29,9 @@ public class UsersController {
     this.clientApi = clientApi;
   }
 
+  /**
+   * Loads the list of users from the server and updates the user table in the view.
+   */
   public void loadUsers() {
     clientApi.getUsers().thenAccept(users -> {
       Platform.runLater(() -> {
@@ -44,7 +51,7 @@ public class UsersController {
   }
 
   /**
-   * Opens a dialog to add a new user.
+   * Opens dialogs to collect user information and sends a request to add a new user.
    */
   public void addUser() {
     // Username
@@ -74,8 +81,8 @@ public class UsersController {
     }
 
     // Role
-    List<String> roles = Arrays.asList("user", "admin");
-    ChoiceDialog<String> roleDialog = new ChoiceDialog<>("user", roles);
+    List<String> roles = Arrays.asList("Admin", "Operator", "Viewer");
+    ChoiceDialog<String> roleDialog = new ChoiceDialog<>("Viewer", roles);
     roleDialog.setTitle("Add User");
     roleDialog.setHeaderText("Select role for " + username);
     roleDialog.setContentText("Role:");
@@ -108,7 +115,7 @@ public class UsersController {
   }
 
   /**
-   * Opens a dialog to edit the selected user's details.
+   * Opens dialogs to edit the selected user's details and updates the user on the server.
    */
   public void editUser() {
     User selectedUser = view.getUserTable().getSelectionModel().getSelectedItem();
@@ -130,7 +137,7 @@ public class UsersController {
       return;
     }
 
-    List<String> roles = Arrays.asList("user", "admin");
+    List<String> roles = Arrays.asList("Admin", "Operator", "Viewer");
     ChoiceDialog<String> roleDialog = new ChoiceDialog<>(selectedUser.getRole(), roles);
     roleDialog.setTitle("Edit User");
     roleDialog.setHeaderText("Select role for user ID: " + selectedUser.getId());
@@ -157,7 +164,7 @@ public class UsersController {
   }
 
   /**
-   * Deletes the selected user after confirmation.
+   * Deletes the selected user after confirmation and updates the view.
    */
   public void deleteUser() {
     User selectedUser = view.getUserTable().getSelectionModel().getSelectedItem();
@@ -189,6 +196,13 @@ public class UsersController {
     }
   }
 
+  /**
+   * Shows an alert dialog with the specified type, title, and message.
+   *
+   * @param type    the type of alert
+   * @param title   the title of the alert
+   * @param message the message to display
+   */
   private void showAlert(Alert.AlertType type, String title, String message) {
     Alert alert = new Alert(type);
     alert.setTitle(title);

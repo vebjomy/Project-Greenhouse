@@ -8,7 +8,8 @@ import core.ClientApi;
 import javafx.application.Platform;
 
 /**
- * Controller for the RegistrationView
+ * Controller for handling user registration logic and interactions with the RegistrationView.
+ * Manages user input validation, communicates with the authentication service, and updates the UI.
  */
 public class RegisterController {
     private final RegistrationView view;
@@ -16,6 +17,13 @@ public class RegisterController {
     private final ClientApi clientApi;
     private final MainApp mainApp;
 
+    /**
+     * Constructs a RegisterController with the given view, API client, and main application reference.
+     *
+     * @param view      the registration view UI
+     * @param clientApi the client API for server communication
+     * @param mainApp   the main application instance for navigation
+     */
     public RegisterController(RegistrationView view, ClientApi clientApi, MainApp mainApp) {
         this.view = view;
         this.clientApi = clientApi;
@@ -25,7 +33,10 @@ public class RegisterController {
     }
 
     /**
-     * Handles user registration
+     /**
+     * Handles the registration process by validating user input,
+     * sending registration requests, and updating the UI based on the result.
+     *
      * @return true if registration successful, false otherwise
      */
     public void handleRegister() {
@@ -48,7 +59,7 @@ public class RegisterController {
             return;
         }
 
-        authService.register(username, password, "user").thenAccept(response -> {
+        authService.register(username, password, "Admin").thenAccept(response -> {
             Platform.runLater(() -> {
                 if (response.success) {
                     showAlert("Success", "Registration successful! You can now login.");
@@ -63,6 +74,12 @@ public class RegisterController {
         });
     }
 
+    /**
+     * Displays an alert dialog with the specified title and message.
+     *
+     * @param title   the title of the alert
+     * @param message the message to display
+     */
     private void showAlert(String title, String message) {
         Alert alert = new Alert(title.equals("Success") ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
         alert.setTitle(title);
