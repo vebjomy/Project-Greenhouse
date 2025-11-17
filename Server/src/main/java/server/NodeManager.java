@@ -27,7 +27,12 @@ public class NodeManager {
     runtimes.put(n.id, new NodeRuntime(n.id));
   }
 
-  // Add a new node and return its assigned ID
+  /**
+   * Add a new node and return its assigned ID
+   *
+   * @param node the node to add
+   * @return the assigned node ID
+   */
   public synchronized String addNode(Topology.Node node) {
     System.out.println("🔧 [NodeManager] addNode called");
     System.out.println("   Input node: " + node.name);
@@ -70,6 +75,11 @@ public class NodeManager {
     return id;
   }
 
+  /**
+   * Returns a list containing all nodes.
+   *
+   * @return a list containing all nodes
+   */
   public List<Topology.Node> getAllNodes() {
     System.out.println("🔧 [NodeManager] getAllNodes called");
     System.out.println("   Nodes in map: " + nodes.size());
@@ -84,6 +94,12 @@ public class NodeManager {
     return result;
   }
 
+  /**
+   * Update an existing node with a patch map.
+   *
+   * @param nodeId the ID of the node to update
+   * @param patch the patch map with fields to update
+   */
   public synchronized void updateNode(String nodeId, Map<String,Object> patch) {
     var n = nodes.get(nodeId);
     if (n == null) return;
@@ -93,11 +109,22 @@ public class NodeManager {
     // Optionally patch sensors/actuators arrays
   }
 
+  /**
+   * Delete a node by its ID.
+   *
+   * @param nodeId the ID of the node to delete
+   */
   public synchronized void deleteNode(String nodeId) {
     nodes.remove(nodeId);
     runtimes.remove(nodeId);
   }
 
+  /**
+   * Add a component (sensor/actuator) to a node.
+   *
+   * @param nodeId the ID of the node
+   * @param component the component map with "kind" and "name"
+   */
   public synchronized void addComponent(String nodeId, Map<String,Object> component) {
     var n = nodes.get(nodeId);
     if (n == null) return;
@@ -110,6 +137,12 @@ public class NodeManager {
     }
   }
 
+    /**
+     * Remove a component (sensor/actuator) from a node.
+     *
+     * @param nodeId the ID of the node
+     * @param component the component map with "kind" and "name"
+     */
   public synchronized void removeComponent(String nodeId, Map<String,Object> component) {
     var n = nodes.get(nodeId);
     if (n == null) return;
