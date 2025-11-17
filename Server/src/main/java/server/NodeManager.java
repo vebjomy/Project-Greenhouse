@@ -10,16 +10,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * In-memory nodes + runtimes. Applies patches and executes commands.
- */
+/** In-memory nodes + runtimes. Applies patches and executes commands. */
 public class NodeManager {
   private final Map<String, Topology.Node> nodes = new ConcurrentHashMap<>();
   private final Map<String, NodeRuntime> runtimes = new ConcurrentHashMap<>();
 
-  /**
-   * Constructor initializes with a demo node.
-   */
+  /** Constructor initializes with a demo node. */
   public NodeManager() {
     // Seed one demo node
     Topology.Node n = new Topology.Node();
@@ -34,7 +30,7 @@ public class NodeManager {
   }
 
   /**
-   * Add a new node and return its assigned ID
+   * Add a new node and return its assigned ID.
    *
    * @param node the node to add
    * @return the assigned node ID
@@ -106,12 +102,20 @@ public class NodeManager {
    * @param nodeId the ID of the node to update
    * @param patch the patch map with fields to update
    */
-  public synchronized void updateNode(String nodeId, Map<String,Object> patch) {
+  public synchronized void updateNode(String nodeId, Map<String, Object> patch) {
     var n = nodes.get(nodeId);
-    if (n == null) return;
-    if (patch.containsKey("name")) n.name = Objects.toString(patch.get("name"), n.name);
-    if (patch.containsKey("location")) n.location = Objects.toString(patch.get("location"), n.location);
-    if (patch.containsKey("ip")) n.ip = Objects.toString(patch.get("ip"), n.ip);
+    if (n == null) {
+      return;
+    }
+    if (patch.containsKey("name")) {
+      n.name = Objects.toString(patch.get("name"), n.name);
+    }
+    if (patch.containsKey("location")) {
+      n.location = Objects.toString(patch.get("location"), n.location);
+    }
+    if (patch.containsKey("ip")) {
+      n.ip = Objects.toString(patch.get("ip"), n.ip);
+    }
     // Optionally patch sensors/actuators arrays
   }
 
@@ -131,27 +135,35 @@ public class NodeManager {
    * @param nodeId the ID of the node
    * @param component the component map with "kind" and "name"
    */
-  public synchronized void addComponent(String nodeId, Map<String,Object> component) {
+  public synchronized void addComponent(String nodeId, Map<String, Object> component) {
     var n = nodes.get(nodeId);
-    if (n == null) return;
+    if (n == null) {
+      return;
+    }
     String kind = Objects.toString(component.get("kind"), "");
     String name = Objects.toString(component.get("name"), "");
     if ("sensor".equals(kind)) {
-      if (!n.sensors.contains(name)) n.sensors.add(name);
+      if (!n.sensors.contains(name)) {
+        n.sensors.add(name);
+      }
     } else if ("actuator".equals(kind)) {
-      if (!n.actuators.contains(name)) n.actuators.add(name);
+      if (!n.actuators.contains(name)) {
+        n.actuators.add(name);
+      }
     }
   }
 
-    /**
-     * Remove a component (sensor/actuator) from a node.
-     *
-     * @param nodeId the ID of the node
-     * @param component the component map with "kind" and "name"
-     */
-  public synchronized void removeComponent(String nodeId, Map<String,Object> component) {
+  /**
+   * Remove a component (sensor/actuator) from a node.
+   *
+   * @param nodeId the ID of the node
+   * @param component the component map with "kind" and "name"
+   */
+  public synchronized void removeComponent(String nodeId, Map<String, Object> component) {
     var n = nodes.get(nodeId);
-    if (n == null) return;
+    if (n == null) {
+      return;
+    }
     String kind = Objects.toString(component.get("kind"), "");
     String name = Objects.toString(component.get("name"), "");
     if ("sensor".equals(kind)) {
@@ -161,28 +173,42 @@ public class NodeManager {
     }
   }
 
+  /**
+   * Set the sampling interval for a node's runtime.
+   *
+   * @param nodeId the ID of the node
+   * @param intervalMs the sampling interval in milliseconds
+   */
   public synchronized void setSampling(String nodeId, int intervalMs) {
     var rt = runtimes.get(nodeId);
-    if (rt != null) rt.intervalMs = Math.max(200, intervalMs);
+    if (rt != null) {
+      rt.intervalMs = Math.max(200, intervalMs);
+    }
   }
 
-
-  public NodeRuntime getRuntime(String nodeId) { return runtimes.get(nodeId); }
+  /** Get the runtime for a node by its ID. */
+  public NodeRuntime getRuntime(String nodeId) {
+    return runtimes.get(nodeId);
+  }
 
   /** Advance the environment for a node by dt seconds. */
   public void advance(String nodeId, double dtSeconds) {
     var rt = runtimes.get(nodeId);
-    if (rt == null) return;
+    if (rt == null) {
+      return;
+    }
     rt.env.step(dtSeconds, rt.fanOn.get(), rt.pumpOn.get(), rt.co2On.get(), rt.window);
   }
 
-  /** Return a snapshot map for building SensorUpdate.data */
-  public Map<String,Object> snapshot(String nodeId) {
+  /** Return a snapshot map for building SensorUpdate.data. */
+  public Map<String, Object> snapshot(String nodeId) {
     var rt = runtimes.get(nodeId);
-    if (rt == null) return Map.of();
+    if (rt == null) {
+      return Map.of();
+    }
     var env = rt.env;
     // Sensor readings
-    Map<String,Object> data = new LinkedHashMap<>();
+    Map<String, Object> data = new LinkedHashMap<>();
     data.put("temperature", env.getTemperatureC());
     data.put("humidity", env.getHumidityPct());
     data.put("light", env.getLightLux());
@@ -198,7 +224,9 @@ public class NodeManager {
   /** Apply actuator command according to protocol. */
   public void executeCommand(Command cmd) {
     var rt = runtimes.get(cmd.nodeId);
-    if (rt == null) return;
+    if (rt == null) {
+      return;
+    }
 
     switch (cmd.target) {
       case "fan" -> rt.fanOn.set(asBool(cmd.params.get("on")));
@@ -208,7 +236,9 @@ public class NodeManager {
         var level = String.valueOf(cmd.params.get("level"));
         try {
           rt.window = EnvironmentState.WindowLevel.valueOf(level);
-        } catch (Exception ignored) { /* invalid level -> ignore */ }
+        } catch (Exception ignored) {
+          /* invalid level -> ignore */
+        }
       }
       default -> System.out.println("Unknown actuator: " + cmd.target);
     }
@@ -216,8 +246,6 @@ public class NodeManager {
     immediate.nodeId = cmd.nodeId;
     immediate.timestamp = System.currentTimeMillis();
     immediate.data = snapshot(cmd.nodeId);
-
-
   }
 
   /**
@@ -230,5 +258,3 @@ public class NodeManager {
     return (v instanceof Boolean b && b) || "true".equalsIgnoreCase(String.valueOf(v));
   }
 }
-
-
