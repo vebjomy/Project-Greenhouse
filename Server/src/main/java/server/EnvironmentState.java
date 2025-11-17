@@ -3,18 +3,18 @@ package server;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Physical-like environment state for a greenhouse node.
- * Values evolve over time and are influenced by actuators.
+ * Physical-like environment state for a greenhouse node. Values evolve over time and are influenced
+ * by actuators.
  */
 public class EnvironmentState {
   // --- Sensors (public for simplicity; could be getters) ---
-  public double temperatureC = 22.0;  // °C
-  public double humidityPct = 55.0;   // % RH
-  public int lightLux = 420;          // lux
-  public double ph = 8.4;             // pH
+  public double temperatureC = 22.0; // °C
+  public double humidityPct = 55.0; // % RH
+  public int lightLux = 420; // lux
+  public double ph = 8.4; // pH
 
   // External environment assumptions (can be extended or randomized)
-  public double outsideTempC = 12.0;  // °C
+  public double outsideTempC = 12.0; // °C
   public int daytimeLightLux = 10000; // lux when "daylight" (demo)
 
   // CO2 heating effect parameters
@@ -22,9 +22,9 @@ public class EnvironmentState {
   private static final double MAX_CO2_TEMP_INCREASE = 5.0; // Maximum temperature increase from CO2
 
   // Light parameters
-  private static final double LIGHT_INCREASE_OPEN = 25.0;   // lux/sec when window open
-  private static final double LIGHT_INCREASE_HALF = 12.0;   // lux/sec when window half open
-  private static final double LIGHT_DECREASE_CLOSED = 8.0;  // lux/sec when window closed
+  private static final double LIGHT_INCREASE_OPEN = 25.0; // lux/sec when window open
+  private static final double LIGHT_INCREASE_HALF = 12.0; // lux/sec when window half open
+  private static final double LIGHT_DECREASE_CLOSED = 8.0; // lux/sec when window closed
   private static final int LIGHT_MIN = 50;
   private static final int LIGHT_MAX = 20000;
 
@@ -34,29 +34,24 @@ public class EnvironmentState {
   }
 
   /**
-   * Update the environment by dt seconds, considering actuator states.
-   * The model is deliberately simple and stable for demo purposes.
+   * Update the environment by dt seconds, considering actuator states. The model is deliberately
+   * simple and stable for demo purposes.
+   *
+   * @param dtSeconds seconds elapsed
+   * @param fanOn the fan state
+   * @param pumpOn the water pump state
+   * @param co2On the CO2 generator state
+   * @param window the window openness level
    */
   public void step(double dtSeconds, boolean fanOn, boolean pumpOn, boolean co2On, WindowLevel window) {
     // --- Temperature dynamics ---
-    double towardOutside = (window == WindowLevel.OPEN) ? 0.15 : (window == WindowLevel.HALF ? 0.08 : 0.03);
-    double fanCooling = fanOn ? 0.10 : 0.0;  // fan pushes toward outside temp too
-
-    // CO2 heating effect - increases temperature when CO2 is on
-    double co2Heating = co2On ? CO2_HEATING_RATE : 0.0;
-
-    double targetTemp = outsideTempC + (temperatureC - outsideTempC) * (1.0 - (towardOutside + fanCooling));
-
-    // Apply CO2 heating effect
-    if (co2On && temperatureC < outsideTempC + MAX_CO2_TEMP_INCREASE) {
-      targetTemp += co2Heating * dtSeconds;
-    }
-
-    temperatureC += (targetTemp - temperatureC) * 0.10 * dtSeconds + noise(0.02);
+    updateTemperature(dtSeconds, fanOn, co2On, window);
 
     // --- Humidity dynamics ---
-    double evap = pumpOn ? +0.35 : -0.08;   // pump increases humidity, otherwise it slowly drops
-    double ventLoss = (fanOn ? -0.20 : 0.0) + (window == WindowLevel.OPEN ? -0.30 : (window == WindowLevel.HALF ? -0.15 : 0.0));
+    double evap = pumpOn ? +0.35 : -0.08; // pump increases humidity, otherwise it slowly drops
+    double ventLoss =
+        (fanOn ? -0.20 : 0.0)
+            + (window == WindowLevel.OPEN ? -0.30 : (window == WindowLevel.HALF ? -0.15 : 0.0));
     humidityPct += (evap + ventLoss) * dtSeconds + noise(0.15);
     humidityPct = Math.max(0.0, Math.min(100.0, humidityPct));
 
@@ -89,11 +84,42 @@ public class EnvironmentState {
     // Very simplified: pump slightly increases pH toward 7, CO2 slightly lowers toward 6.0
     double phTrend = 0.0;
     if (pumpOn) phTrend += (7.0 - ph) * 0.05;
-    if (co2On)  phTrend += (6.0 - ph) * 0.04;
+    if (co2On) phTrend += (6.0 - ph) * 0.04;
     ph += phTrend * dtSeconds + noise(0.01);
     ph = Math.max(0.0, Math.min(14.0, ph));
   }
 
+  /**
+   * Update temperature considering fan, CO2, and window state.
+   *
+   * @param dtSeconds seconds elapsed
+   * @param fanOn the fan state
+   * @param co2On the CO2 state
+   * @param window the window openness level
+   */
+  public void updateTemperature(double dtSeconds, boolean fanOn, boolean co2On, WindowLevel window) {
+    double towardOutside =
+        (window == WindowLevel.OPEN) ? 0.15 : (window == WindowLevel.HALF ? 0.08 : 0.03);
+    double fanCooling = fanOn ? 0.10 : 0.0; // fan pushes toward outside temp too
+
+    // CO2 heating effect - increases temperature when CO2 is on
+    double co2Heating = co2On ? CO2_HEATING_RATE : 0.0;
+
+    double targetTemp =
+        outsideTempC + (temperatureC - outsideTempC) * (1.0 - (towardOutside + fanCooling));
+
+    // Apply CO2 heating effect
+    if (co2On && temperatureC < outsideTempC + MAX_CO2_TEMP_INCREASE) {
+      targetTemp += co2Heating * dtSeconds;
+    }
+
+    temperatureC += (targetTemp - temperatureC) * 0.10 * dtSeconds + noise(0.02);
+  }
+
   /** Window openness enum aligned with protocol CLOSED/HALF/OPEN */
-  public enum WindowLevel { CLOSED, HALF, OPEN }
+  public enum WindowLevel {
+    CLOSED,
+    HALF,
+    OPEN
+  }
 }
