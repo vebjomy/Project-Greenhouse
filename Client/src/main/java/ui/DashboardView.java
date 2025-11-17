@@ -403,6 +403,10 @@ public class DashboardView {
     return centerContainer;
   }
 
+  public void setUserGreeting(String username) {
+    userGreetingLabel.setText("Hello, " + username + "!");
+  }
+
   /** GETTER FOR ROOT PANE */
   public BorderPane getRoot() {
     return root;

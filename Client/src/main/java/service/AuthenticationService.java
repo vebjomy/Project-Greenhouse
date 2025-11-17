@@ -61,13 +61,11 @@ public class AuthenticationService {
                 UUID.randomUUID().toString(),
                 username,
                 password,
-                role != null ? role : "user"
+                role != null ? role : "Admin"
         );
 
         return clientApi.sendRegisterMessage(request).thenApply(response -> {
             if (response.success) {
-                // Add to local register
-//                userRegister.addUser(username, password, role);
                 System.out.println("✅ Registration successful - UserID: " + response.userId);
             } else {
                 System.out.println("❌ Registration failed: " + response.message);
