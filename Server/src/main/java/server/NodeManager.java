@@ -3,8 +3,11 @@ package server;
 import dto.Command;
 import dto.SensorUpdate;
 import dto.Topology;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -14,6 +17,9 @@ public class NodeManager {
   private final Map<String, Topology.Node> nodes = new ConcurrentHashMap<>();
   private final Map<String, NodeRuntime> runtimes = new ConcurrentHashMap<>();
 
+  /**
+   * Constructor initializes with a demo node.
+   */
   public NodeManager() {
     // Seed one demo node
     Topology.Node n = new Topology.Node();
@@ -21,8 +27,8 @@ public class NodeManager {
     n.name = "Demo Greenhouse";
     n.location = "Central";
     n.ip = "127.0.0.1";
-    n.sensors = new ArrayList<>(List.of("temperature","humidity","light","ph"));
-    n.actuators = new ArrayList<>(List.of("fan","water_pump","co2","window"));
+    n.sensors = new ArrayList<>(List.of("temperature", "humidity", "light", "ph"));
+    n.actuators = new ArrayList<>(List.of("fan", "water_pump", "co2", "window"));
     nodes.put(n.id, n);
     runtimes.put(n.id, new NodeRuntime(n.id));
   }
@@ -214,6 +220,12 @@ public class NodeManager {
 
   }
 
+  /**
+   * Convert an object to boolean. Handles Boolean and String "true"/"false".
+   *
+   * @param v the object to convert
+   * @return the boolean value
+   */
   private boolean asBool(Object v) {
     return (v instanceof Boolean b && b) || "true".equalsIgnoreCase(String.valueOf(v));
   }
