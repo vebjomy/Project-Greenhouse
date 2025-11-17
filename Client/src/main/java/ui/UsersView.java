@@ -1,6 +1,7 @@
 package ui;
 
 import controller.UsersController;
+import core.ClientApi;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -11,11 +12,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import model.User;
-import core.ClientApi;
 
 /**
- * The View (UI) for the user management section.
- * It displays a list of users and buttons to manage them.
+ * The View (UI) for the user management section. It displays a list of users and buttons to manage
+ * them.
  */
 public class UsersView {
 
@@ -23,13 +23,14 @@ public class UsersView {
   private final UsersController controller;
   private final TableView<User> userTable = new TableView<>();
 
-  /* this class creates the user management view with a table and buttons */
+  /** This class creates the user management view with a table and buttons. */
   public UsersView(ClientApi clientApi) {
     controller = new UsersController(this, clientApi);
     view = createUsersView();
-//    controller.loadUsers();
+    //    controller.loadUsers();
   }
-/* creates the user management view layout */
+
+  /* creates the user management view layout */
   private BorderPane createUsersView() {
     BorderPane layout = new BorderPane();
     layout.setPadding(new Insets(20));
@@ -49,7 +50,7 @@ public class UsersView {
     Button deleteUserBtn = new Button("Delete User");
     deleteUserBtn.setOnAction(e -> controller.deleteUser());
     deleteUserBtn.getStyleClass().add("danger-button");
-   // layout for buttons
+    // layout for buttons
     HBox buttonBar = new HBox(10, addUserBtn, editUserBtn, deleteUserBtn);
     buttonBar.setAlignment(Pos.CENTER_LEFT);
 
