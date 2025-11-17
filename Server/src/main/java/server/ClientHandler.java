@@ -1,17 +1,17 @@
 package server;
 
-
-import net.MessageCodec;
-import dto.*;
 import com.fasterxml.jackson.databind.JsonNode;
-
-import java.io.*;
+import dto.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.*;
+import net.MessageCodec;
 
-/**
- * Single client connection: subscriptions + requests + acks.
- */
+/** Single client connection: subscriptions + requests + acks. */
 public class ClientHandler implements Runnable {
   private final Socket socket;
   private final NodeManager nodeManager;
@@ -23,7 +23,23 @@ public class ClientHandler implements Runnable {
   private PrintWriter out;
   private ClientRegistry.Session session;
 
-  public ClientHandler(Socket socket, NodeManager nodeManager, ClientRegistry registry, SensorEngine engine, UserService userService) {
+  /**
+   * Creates a new {@code ClientHandler} for a single client connection and wires required services.
+   * Initializes references for node management, client session registry, sensor engine callbacks,
+   * and user management. No I/O is performed here.
+   *
+   * @param socket the client socket used for reading and writing messages
+   * @param nodeManager manager for node CRUD and operations
+   * @param registry registry that tracks sessions and broadcasts server events
+   * @param engine sensor engine notified on topology changes
+   * @param userService user management service for auth and user operations
+   */
+  public ClientHandler(
+      Socket socket,
+      NodeManager nodeManager,
+      ClientRegistry registry,
+      SensorEngine engine,
+      UserService userService) {
     this.socket = socket;
     this.nodeManager = nodeManager;
     this.registry = registry;
@@ -33,11 +49,18 @@ public class ClientHandler implements Runnable {
 
   @Override
   public void run() {
-    try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-         PrintWriter writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true)) {
+    try (BufferedReader in =
+            new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+        PrintWriter writer =
+            new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true)) {
       this.out = writer;
 
-      session = registry.addSession(json -> { out.write(json); out.flush(); });
+      session =
+          registry.addSession(
+              json -> {
+                out.write(json);
+                out.flush();
+              });
 
       Welcome welcome = new Welcome();
       welcome.server = "GreenhouseServer";
@@ -45,13 +68,19 @@ public class ClientHandler implements Runnable {
       send(welcome);
 
       String line;
-      while ((line = in.readLine()) != null) process(line);
+      while ((line = in.readLine()) != null) {
+        process(line);
+      }
 
     } catch (Exception e) {
       System.err.println("Client error: " + e.getMessage());
     } finally {
       registry.removeSession(session);
-      try { socket.close(); } catch (IOException ignored) {}
+      try {
+        socket.close();
+      } catch (IOException ignored) {
+        System.out.println(" Failed to close socket");
+      }
     }
   }
 
@@ -79,11 +108,15 @@ public class ClientHandler implements Runnable {
         case "ping" -> handlePing(root);
         default -> System.out.println("Unknown type: " + type);
       }
-    } catch (Exception e) { e.printStackTrace(); }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
-  private void handleHello(JsonNode msg) { session.clientId = msg.path("clientId").asText(null); ack(msg, "ok"); }
-
+  private void handleHello(JsonNode msg) {
+    session.clientId = msg.path("clientId").asText(null);
+    ack(msg, "ok");
+  }
 
   // Handle get_topology request and send topology response
   private void handleGetTopology(JsonNode msg) {
@@ -102,8 +135,7 @@ public class ClientHandler implements Runnable {
     if (t.nodes != null && !t.nodes.isEmpty()) {
       System.out.println("   - Node details:");
       for (var n : t.nodes) {
-        System.out.println("     • " + n.id + ": " + n.name +
-                " (" + n.location + ") - " + n.ip);
+        System.out.println("     • " + n.id + ": " + n.name + " (" + n.location + ") - " + n.ip);
       }
     } else {
       System.err.println("   ⚠️ WARNING: Node list is empty or null!");
@@ -117,9 +149,7 @@ public class ClientHandler implements Runnable {
       System.err.println("   ❌ Failed to serialize: " + e.getMessage());
     }
 
-
     send(t);
-
 
     System.out.println("   ✅ Topology sent (no separate ACK)");
   }
@@ -258,8 +288,6 @@ public class ClientHandler implements Runnable {
     nc.node = cn.node;
     nc.node.id = id;
     registry.broadcast(nc);
-
-
   }
 
   /**
@@ -275,15 +303,20 @@ public class ClientHandler implements Runnable {
     // broadcast node_change updated
     NodeChange nc = new NodeChange();
     nc.op = "updated";
-    nc.node = nodeManager.getAllNodes().stream().filter(n -> n.id.equals(m.nodeId)).findFirst().orElse(null);
+    nc.node =
+        nodeManager.getAllNodes().stream()
+            .filter(n -> n.id.equals(m.nodeId))
+            .findFirst()
+            .orElse(null);
     registry.broadcast(nc);
   }
 
   /**
-   * Handle delete_node request.
+   * Processes a delete_node request: deletes the node, notifies the engine, sends an ACK, and
+   * broadcasts a node_change "deleted" event with the node id.
    *
-   * @param msg The JSON message.
-   * @throws Exception
+   * @param msg JSON request containing the request id and target nodeId
+   * @throws Exception if deserialization or downstream operations fail
    */
   private void handleDeleteNode(JsonNode msg) throws Exception {
     DeleteNode m = codec.fromJson(msg.toString(), DeleteNode.class);
@@ -335,16 +368,29 @@ public class ClientHandler implements Runnable {
     ack(msg, "ok");
   }
 
-  private void handlePing(JsonNode msg) { Pong p = new Pong(); p.id = msg.path("id").asText(null); send(p); }
+  private void handlePing(JsonNode msg) {
+    Pong p = new Pong();
+    p.id = msg.path("id").asText(null);
+    send(p);
+  }
 
   private void ack(JsonNode msg, String status) {
-    try { Ack a = new Ack(); a.id = msg.path("id").asText(null); a.status = status; send(a); }
-    catch (Exception e) { e.printStackTrace(); }
+    try {
+      Ack a = new Ack();
+      a.id = msg.path("id").asText(null);
+      a.status = status;
+      send(a);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void send(Object obj) {
-    try { out.write(codec.toJsonLine(obj)); out.flush(); }
-    catch (Exception e) { e.printStackTrace(); }
+    try {
+      out.write(codec.toJsonLine(obj));
+      out.flush();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }
-
