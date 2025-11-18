@@ -99,8 +99,6 @@ public class ClientHandler implements Runnable {
         case "create_node" -> handleCreateNode(root);
         case "update_node" -> handleUpdateNode(root);
         case "delete_node" -> handleDeleteNode(root);
-        case "add_component" -> handleAddComponent(root);
-        case "remove_component" -> handleRemoveComponent(root);
         case "set_sampling" -> handleSetSampling(root);
         case "subscribe" -> handleSubscribe(root);
         case "unsubscribe" -> handleUnsubscribe(root);
@@ -331,17 +329,6 @@ public class ClientHandler implements Runnable {
     registry.broadcast(nc);
   }
 
-  private void handleAddComponent(JsonNode msg) throws Exception {
-    AddComponent m = codec.fromJson(msg.toString(), AddComponent.class);
-    nodeManager.addComponent(m.nodeId, m.component);
-    ack(msg, "ok");
-  }
-
-  private void handleRemoveComponent(JsonNode msg) throws Exception {
-    RemoveComponent m = codec.fromJson(msg.toString(), RemoveComponent.class);
-    nodeManager.removeComponent(m.nodeId, m.component);
-    ack(msg, "ok");
-  }
 
   private void handleSetSampling(JsonNode msg) throws Exception {
     SetSampling m = codec.fromJson(msg.toString(), SetSampling.class);
