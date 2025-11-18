@@ -3,6 +3,16 @@ package controller;
 import App.MainApp;
 import core.ClientApi;
 import dto.Topology;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -11,20 +21,24 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import model.Node;
-import ui.AddComponentDialog;
 import ui.AddNodeDialog;
 import ui.DashboardView;
 import ui.EditNodeDialog;
-import ui.components.*;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
+import ui.components.Co2ActuatorView;
+import ui.components.FanActuatorView;
+import ui.components.HumiditySensorView;
+import ui.components.LightSensorView;
+import ui.components.PhSensorView;
+import ui.components.TemperatureSensorView;
+import ui.components.WaterPumpActuatorView;
+import ui.components.WindowActuatorView;
 
 /**
  * Controller class for managing the dashboard view and its interactions.
@@ -53,69 +67,91 @@ import java.util.stream.Collectors;
  *
  * @author Green House Control Team
  * @version 3.0
- * @since 1.0
  * @see DashboardView
  * @see ClientApi
  * @see Node
+ * @since 1.0
  */
 public class DashboardController {
 
   // ========== Dependencies ==========
 
-  /** The associated dashboard view */
+  /**
+   * The associated dashboard view.
+   */
   private final DashboardView view;
 
-  /** Reference to the main application for navigation */
+  /**
+   * Reference to the main application for navigation.
+   */
   private final MainApp mainApp;
 
-  /** API client for server communication */
+  /**
+   * API client for server communication.
+   */
   private ClientApi api;
 
   // ========== Data Storage ==========
 
   /**
-   * Local cache of all greenhouse nodes (keyed by node ID).
-   * This map is synchronized with the server via topology and node_change messages.
+   * Local cache of all greenhouse nodes (keyed by node ID). This map is synchronized with the
+   * server via topology and node_change messages.
    */
   private final Map<String, Node> nodes = new HashMap<>();
 
   /**
-   * UI cards for each node (keyed by node ID).
-   * Allows efficient updates without full dashboard redraw.
+   * UI cards for each node (keyed by node ID). Allows efficient updates without full dashboard
+   * redraw.
    */
   private final Map<String, VBox> nodeCards = new HashMap<>();
 
   // ========== UI Components ==========
 
-  /** UI container for displaying node cards */
+  /**
+   * UI container for displaying node cards.
+   */
   private FlowPane nodesPane;
 
-  /** Label showing the last data update timestamp */
+  /**
+   * Label showing the last data update timestamp.
+   */
   private Label lastUpdateLabel;
 
-  /** Container for activity log entries */
+  /**
+   * Container for activity log entries.
+   */
   private VBox logContent;
 
-  /** Text area for displaying command line output */
+  /**
+   * Text area for displaying command line output.
+   */
   private TextArea commandOutputArea;
 
   // ========== Auto-Refresh ==========
 
-  /** Timeline for scheduling automatic data refreshes */
+  /**
+   * Timeline for scheduling automatic data refreshes.
+   */
   private Timeline refreshTimeline;
 
-  /** Auto-refresh interval in seconds (0 = disabled) */
+  /**
+   * Auto-refresh interval in seconds (0 = disabled).
+   */
   private long refreshIntervalSeconds = 0;
 
   // ========== Time Formatters ==========
 
-  /** Time formatter for log entries (HH:mm:ss) */
+  /**
+   * Time formatter for log entries (HH:mm:ss).
+   */
   private static final DateTimeFormatter TIME_FORMATTER =
-          DateTimeFormatter.ofPattern("HH:mm:ss");
+      DateTimeFormatter.ofPattern("HH:mm:ss");
 
-  /** Time formatter for full timestamps (HH:mm:ss dd.MM.yyyy) */
+  /**
+   * Time formatter for full timestamps (HH:mm:ss dd.MM.yyyy).
+   */
   private static final DateTimeFormatter FULL_TIME_FORMATTER =
-          DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
+      DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
 
   // ========== Constructor ==========
 
@@ -125,9 +161,9 @@ public class DashboardController {
    * <p>Initializes the controller with references to the view, main application,
    * and API client. Sets up the auto-refresh timeline with a default interval.
    *
-   * @param view The DashboardView instance this controller manages
+   * @param view    The DashboardView instance this controller manages
    * @param mainApp The main application instance for navigation operations
-   * @param api The ClientApi instance for server communication (can be null initially)
+   * @param api     The ClientApi instance for server communication (can be null initially)
    * @throws NullPointerException if view or mainApp is null
    */
   public DashboardController(DashboardView view, MainApp mainApp, ClientApi api) {
@@ -141,7 +177,7 @@ public class DashboardController {
 
     // Initialize auto-refresh timeline (not started by default)
     refreshTimeline = new Timeline(
-            new KeyFrame(Duration.seconds(1), e -> manualRefresh())
+        new KeyFrame(Duration.seconds(1), e -> manualRefresh())
     );
     refreshTimeline.setCycleCount(Timeline.INDEFINITE);
 
@@ -161,13 +197,13 @@ public class DashboardController {
    * <p>This method must be called before any UI operations are performed.
    * It establishes the connection between the controller and the view's components.
    *
-   * @param nodesPane The FlowPane container for node visualization cards
-   * @param lastUpdateLabel The label displaying the last data refresh timestamp
-   * @param logContent The VBox container for activity log entries
+   * @param nodesPane         The FlowPane container for node visualization cards
+   * @param lastUpdateLabel   The label displaying the last data refresh timestamp
+   * @param logContent        The VBox container for activity log entries
    * @param commandOutputArea The TextArea for command line output display
    */
   public void setUiComponents(FlowPane nodesPane, Label lastUpdateLabel,
-                              VBox logContent, TextArea commandOutputArea) {
+      VBox logContent, TextArea commandOutputArea) {
     this.nodesPane = nodesPane;
     this.lastUpdateLabel = lastUpdateLabel;
     this.logContent = logContent;
@@ -187,7 +223,6 @@ public class DashboardController {
       lastUpdateLabel.setText("Date and time: " + currentTime);
     }
   }
-
 
 
   /**
@@ -286,12 +321,12 @@ public class DashboardController {
       Node node = nodes.computeIfAbsent(nodeState.nodeId, id -> {
         System.out.println("➕ Creating new node: " + nodeState.name);
         return new Node(
-                id,
-                nodeState.name,
-                nodeState.location,
-                nodeState.ip,
-                new ArrayList<>(nodeState.sensors),
-                new ArrayList<>(nodeState.actuators)
+            id,
+            nodeState.name,
+            nodeState.location,
+            nodeState.ip,
+            new ArrayList<>(nodeState.sensors),
+            new ArrayList<>(nodeState.actuators)
         );
       });
 
@@ -390,15 +425,15 @@ public class DashboardController {
 
         Platform.runLater(() -> {
           String componentSummary = String.format(
-                  "%d sensor(s), %d actuator(s)",
-                  serverNode.sensors.size(),
-                  serverNode.actuators.size()
+              "%d sensor(s), %d actuator(s)",
+              serverNode.sensors.size(),
+              serverNode.actuators.size()
           );
 
           logActivity("System", String.format(
-                  "Node '%s' created (ID: %s). Location: %s. IP: %s. Components: %s",
-                  serverNode.name, nodeId, serverNode.location,
-                  serverNode.ip, componentSummary
+              "Node '%s' created (ID: %s). Location: %s. IP: %s. Components: %s",
+              serverNode.name, nodeId, serverNode.location,
+              serverNode.ip, componentSummary
           ));
         });
       }).exceptionally(ex -> {
@@ -416,11 +451,9 @@ public class DashboardController {
   /**
    * Opens a dialog to edit an existing node and sends update request to server.
    *
-   * This method:
-   * 1. Shows EditNodeDialog pre-populated with current node data
-   * 2. Converts user input to protocol format (sensors/actuators)
-   * 3. Sends update_node request to server via ClientApi
-   * 4. Logs the operation
+   * <p>This method: 1. Shows EditNodeDialog pre-populated with current node data 2. Converts user
+   * input to protocol format (sensors/actuators) 3. Sends update_node request to server via
+   * ClientApi 4. Logs the operation
    *
    * @param node The node to edit
    */
@@ -495,8 +528,8 @@ public class DashboardController {
         Platform.runLater(() -> {
           String changes = buildChangesSummary(node, editData, newSensors, newActuators);
           logActivity("System", String.format(
-                  "Node '%s' (ID: %s) updated. Changes: %s",
-                  node.getName(), node.getId(), changes
+              "Node '%s' (ID: %s) updated. Changes: %s",
+              node.getName(), node.getId(), changes
           ));
         });
       }).exceptionally(ex -> {
@@ -515,7 +548,7 @@ public class DashboardController {
    * Builds a human-readable summary of what changed in the node.
    */
   private String buildChangesSummary(Node node, EditNodeDialog.NodeEditResult editData,
-                                     List<String> newSensors, List<String> newActuators) {
+      List<String> newSensors, List<String> newActuators) {
     List<String> changes = new ArrayList<>();
 
     if (!editData.name.equals(node.getName())) {
@@ -545,8 +578,7 @@ public class DashboardController {
    * Maps UI component names to server protocol actuator names.
    *
    * <p>This method ensures consistent naming between the user interface and
-   * the server protocol. It converts human-readable names to protocol-compliant
-   * identifiers.
+   * the server protocol. It converts human-readable names to protocol-compliant identifiers.
    *
    * <p><b>Supported mappings:</b>
    * <ul>
@@ -592,8 +624,8 @@ public class DashboardController {
       Platform.runLater(() -> {
         removeNodeCard(nodeId);
         logActivity("System", String.format(
-                "Node '%s' (ID: %s) deleted from server",
-                nodeName, nodeId
+            "Node '%s' (ID: %s) deleted from server",
+            nodeName, nodeId
         ));
       });
     }).exceptionally(ex -> {
@@ -627,33 +659,32 @@ public class DashboardController {
     VBox card = new VBox(10);
     card.getStyleClass().add("node-card");
     card.setStyle(
-            "-fx-background-color: #ffffff;" +
-                    "-fx-background-radius: 12;" +
-                    "-fx-border-radius: 12;" +
-                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.1, 0, 2);" +
-                    "-fx-padding: 0;" +
-                    "-fx-min-width: 280;" +
-                    "-fx-max-width: 280;"
+        "-fx-background-color: #ffffff;"
+            + "-fx-background-radius: 12;"
+            + "-fx-border-radius: 12;"
+            + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.1, 0, 2);"
+            + "-fx-padding: 0;"
+            + "-fx-min-width: 280;"
+            + "-fx-max-width: 280;"
     );
 
     // === Title Bar ===
     Label nodeTitle = new Label(node.getName());
     nodeTitle.setStyle(
-            "-fx-font-size: 16px;" +
-                    "-fx-font-weight: bold;" +
-                    "-fx-text-fill: #202124;"
+        "-fx-font-size: 16px;"
+            + "-fx-font-weight: bold;"
+            + "-fx-text-fill: #202124;"
     );
 
     // Action menu (three-dot menu)
     MenuButton actionsMenu = new MenuButton("⋮");
     actionsMenu.setStyle(
-            "-fx-background-color: transparent;" +
-                    "-fx-font-size: 18px;" +
-                    "-fx-text-fill: #5f6368;" +
-                    "-fx-cursor: hand;" +
-                    "-fx-padding: 2 8;"
+        "-fx-background-color: transparent;"
+            + "-fx-font-size: 18px;"
+            + "-fx-text-fill: #5f6368;"
+            + "-fx-cursor: hand;"
+            + "-fx-padding: 2 8;"
     );
-
 
     MenuItem editNodeItem = new MenuItem("✏️ Edit Node");
     editNodeItem.setOnAction(e -> editNode(node));
@@ -670,8 +701,8 @@ public class DashboardController {
     titleBar.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
     titleBar.setPadding(new Insets(10, 10, 5, 15));
     titleBar.setStyle(
-            "-fx-background-color: #f1f3f4;" +
-                    "-fx-background-radius: 12 12 0 0;"
+        "-fx-background-color: #f1f3f4;"
+            + "-fx-background-radius: 12 12 0 0;"
     );
 
     // === Node Info ===
@@ -683,7 +714,7 @@ public class DashboardController {
 
     Label locationLabel = new Label("📍 " + node.getLocation());
     locationLabel.setStyle(
-            "-fx-font-size: 11px; -fx-text-fill: #5f6368; -fx-font-style: italic;"
+        "-fx-font-size: 11px; -fx-text-fill: #5f6368; -fx-font-style: italic;"
     );
 
     VBox nodeInfoBox = new VBox(2, idLabel, ipLabel, locationLabel);
@@ -719,8 +750,8 @@ public class DashboardController {
    * Refreshes a node's card by redrawing sensors and actuators.
    *
    * <p>This method clears and recreates the sensor and actuator visualizations
-   * based on the current data in the Node model. It's called whenever sensor_update
-   * messages are received from the server.
+   * based on the current data in the Node model. It's called whenever sensor_update messages are
+   * received from the server.
    *
    * <p><b>Performance:</b> This method performs a full redraw of the card's content.
    * For better performance with frequent updates, consider using JavaFX property binding.
@@ -749,7 +780,7 @@ public class DashboardController {
       Double temp = node.getTemperature();
       if (temp != null) {
         sensorsBox.getChildren().add(
-                TemperatureSensorView.create("Temperature", temp, "°C")
+            TemperatureSensorView.create("Temperature", temp, "°C")
         );
       }
     }
@@ -758,7 +789,7 @@ public class DashboardController {
       Double humidity = node.getHumidity();
       if (humidity != null) {
         sensorsBox.getChildren().add(
-                HumiditySensorView.create("Humidity", humidity, "%")
+            HumiditySensorView.create("Humidity", humidity, "%")
         );
       }
     }
@@ -767,7 +798,7 @@ public class DashboardController {
       Double light = node.getLight();
       if (light != null) {
         sensorsBox.getChildren().add(
-                LightSensorView.create("Light", light, "lx")
+            LightSensorView.create("Light", light, "lx")
         );
       }
     }
@@ -776,7 +807,7 @@ public class DashboardController {
       Double ph = node.getPh();
       if (ph != null) {
         sensorsBox.getChildren().add(
-                PhSensorView.create("pH Level", ph, "pH")
+            PhSensorView.create("pH Level", ph, "pH")
         );
       }
     }
@@ -786,41 +817,41 @@ public class DashboardController {
 
     if (node.getActuatorTypes().contains("fan")) {
       actuatorsBox.getChildren().add(
-              FanActuatorView.create(
-                      "Fan",
-                      node.getFanState(),
-                      on -> sendCommand(node.getId(), "fan", on)
-              )
+          FanActuatorView.create(
+              "Fan",
+              node.getFanState(),
+              on -> sendCommand(node.getId(), "fan", on)
+          )
       );
     }
 
     if (node.getActuatorTypes().contains("water_pump")) {
       actuatorsBox.getChildren().add(
-              WaterPumpActuatorView.create(
-                      "Water Pump",
-                      node.getPumpState(),
-                      on -> sendCommand(node.getId(), "water_pump", on)
-              )
+          WaterPumpActuatorView.create(
+              "Water Pump",
+              node.getPumpState(),
+              on -> sendCommand(node.getId(), "water_pump", on)
+          )
       );
     }
 
     if (node.getActuatorTypes().contains("co2")) {
       actuatorsBox.getChildren().add(
-              Co2ActuatorView.create(
-                      "CO₂ Generator",
-                      node.getCo2State(),
-                      on -> sendCommand(node.getId(), "co2", on)
-              )
+          Co2ActuatorView.create(
+              "CO₂ Generator",
+              node.getCo2State(),
+              on -> sendCommand(node.getId(), "co2", on)
+          )
       );
     }
 
     if (node.getActuatorTypes().contains("window")) {
       actuatorsBox.getChildren().add(
-              WindowActuatorView.create(
-                      "Window",
-                      node.getWindowState(),
-                      level -> sendWindowCommand(node.getId(), level)
-              )
+          WindowActuatorView.create(
+              "Window",
+              node.getWindowState(),
+              level -> sendWindowCommand(node.getId(), level)
+          )
       );
 
       // Update node count in UI
@@ -865,9 +896,9 @@ public class DashboardController {
    * }
    * </pre>
    *
-   * @param nodeId ID of the node containing the actuator
+   * @param nodeId   ID of the node containing the actuator
    * @param actuator Name of the actuator (e.g., "fan", "water_pump")
-   * @param on Desired state: true for ON, false for OFF
+   * @param on       Desired state: true for ON, false for OFF
    */
   private void sendCommand(String nodeId, String actuator, boolean on) {
     if (api == null) {
@@ -878,27 +909,27 @@ public class DashboardController {
     Map<String, Object> params = Map.of("on", on);
 
     api.sendCommand(nodeId, actuator, "set", params)
-            .thenRun(() -> {
-              String action = on ? "ON" : "OFF";
-              System.out.println("✅ Command sent: " + actuator + " = " + action);
+        .thenRun(() -> {
+          String action = on ? "ON" : "OFF";
+          System.out.println("✅ Command sent: " + actuator + " = " + action);
 
-              Platform.runLater(() -> {
-                Node node = nodes.get(nodeId);
-                String nodeName = node != null ? node.getName() : nodeId;
-                logActivity(nodeName, String.format(
-                        "%s turned %s",
-                        capitalize(actuator.replace("_", " ")),
-                        action
-                ));
-              });
-            })
-            .exceptionally(ex -> {
-              System.err.println("❌ Command failed: " + ex.getMessage());
-              Platform.runLater(() -> {
-                logActivity("System", "Failed to send command: " + ex.getMessage());
-              });
-              return null;
-            });
+          Platform.runLater(() -> {
+            Node node = nodes.get(nodeId);
+            String nodeName = node != null ? node.getName() : nodeId;
+            logActivity(nodeName, String.format(
+                "%s turned %s",
+                capitalize(actuator.replace("_", " ")),
+                action
+            ));
+          });
+        })
+        .exceptionally(ex -> {
+          System.err.println("❌ Command failed: " + ex.getMessage());
+          Platform.runLater(() -> {
+            logActivity("System", "Failed to send command: " + ex.getMessage());
+          });
+          return null;
+        });
   }
 
   /**
@@ -907,7 +938,7 @@ public class DashboardController {
    * <p>Window commands use a different parameter format than boolean actuators.
    *
    * @param nodeId ID of the node containing the window
-   * @param level Window level: "CLOSED", "HALF", or "OPEN"
+   * @param level  Window level: "CLOSED", "HALF", or "OPEN"
    */
   private void sendWindowCommand(String nodeId, String level) {
     if (api == null) {
@@ -918,22 +949,22 @@ public class DashboardController {
     Map<String, Object> params = Map.of("level", level);
 
     api.sendCommand(nodeId, "window", "set", params)
-            .thenRun(() -> {
-              System.out.println("✅ Command sent: window = " + level);
+        .thenRun(() -> {
+          System.out.println("✅ Command sent: window = " + level);
 
-              Platform.runLater(() -> {
-                Node node = nodes.get(nodeId);
-                String nodeName = node != null ? node.getName() : nodeId;
-                logActivity(nodeName, "Window set to " + level);
-              });
-            })
-            .exceptionally(ex -> {
-              System.err.println("❌ Command failed: " + ex.getMessage());
-              Platform.runLater(() -> {
-                logActivity("System", "Failed to send command: " + ex.getMessage());
-              });
-              return null;
-            });
+          Platform.runLater(() -> {
+            Node node = nodes.get(nodeId);
+            String nodeName = node != null ? node.getName() : nodeId;
+            logActivity(nodeName, "Window set to " + level);
+          });
+        })
+        .exceptionally(ex -> {
+          System.err.println("❌ Command failed: " + ex.getMessage());
+          Platform.runLater(() -> {
+            logActivity("System", "Failed to send command: " + ex.getMessage());
+          });
+          return null;
+        });
   }
 
   // ========== Data Refresh ==========
@@ -951,10 +982,10 @@ public class DashboardController {
    * not from this method. This only updates the "Last update" timestamp.
    */
   public void manualRefresh() {
-//    if (lastUpdateLabel != null) {
-//      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
-//      lastUpdateLabel.setText("Date and time : " + currentTime);
-//    }
+    //    if (lastUpdateLabel != null) {
+    //      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
+    //      lastUpdateLabel.setText("Date and time : " + currentTime);
+    //    }
     if (refreshIntervalSeconds > 0) {
       logActivity("System", "Auto-refresh: Dashboard timestamp updated");
     }
@@ -985,7 +1016,7 @@ public class DashboardController {
 
     if (seconds > 0) {
       refreshTimeline.getKeyFrames().setAll(
-              new KeyFrame(Duration.seconds(seconds), e -> manualRefresh())
+          new KeyFrame(Duration.seconds(seconds), e -> manualRefresh())
       );
       refreshTimeline.play();
       logActivity("System", "Auto-refresh started: every " + seconds + " second(s)");
@@ -1016,7 +1047,7 @@ public class DashboardController {
    * [HH:mm:ss] Source: Message
    * </pre>
    *
-   * @param source The source or origin of the activity (e.g., node name or "System")
+   * @param source  The source or origin of the activity (e.g., node name or "System")
    * @param message The descriptive message about the activity
    */
   public void logActivity(String source, String message) {
