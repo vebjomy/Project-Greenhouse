@@ -1,5 +1,6 @@
 package ui.components;
 
+import java.util.function.Consumer;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -11,17 +12,26 @@ import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.util.Duration;
-import java.util.function.Consumer;
 
 /**
- * Visual component for displaying and controlling a fan actuator in a modern card style.
- * LAYOUT MODIFIED: Separates Name/Status from Icon/Controls. Button text size reduced.
+ * Visual component for displaying and controlling a fan actuator in a modern card style. LAYOUT
+ * MODIFIED: Separates Name/Status from Icon/Controls. Button text size reduced.
  *
  * @author Green House Control Team
  * @version 3.1 (Layout modified to separate status display from controls, button text smaller)
@@ -36,10 +46,10 @@ public class FanActuatorView {
   /**
    * Creates a visual representation of a fan actuator with control buttons and animation.
    *
-   * @param name Display name for the actuator (e.g., "Fan")
-   * @param state Current state from server ("ON", "OFF", or "UNKNOWN")
-   * @param onToggle Callback function to handle button clicks.
-   * Called with true for ON button, false for OFF button.
+   * @param name     Display name for the actuator (e.g., "Fan")
+   * @param state    Current state from server ("ON", "OFF", or "UNKNOWN")
+   * @param onToggle Callback function to handle button clicks. Called with true for ON button,
+   *                 false for OFF button.
    * @return A Pane containing the complete actuator visualization and controls
    */
   public static Pane create(String name, String state, Consumer<Boolean> onToggle) {
@@ -108,7 +118,8 @@ public class FanActuatorView {
     activeIndicator.setStroke(Color.WHITE);
     activeIndicator.setStrokeWidth(1.5);
     if (isOn) {
-      activeIndicator.setEffect(new DropShadow(BlurType.GAUSSIAN, activeIndicatorColor, 8, 0.7, 0, 0));
+      activeIndicator.setEffect(
+          new DropShadow(BlurType.GAUSSIAN, activeIndicatorColor, 8, 0.7, 0, 0));
     }
 
     // --- Status Label (e.g., "RUNNING") ---
@@ -130,17 +141,16 @@ public class FanActuatorView {
 
     infoBlock.getChildren().addAll(titleAndIndicator, mainStatusLabel);
 
-
     // --- 3. Control Buttons (Smaller Text) ---
     Button onButton = new Button("SET ON");
     onButton.setStyle(
-        "-fx-background-color: #388E3C; " + // Use darker active color for button
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-font-size: 11px; " + // Smaller font size
-            "-fx-padding: 8 10; " + // Adjusted padding
-            "-fx-cursor: hand; " +
-            "-fx-background-radius: 5;"
+        "-fx-background-color: #388E3C; " // Use darker active color for button
+            + "-fx-text-fill: white; "
+            + "-fx-font-weight: bold; "
+            + "-fx-font-size: 11px; " // Smaller font size
+            + "-fx-padding: 8 10; " // Adjusted padding
+            + "-fx-cursor: hand; "
+            + "-fx-background-radius: 5;"
     );
 
     // Retain existing logic
@@ -160,13 +170,13 @@ public class FanActuatorView {
 
     Button offButton = new Button("SET OFF");
     offButton.setStyle(
-        "-fx-background-color: #757575; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-font-size: 11px; " + // Smaller font size
-            "-fx-padding: 8 10; " + // Adjusted padding
-            "-fx-cursor: hand; " +
-            "-fx-background-radius: 5;"
+        "-fx-background-color: #757575; "
+            + "-fx-text-fill: white; "
+            + "-fx-font-weight: bold; "
+            + "-fx-font-size: 11px; " // Smaller font size
+            + "-fx-padding: 8 10; " // Adjusted padding
+            + "-fx-cursor: hand; "
+            + "-fx-background-radius: 5;"
     );
     // Retain existing logic
     offButton.setOnAction(e -> {
@@ -203,7 +213,6 @@ public class FanActuatorView {
     contentBox.setAlignment(Pos.TOP_LEFT);
     contentBox.setPadding(new Insets(15, 20, 20, 20));
 
-
     // --- 5. Status Bar and Menu Button (Card Top) ---
     Label indicatorLabel = new Label("ACTUATOR STATUS");
     indicatorLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
@@ -212,7 +221,8 @@ public class FanActuatorView {
     HBox statusBar = new HBox();
     statusBar.setAlignment(Pos.CENTER_LEFT);
     statusBar.setPadding(new Insets(5, 10, 5, 10));
-    statusBar.setBackground(new Background(new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
+    statusBar.setBackground(new Background(
+        new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
 
     HBox statusBox = new HBox(indicatorLabel);
     statusBox.setAlignment(Pos.CENTER_LEFT);
@@ -227,7 +237,8 @@ public class FanActuatorView {
 
     Button menuButton = new Button();
     menuButton.setGraphic(dots);
-    menuButton.setStyle("-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
+    menuButton.setStyle(
+        "-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
 
     ContextMenu contextMenu = new ContextMenu();
     MenuItem deleteItem = new MenuItem("Delete this actuator");
@@ -245,8 +256,11 @@ public class FanActuatorView {
     layout.getChildren().addAll(statusBar, contentBox);
     layout.setAlignment(Pos.TOP_CENTER);
 
-    layout.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
-    layout.setBorder(new Border(new BorderStroke(CARD_BORDER_COLOR, BorderStrokeStyle.SOLID, new CornerRadii(8), new BorderWidths(1))));
+    layout.setBackground(
+        new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
+    layout.setBorder(new Border(
+        new BorderStroke(CARD_BORDER_COLOR, BorderStrokeStyle.SOLID, new CornerRadii(8),
+            new BorderWidths(1))));
     layout.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.1), 10, 0, 0, 5));
     layout.setPrefWidth(CARD_WIDTH);
     layout.setMaxWidth(CARD_WIDTH);
