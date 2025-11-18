@@ -10,7 +10,19 @@ import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -21,8 +33,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * Visual component for displaying temperature sensor readings in a modern card style
- * with a horizontal temperature spectrum bar and a context menu button for deletion.
+ * Visual component for displaying temperature sensor readings in a modern card style with a
+ * horizontal temperature spectrum bar and a context menu button for deletion.
  *
  * @author Green House Control Team
  * @version 3.2 (Added Temperature Range Scale below spectrum bar)
@@ -44,9 +56,9 @@ public class TemperatureSensorView {
   /**
    * Creates a visual representation of a temperature sensor in a modern card style.
    *
-   * @param name Display name for the sensor (e.g., "Temperature")
+   * @param name  Display name for the sensor (e.g., "Temperature")
    * @param value Current temperature value in Celsius
-   * @param unit Unit string to display (e.g., "°C")
+   * @param unit  Unit string to display (e.g., "°C")
    * @return A Pane containing the complete sensor visualization
    */
   public static Pane create(String name, double value, String unit) {
@@ -101,7 +113,8 @@ public class TemperatureSensorView {
       icon.setFitWidth(ICON_SIZE + 25);
       icon.setFitHeight(ICON_SIZE + 25);
       icon.setPreserveRatio(true);
-      icon.setEffect(new DropShadow(BlurType.GAUSSIAN, darkColor.deriveColor(0, 1.0, 1.0, 0.5), 5, 0, 0, 0));
+      icon.setEffect(
+          new DropShadow(BlurType.GAUSSIAN, darkColor.deriveColor(0, 1.0, 1.0, 0.5), 5, 0, 0, 0));
     } catch (Exception e) {
       System.err.println("⚠️ Could not load temperature icon: " + e.getMessage());
     }
@@ -120,9 +133,11 @@ public class TemperatureSensorView {
     LinearGradient spectrumGradient = new LinearGradient(
         0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
         new Stop(0.0, Color.web("#1976D2")),                    // Cold (Blue, -10°C)
-        new Stop(TEMP_COLD_THRESHOLD / (TEMP_MAX - TEMP_MIN), Color.web("#64B5F6")), // Light Blue transition
+        new Stop(TEMP_COLD_THRESHOLD / (TEMP_MAX - TEMP_MIN), Color.web("#64B5F6")),
+        // Light Blue transition
         new Stop(0.4, Color.web("#66BB6A")),                    // Normal (Green, ~15°C)
-        new Stop(TEMP_HOT_THRESHOLD / (TEMP_MAX - TEMP_MIN), Color.web("#FF9800")), // Orange transition
+        new Stop(TEMP_HOT_THRESHOLD / (TEMP_MAX - TEMP_MIN), Color.web("#FF9800")),
+        // Orange transition
         new Stop(1.0, Color.web("#D32F2F"))                     // Hot (Red, 40°C)
     );
 
@@ -137,7 +152,8 @@ public class TemperatureSensorView {
     double positionRatio = (clampedValue - TEMP_MIN) / (TEMP_MAX - TEMP_MIN);
     double indicatorX = (BAR_WIDTH * positionRatio) - 1; // Center the indicator
 
-    Rectangle indicator = new Rectangle(2, BAR_HEIGHT + 4); // Vertical line slightly taller than the bar
+    Rectangle indicator = new Rectangle(2,
+        BAR_HEIGHT + 4); // Vertical line slightly taller than the bar
     indicator.setFill(Color.BLACK); // Marker color
     indicator.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.BLACK, 5, 0, 0, 0));
 
@@ -213,7 +229,8 @@ public class TemperatureSensorView {
     HBox statusBar = new HBox();
     statusBar.setAlignment(Pos.CENTER_LEFT);
     statusBar.setPadding(new Insets(5, 10, 5, 10));
-    statusBar.setBackground(new Background(new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
+    statusBar.setBackground(new Background(
+        new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
 
     HBox statusBox = new HBox(statusLabel);
     statusBox.setAlignment(Pos.CENTER_LEFT);
@@ -228,7 +245,8 @@ public class TemperatureSensorView {
 
     Button menuButton = new Button();
     menuButton.setGraphic(dots);
-    menuButton.setStyle("-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
+    menuButton.setStyle(
+        "-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
 
     ContextMenu contextMenu = new ContextMenu();
     MenuItem deleteItem = new MenuItem("Delete this sensor");
@@ -246,8 +264,11 @@ public class TemperatureSensorView {
     layout.getChildren().addAll(statusBar, contentBox);
     layout.setAlignment(Pos.TOP_CENTER);
 
-    layout.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
-    layout.setBorder(new Border(new BorderStroke(Color.web("#EEEEEE"), BorderStrokeStyle.SOLID, new CornerRadii(8), new BorderWidths(1))));
+    layout.setBackground(
+        new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
+    layout.setBorder(new Border(
+        new BorderStroke(Color.web("#EEEEEE"), BorderStrokeStyle.SOLID, new CornerRadii(8),
+            new BorderWidths(1))));
     layout.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.1), 10, 0, 0, 5));
     layout.setPrefWidth(CARD_WIDTH);
     layout.setMaxWidth(CARD_WIDTH);
