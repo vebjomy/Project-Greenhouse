@@ -42,15 +42,60 @@ public class ClientState {
     return nodes.computeIfAbsent(id, NodeState::new);
   }
 
+  /**
+   * Updates node configuration (name, location, IP, sensors, actuators).
+   * This triggers nodeChange listeners to update the UI.
+   *
+   * @param id node ID
+   * @param name new name (can be null to keep current)
+   * @param location new location (can be null to keep current)
+   * @param ip new IP address (can be null to keep current)
+   * @param sensors new sensors list (can be null to keep current)
+   * @param actuators new actuators list (can be null to keep current)
+   */
   public void patchNode(String id, String name, String location, String ip,
                         Collection<String> sensors, Collection<String> actuators){
     NodeState n = upsertNode(id);
-    if (name != null) n.name = name;
-    if (location != null) n.location = location;
-    if (ip != null) n.ip = ip;
-    if (sensors != null){ n.sensors.clear(); n.sensors.addAll(sensors); }
-    if (actuators != null){ n.actuators.clear(); n.actuators.addAll(actuators); }
-    notifyNodeChange(n);
+
+    boolean changed = false;
+
+    if (name != null && !name.equals(n.name)) {
+      n.name = name;
+      changed = true;
+      System.out.println("🔧 [ClientState] Updated name: " + name);
+    }
+
+    if (location != null && !location.equals(n.location)) {
+      n.location = location;
+      changed = true;
+      System.out.println("🔧 [ClientState] Updated location: " + location);
+    }
+
+    if (ip != null && !ip.equals(n.ip)) {
+      n.ip = ip;
+      changed = true;
+      System.out.println("🔧 [ClientState] Updated IP: " + ip);
+    }
+
+    if (sensors != null) {
+      n.sensors.clear();
+      n.sensors.addAll(sensors);
+      changed = true;
+      System.out.println("🔧 [ClientState] Updated sensors: " + sensors);
+    }
+
+    if (actuators != null) {
+      n.actuators.clear();
+      n.actuators.addAll(actuators);
+      changed = true;
+      System.out.println("🔧 [ClientState] Updated actuators: " + actuators);
+    }
+
+    //Notify listeners to update UI
+    if (changed) {
+      System.out.println("✅ [ClientState] Broadcasting node change for: " + id);
+      notifyNodeChange(n);
+    }
   }
 
   public void removeNode(String id){

@@ -18,6 +18,7 @@ import model.Node;
 import ui.AddComponentDialog;
 import ui.AddNodeDialog;
 import ui.DashboardView;
+import ui.EditNodeDialog;
 import ui.components.*;
 
 import java.time.LocalDateTime;
@@ -388,6 +389,134 @@ public class DashboardController {
   }
 
   /**
+   * Opens a dialog to edit an existing node and sends update request to server.
+   *
+   * This method:
+   * 1. Shows EditNodeDialog pre-populated with current node data
+   * 2. Converts user input to protocol format (sensors/actuators)
+   * 3. Sends update_node request to server via ClientApi
+   * 4. Logs the operation
+   *
+   * @param node The node to edit
+   */
+  public void editNode(Node node) {
+    if (api == null) {
+      logActivity("System", "Cannot edit node: API not initialized");
+      return;
+    }
+
+    EditNodeDialog dialog = new EditNodeDialog(node);
+    Optional<EditNodeDialog.NodeEditResult> result = dialog.showAndWait();
+
+    result.ifPresent(editData -> {
+      System.out.println("🔧 Editing node: " + node.getId());
+
+      // Build patch map with only changed fields
+      Map<String, Object> patch = new HashMap<>();
+
+      // Check if name changed
+      if (!editData.name.equals(node.getName())) {
+        patch.put("name", editData.name);
+        System.out.println("   Name: " + editData.name);
+      }
+
+      // Check if location changed
+      if (!editData.location.equals(node.getLocation())) {
+        patch.put("location", editData.location);
+        System.out.println("   Location: " + editData.location);
+      }
+
+      // Check if IP changed
+      if (!editData.ip.equals(node.getIpAddress())) {
+        patch.put("ip", editData.ip);
+        System.out.println("   IP: " + editData.ip);
+      }
+
+      // Convert components to sensors/actuators lists
+      List<String> newSensors = new ArrayList<>();
+      List<String> newActuators = new ArrayList<>();
+
+      for (String component : editData.components) {
+        if (component.endsWith("Sensor")) {
+          // Remove " Sensor" suffix and convert to lowercase
+          String sensorType = component.replace(" Sensor", "").toLowerCase();
+
+          // Special case for PH (server expects "ph" not "ph")
+          if (sensorType.equals("ph")) {
+            newSensors.add("ph");
+          } else {
+            newSensors.add(sensorType);
+          }
+
+          System.out.println("   📡 Added sensor: " + sensorType);
+        } else {
+          String actuatorType = mapActuatorName(component);
+          newActuators.add(actuatorType);
+          System.out.println("   🎛️  Added actuator: " + actuatorType);
+        }
+      }
+
+      // Always send sensors/actuators (full replacement)
+      patch.put("sensors", newSensors);
+      patch.put("actuators", newActuators);
+
+      System.out.println("   New Sensors: " + newSensors);
+      System.out.println("   New Actuators: " + newActuators);
+
+      // Send to server
+      api.updateNode(node.getId(), patch).thenRun(() -> {
+        System.out.println("✅ Server confirmed node update");
+
+        Platform.runLater(() -> {
+          String changes = buildChangesSummary(node, editData, newSensors, newActuators);
+          logActivity("System", String.format(
+                  "Node '%s' (ID: %s) updated. Changes: %s",
+                  node.getName(), node.getId(), changes
+          ));
+        });
+      }).exceptionally(ex -> {
+        System.err.println("❌ Server error: " + ex.getMessage());
+        ex.printStackTrace();
+
+        Platform.runLater(() -> {
+          logActivity("System", "Failed to update node: " + ex.getMessage());
+        });
+        return null;
+      });
+    });
+  }
+
+  /**
+   * Builds a human-readable summary of what changed in the node.
+   */
+  private String buildChangesSummary(Node node, EditNodeDialog.NodeEditResult editData,
+                                     List<String> newSensors, List<String> newActuators) {
+    List<String> changes = new ArrayList<>();
+
+    if (!editData.name.equals(node.getName())) {
+      changes.add("name");
+    }
+    if (!editData.location.equals(node.getLocation())) {
+      changes.add("location");
+    }
+    if (!editData.ip.equals(node.getIpAddress())) {
+      changes.add("IP");
+    }
+
+    // Check if sensors changed
+    if (!new HashSet<>(newSensors).equals(new HashSet<>(node.getSensorTypes()))) {
+      changes.add("sensors");
+    }
+
+    // Check if actuators changed
+    if (!new HashSet<>(newActuators).equals(new HashSet<>(node.getActuatorTypes()))) {
+      changes.add("actuators");
+    }
+
+    return changes.isEmpty() ? "none" : String.join(", ", changes);
+  }
+
+  /**
    * Maps UI component names to server protocol actuator names.
    *
    * <p>This method ensures consistent naming between the user interface and
@@ -413,45 +542,6 @@ public class DashboardController {
       case "Window" -> "window";
       default -> uiName.toLowerCase().replace(" ", "_");
     };
-  }
-
-  /**
-   * Opens a dialog to add components (sensors/actuators) to an existing node.
-   *
-   * <p>This method allows users to expand a node's capabilities by adding new
-   * sensors or actuators. The dashboard is automatically refreshed to reflect
-   * the changes, and the activity is logged.
-   *
-   * <p><b>Note:</b> This currently only updates the local UI. Server-side
-   * component addition should be implemented via {@link ClientApi#addComponent}.
-   *
-   * @param node The node to which components will be added
-   * @throws NullPointerException if node is null
-   * @see AddComponentDialog
-   */
-  public void showAddComponentDialog(Node node) {
-    AddComponentDialog dialog = new AddComponentDialog();
-    Optional<List<String>> result = dialog.showAndWait();
-
-    result.ifPresent(componentsToAdd -> {
-      if (!componentsToAdd.isEmpty()) {
-        String componentList = componentsToAdd.stream()
-                .map(c -> c.replace(" Sensor", "(S)")
-                        .replace(" Pump", "(A)")
-                        .replace(" Generator", "(A)")
-                        .replace(" Window", "(A)")
-                        .replace(" Fan", "(A)"))
-                .collect(Collectors.joining(", "));
-
-        logActivity(node.getName(), String.format(
-                "Component addition requested: %s (implementation pending)",
-                componentList
-        ));
-
-        // TODO: Send add_component request to server
-        // api.addComponent(node.getId(), ...);
-      }
-    });
   }
 
   /**
@@ -539,18 +629,14 @@ public class DashboardController {
                     "-fx-padding: 2 8;"
     );
 
-    MenuItem addComponentItem = new MenuItem("+ Add Component");
-    addComponentItem.setOnAction(e -> showAddComponentDialog(node));
 
     MenuItem editNodeItem = new MenuItem("✏️ Edit Node");
-    editNodeItem.setOnAction(e ->
-            logActivity(node.getName(), "Edit dialog opened (not implemented)")
-    );
+    editNodeItem.setOnAction(e -> editNode(node));
 
     MenuItem deleteNodeItem = new MenuItem("🗑️ Delete Node");
     deleteNodeItem.setOnAction(e -> deleteNode(node));
 
-    actionsMenu.getItems().addAll(addComponentItem, editNodeItem, deleteNodeItem);
+    actionsMenu.getItems().addAll(editNodeItem, deleteNodeItem);
 
     Region spacer = new Region();
     HBox.setHgrow(spacer, Priority.ALWAYS);

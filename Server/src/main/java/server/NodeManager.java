@@ -98,6 +98,7 @@ public class NodeManager {
 
   /**
    * Update an existing node with a patch map.
+   * Supports updating: name, location, ip, sensors (full list), actuators (full list).
    *
    * @param nodeId the ID of the node to update
    * @param patch the patch map with fields to update
@@ -105,18 +106,51 @@ public class NodeManager {
   public synchronized void updateNode(String nodeId, Map<String, Object> patch) {
     var n = nodes.get(nodeId);
     if (n == null) {
+      System.err.println("⚠️ Cannot update node: " + nodeId + " not found");
       return;
     }
+
+    System.out.println("🔧 [NodeManager] Updating node: " + nodeId);
+
+    // Update basic properties
     if (patch.containsKey("name")) {
       n.name = Objects.toString(patch.get("name"), n.name);
+      System.out.println("   Updated name: " + n.name);
     }
     if (patch.containsKey("location")) {
       n.location = Objects.toString(patch.get("location"), n.location);
+      System.out.println("   Updated location: " + n.location);
     }
     if (patch.containsKey("ip")) {
       n.ip = Objects.toString(patch.get("ip"), n.ip);
+      System.out.println("   Updated IP: " + n.ip);
     }
-    // Optionally patch sensors/actuators arrays
+
+    // Patch sensors array (replaces entire list)
+    if (patch.containsKey("sensors")) {
+      Object sensorsObj = patch.get("sensors");
+      if (sensorsObj instanceof List<?>) {
+        n.sensors = new ArrayList<>();
+        for (Object item : (List<?>) sensorsObj) {
+          n.sensors.add(Objects.toString(item, ""));
+        }
+        System.out.println("   Updated sensors: " + n.sensors);
+      }
+    }
+
+    // Patch actuators array (replaces entire list)
+    if (patch.containsKey("actuators")) {
+      Object actuatorsObj = patch.get("actuators");
+      if (actuatorsObj instanceof List<?>) {
+        n.actuators = new ArrayList<>();
+        for (Object item : (List<?>) actuatorsObj) {
+          n.actuators.add(Objects.toString(item, ""));
+        }
+        System.out.println("   Updated actuators: " + n.actuators);
+      }
+    }
+
+    System.out.println("   ✅ Node updated successfully");
   }
 
   /**
@@ -129,49 +163,6 @@ public class NodeManager {
     runtimes.remove(nodeId);
   }
 
-  /**
-   * Add a component (sensor/actuator) to a node.
-   *
-   * @param nodeId the ID of the node
-   * @param component the component map with "kind" and "name"
-   */
-  public synchronized void addComponent(String nodeId, Map<String, Object> component) {
-    var n = nodes.get(nodeId);
-    if (n == null) {
-      return;
-    }
-    String kind = Objects.toString(component.get("kind"), "");
-    String name = Objects.toString(component.get("name"), "");
-    if ("sensor".equals(kind)) {
-      if (!n.sensors.contains(name)) {
-        n.sensors.add(name);
-      }
-    } else if ("actuator".equals(kind)) {
-      if (!n.actuators.contains(name)) {
-        n.actuators.add(name);
-      }
-    }
-  }
-
-  /**
-   * Remove a component (sensor/actuator) from a node.
-   *
-   * @param nodeId the ID of the node
-   * @param component the component map with "kind" and "name"
-   */
-  public synchronized void removeComponent(String nodeId, Map<String, Object> component) {
-    var n = nodes.get(nodeId);
-    if (n == null) {
-      return;
-    }
-    String kind = Objects.toString(component.get("kind"), "");
-    String name = Objects.toString(component.get("name"), "");
-    if ("sensor".equals(kind)) {
-      n.sensors.remove(name);
-    } else if ("actuator".equals(kind)) {
-      n.actuators.remove(name);
-    }
-  }
 
   /**
    * Set the sampling interval for a node's runtime.
