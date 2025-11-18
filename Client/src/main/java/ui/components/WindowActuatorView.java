@@ -1,5 +1,6 @@
 package ui.components;
 
+import java.util.function.Consumer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -11,16 +12,25 @@ import javafx.scene.effect.ColorAdjust;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import java.util.function.Consumer;
 
 /**
- * Visual component for displaying and controlling a window actuator in a modern card style
- * with status bar, control buttons, and icon color effects.
+ * Visual component for displaying and controlling a window actuator in a modern card style with
+ * status bar, control buttons, and icon color effects.
  *
  * @author Green House Control Team
  * @version 3.2 (Reorganized layout with buttons at bottom for better text fitting)
@@ -35,10 +45,10 @@ public class WindowActuatorView {
   /**
    * Creates a visual representation of a window actuator with control buttons and color effects.
    *
-   * @param name Display name for the actuator (e.g., "Window")
-   * @param state Current state from server ("CLOSED", "HALF", "OPEN", or "UNKNOWN")
-   * @param onLevelChange Callback function to handle button clicks.
-   * Called with "CLOSED", "HALF", or "OPEN" string.
+   * @param name          Display name for the actuator (e.g., "Window")
+   * @param state         Current state from server ("CLOSED", "HALF", "OPEN", or "UNKNOWN")
+   * @param onLevelChange Callback function to handle button clicks. Called with "CLOSED", "HALF",
+   *                      or "OPEN" string.
    * @return A Pane containing the complete actuator visualization and controls
    */
   public static Pane create(String name, String state, Consumer<String> onLevelChange) {
@@ -107,8 +117,6 @@ public class WindowActuatorView {
         colorAdjust.setBrightness(0.0);
     }
 
-    Color lightTextColor = Color.WHITE; // Status bar text color
-
     // === 2. Content Layout - Reorganized Structure ===
 
     // --- Active/Enabled Indicator (Circle) ---
@@ -118,7 +126,8 @@ public class WindowActuatorView {
     activeIndicator.setStrokeWidth(1.5);
     // Add glow effect if not CLOSED
     if (!"CLOSED".equals(currentState) && !"UNKNOWN".equals(currentState)) {
-      activeIndicator.setEffect(new DropShadow(BlurType.GAUSSIAN, activeIndicatorColor, 8, 0.7, 0, 0));
+      activeIndicator.setEffect(
+          new DropShadow(BlurType.GAUSSIAN, activeIndicatorColor, 8, 0.7, 0, 0));
     }
 
     // --- Name Label (e.g., "Window") ---
@@ -163,13 +172,13 @@ public class WindowActuatorView {
 
     Button closedButton = new Button("CLOSED");
     closedButton.setStyle(
-        "-fx-background-color: #757575; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-font-size: 11px; " +
-            "-fx-padding: 8 10; " +
-            "-fx-cursor: hand; " +
-            "-fx-background-radius: 5;"
+        "-fx-background-color: #757575; "
+            + "-fx-text-fill: white; "
+            + "-fx-font-weight: bold; "
+            + "-fx-font-size: 11px; "
+            + "-fx-padding: 8 10; "
+            + "-fx-cursor: hand; "
+            + "-fx-background-radius: 5;"
     );
     closedButton.setOnAction(e -> {
       if (onLevelChange != null) {
@@ -186,13 +195,13 @@ public class WindowActuatorView {
 
     Button halfButton = new Button("HALF");
     halfButton.setStyle(
-        "-fx-background-color: #F57C00; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-font-size: 11px; " +
-            "-fx-padding: 8 10; " +
-            "-fx-cursor: hand; " +
-            "-fx-background-radius: 5;"
+        "-fx-background-color: #F57C00; "
+            + "-fx-text-fill: white; "
+            + "-fx-font-weight: bold; "
+            + "-fx-font-size: 11px; "
+            + "-fx-padding: 8 10; "
+            + "-fx-cursor: hand; "
+            + "-fx-background-radius: 5;"
     );
     halfButton.setOnAction(e -> {
       if (onLevelChange != null) {
@@ -209,13 +218,13 @@ public class WindowActuatorView {
 
     Button openButton = new Button("OPEN");
     openButton.setStyle(
-        "-fx-background-color: #388E3C; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-weight: bold; " +
-            "-fx-font-size: 11px; " +
-            "-fx-padding: 8 10; " +
-            "-fx-cursor: hand; " +
-            "-fx-background-radius: 5;"
+        "-fx-background-color: #388E3C; "
+            + "-fx-text-fill: white; "
+            + "-fx-font-weight: bold; "
+            + "-fx-font-size: 11px; "
+            + "-fx-padding: 8 10; "
+            + "-fx-cursor: hand; "
+            + "-fx-background-radius: 5;"
     );
     openButton.setOnAction(e -> {
       if (onLevelChange != null) {
@@ -242,12 +251,14 @@ public class WindowActuatorView {
     // === 5. Status Bar and Menu Button (Card Top) ===
     Label indicatorLabel = new Label("ACTUATOR STATUS");
     indicatorLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+    Color lightTextColor = Color.WHITE; // Status bar text color
     indicatorLabel.setTextFill(lightTextColor);
 
     HBox statusBar = new HBox();
     statusBar.setAlignment(Pos.CENTER_LEFT);
     statusBar.setPadding(new Insets(5, 10, 5, 10));
-    statusBar.setBackground(new Background(new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
+    statusBar.setBackground(new Background(
+        new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
 
     HBox statusBoxTop = new HBox(indicatorLabel);
     statusBoxTop.setAlignment(Pos.CENTER_LEFT);
@@ -262,7 +273,8 @@ public class WindowActuatorView {
 
     Button menuButton = new Button();
     menuButton.setGraphic(dots);
-    menuButton.setStyle("-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
+    menuButton.setStyle(
+        "-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
 
     ContextMenu contextMenu = new ContextMenu();
     MenuItem deleteItem = new MenuItem("Delete this actuator");
@@ -280,8 +292,11 @@ public class WindowActuatorView {
     layout.getChildren().addAll(statusBar, contentBox);
     layout.setAlignment(Pos.TOP_CENTER);
 
-    layout.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
-    layout.setBorder(new Border(new BorderStroke(CARD_BORDER_COLOR, BorderStrokeStyle.SOLID, new CornerRadii(8), new BorderWidths(1))));
+    layout.setBackground(
+        new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
+    layout.setBorder(new Border(
+        new BorderStroke(CARD_BORDER_COLOR, BorderStrokeStyle.SOLID, new CornerRadii(8),
+            new BorderWidths(1))));
     layout.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.1), 10, 0, 0, 5));
     layout.setPrefWidth(CARD_WIDTH);
     layout.setMaxWidth(CARD_WIDTH);

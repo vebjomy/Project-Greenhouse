@@ -10,7 +10,19 @@ import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
@@ -21,9 +33,9 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
 /**
- * Visual component for displaying humidity sensor readings in a modern card style
- * with a horizontal humidity spectrum bar and a context menu button for deletion.
- * Uses the same horizontal layout pattern as TemperatureSensorView.
+ * Visual component for displaying humidity sensor readings in a modern card style with a horizontal
+ * humidity spectrum bar and a context menu button for deletion. Uses the same horizontal layout
+ * pattern as TemperatureSensorView.
  *
  * @author Green House Control Team
  * @version 3.2 (Added Humidity Range Scale below spectrum bar)
@@ -45,9 +57,9 @@ public class HumiditySensorView {
   /**
    * Creates a visual representation of a humidity sensor in a modern card style.
    *
-   * @param name Display name for the sensor (e.g., "Humidity")
+   * @param name  Display name for the sensor (e.g., "Humidity")
    * @param value Current humidity value (0-100)
-   * @param unit Unit string to display (e.g., "%")
+   * @param unit  Unit string to display (e.g., "%")
    * @return A Pane containing the complete sensor visualization
    */
   public static Pane create(String name, double value, String unit) {
@@ -102,7 +114,8 @@ public class HumiditySensorView {
       icon.setFitWidth(ICON_SIZE + 25);
       icon.setFitHeight(ICON_SIZE + 25);
       icon.setPreserveRatio(true);
-      icon.setEffect(new DropShadow(BlurType.GAUSSIAN, darkColor.deriveColor(0, 1.0, 1.0, 0.5), 5, 0, 0, 0));
+      icon.setEffect(
+          new DropShadow(BlurType.GAUSSIAN, darkColor.deriveColor(0, 1.0, 1.0, 0.5), 5, 0, 0, 0));
     } catch (Exception e) {
       System.err.println("⚠️ Could not load humidity icon: " + e.getMessage());
     }
@@ -123,7 +136,8 @@ public class HumiditySensorView {
         new Stop(0.0, Color.web("#FFB74D")),                    // Orange - Low (0%)
         new Stop(HUMIDITY_LOW_THRESHOLD / HUMIDITY_MAX, Color.web("#FFD54F")), // Yellow transition
         new Stop(0.5, Color.web("#81C784")),                    // Green - Normal (50%)
-        new Stop(HUMIDITY_HIGH_THRESHOLD / HUMIDITY_MAX, Color.web("#4FC3F7")), // Light Blue transition
+        new Stop(HUMIDITY_HIGH_THRESHOLD / HUMIDITY_MAX, Color.web("#4FC3F7")),
+        // Light Blue transition
         new Stop(1.0, Color.web("#0288D1"))                     // Blue - High (100%)
     );
 
@@ -138,7 +152,8 @@ public class HumiditySensorView {
     double positionRatio = clampedValue / HUMIDITY_MAX;
     double indicatorX = (BAR_WIDTH * positionRatio) - 1; // Center the indicator
 
-    Rectangle indicator = new Rectangle(2, BAR_HEIGHT + 4); // Vertical line slightly taller than the bar
+    Rectangle indicator = new Rectangle(2,
+        BAR_HEIGHT + 4); // Vertical line slightly taller than the bar
     indicator.setFill(Color.BLACK); // Marker color
     indicator.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.BLACK, 5, 0, 0, 0));
 
@@ -214,7 +229,8 @@ public class HumiditySensorView {
     HBox statusBar = new HBox();
     statusBar.setAlignment(Pos.CENTER_LEFT);
     statusBar.setPadding(new Insets(5, 10, 5, 10));
-    statusBar.setBackground(new Background(new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
+    statusBar.setBackground(new Background(
+        new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
 
     HBox statusBox = new HBox(statusLabel);
     statusBox.setAlignment(Pos.CENTER_LEFT);
@@ -229,7 +245,8 @@ public class HumiditySensorView {
 
     Button menuButton = new Button();
     menuButton.setGraphic(dots);
-    menuButton.setStyle("-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
+    menuButton.setStyle(
+        "-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
 
     ContextMenu contextMenu = new ContextMenu();
     MenuItem deleteItem = new MenuItem("Delete this sensor");
@@ -247,8 +264,11 @@ public class HumiditySensorView {
     layout.getChildren().addAll(statusBar, contentBox);
     layout.setAlignment(Pos.TOP_CENTER);
 
-    layout.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
-    layout.setBorder(new Border(new BorderStroke(Color.web("#EEEEEE"), BorderStrokeStyle.SOLID, new CornerRadii(8), new BorderWidths(1))));
+    layout.setBackground(
+        new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
+    layout.setBorder(new Border(
+        new BorderStroke(Color.web("#EEEEEE"), BorderStrokeStyle.SOLID, new CornerRadii(8),
+            new BorderWidths(1))));
     layout.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.1), 10, 0, 0, 5));
     layout.setPrefWidth(CARD_WIDTH);
     layout.setMaxWidth(CARD_WIDTH);

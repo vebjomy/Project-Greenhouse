@@ -1,5 +1,6 @@
 package ui.components;
 
+import java.util.function.Consumer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -10,12 +11,21 @@ import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.Border;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import java.util.function.Consumer;
 
 /**
  * Visual component for displaying and controlling a CO₂ generator actuator in a modern card style.
@@ -34,10 +44,10 @@ public class Co2ActuatorView {
   /**
    * Creates a visual representation of a CO₂ generator actuator with control buttons.
    *
-   * @param name Display name for the actuator (e.g., "CO₂ Generator")
-   * @param state Current state from server ("ON", "OFF", or "UNKNOWN")
-   * @param onToggle Callback function to handle button clicks.
-   * Called with true for ON button, false for OFF button.
+   * @param name     Display name for the actuator (e.g., "CO₂ Generator")
+   * @param state    Current state from server ("ON", "OFF", or "UNKNOWN")
+   * @param onToggle Callback function to handle button clicks. Called with true for ON button,
+   *                 false for OFF button.
    * @return A Pane containing the complete actuator visualization and controls
    */
   public static Pane create(String name, String state, Consumer<Boolean> onToggle) {
@@ -79,8 +89,6 @@ public class Co2ActuatorView {
       statusText = "UNKNOWN";
     }
 
-    Color lightTextColor = Color.WHITE; // Status bar text color
-
     // === 2. Content Layout - Modified Structure ===
 
     // --- Active/Enabled Indicator (Circle) ---
@@ -89,7 +97,8 @@ public class Co2ActuatorView {
     activeIndicator.setStroke(Color.WHITE);
     activeIndicator.setStrokeWidth(1.5);
     if (isOn) {
-      activeIndicator.setEffect(new DropShadow(BlurType.GAUSSIAN, activeIndicatorColor, 8, 0.7, 0, 0));
+      activeIndicator.setEffect(
+          new DropShadow(BlurType.GAUSSIAN, activeIndicatorColor, 8, 0.7, 0, 0));
     }
 
     // --- Status Label (e.g., "GENERATING") ---
@@ -111,17 +120,16 @@ public class Co2ActuatorView {
 
     infoBlock.getChildren().addAll(titleAndIndicator, mainStatusLabel);
 
-
     // --- Control Buttons ---
     Button onButton = new Button("SET ON");
     onButton.setStyle(
-        "-fx-background-color: #E64A19; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 8px; " + // Smaller font size
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 8 15; " +
-            "-fx-cursor: hand; " +
-            "-fx-background-radius: 5;"
+        "-fx-background-color: #E64A19; "
+            + "-fx-text-fill: white; "
+            + "-fx-font-size: 8px; " // Smaller font size
+            + "-fx-font-weight: bold; "
+            + "-fx-padding: 8 15; "
+            + "-fx-cursor: hand; "
+            + "-fx-background-radius: 5;"
     );
     // Retain existing logic
     onButton.setOnAction(e -> {
@@ -133,13 +141,13 @@ public class Co2ActuatorView {
 
     Button offButton = new Button("SET OFF");
     offButton.setStyle(
-        "-fx-background-color: #757575; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-size: 8px; " + // Smaller font size
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 8 15; " +
-            "-fx-cursor: hand; " +
-            "-fx-background-radius: 5;"
+        "-fx-background-color: #757575; "
+            + "-fx-text-fill: white; "
+            + "-fx-font-size: 8px; " // Smaller font size
+            + "-fx-font-weight: bold; "
+            + "-fx-padding: 8 15; "
+            + "-fx-cursor: hand; "
+            + "-fx-background-radius: 5;"
     );
     // Retain existing logic
     offButton.setOnAction(e -> {
@@ -170,16 +178,17 @@ public class Co2ActuatorView {
     contentBox.setAlignment(Pos.TOP_LEFT);
     contentBox.setPadding(new Insets(15, 20, 20, 20));
 
-
     // --- 5. Status Bar and Menu Button (Card Top) ---
     Label indicatorLabel = new Label("ACTUATOR STATUS");
     indicatorLabel.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+    Color lightTextColor = Color.WHITE; // Status bar text color
     indicatorLabel.setTextFill(lightTextColor);
 
     HBox statusBar = new HBox();
     statusBar.setAlignment(Pos.CENTER_LEFT);
     statusBar.setPadding(new Insets(5, 10, 5, 10));
-    statusBar.setBackground(new Background(new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
+    statusBar.setBackground(new Background(
+        new BackgroundFill(baseColor, new CornerRadii(8, 8, 0, 0, false), Insets.EMPTY)));
 
     HBox statusBox = new HBox(indicatorLabel);
     statusBox.setAlignment(Pos.CENTER_LEFT);
@@ -194,7 +203,8 @@ public class Co2ActuatorView {
 
     Button menuButton = new Button();
     menuButton.setGraphic(dots);
-    menuButton.setStyle("-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
+    menuButton.setStyle(
+        "-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
 
     ContextMenu contextMenu = new ContextMenu();
     MenuItem deleteItem = new MenuItem("Delete this actuator");
@@ -212,8 +222,11 @@ public class Co2ActuatorView {
     layout.getChildren().addAll(statusBar, contentBox);
     layout.setAlignment(Pos.TOP_CENTER);
 
-    layout.setBackground(new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
-    layout.setBorder(new Border(new BorderStroke(CARD_BORDER_COLOR, BorderStrokeStyle.SOLID, new CornerRadii(8), new BorderWidths(1))));
+    layout.setBackground(
+        new Background(new BackgroundFill(Color.WHITE, new CornerRadii(8), Insets.EMPTY)));
+    layout.setBorder(new Border(
+        new BorderStroke(CARD_BORDER_COLOR, BorderStrokeStyle.SOLID, new CornerRadii(8),
+            new BorderWidths(1))));
     layout.setEffect(new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.1), 10, 0, 0, 5));
     layout.setPrefWidth(CARD_WIDTH);
     layout.setMaxWidth(CARD_WIDTH);
@@ -226,9 +239,9 @@ public class Co2ActuatorView {
    */
   private static String toHexString(Color color) {
     return String.format("#%02X%02X%02X",
-        (int)(color.getRed() * 255),
-        (int)(color.getGreen() * 255),
-        (int)(color.getBlue() * 255));
+        (int) (color.getRed() * 255),
+        (int) (color.getGreen() * 255),
+        (int) (color.getBlue() * 255));
   }
 
   /**
