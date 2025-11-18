@@ -1,13 +1,14 @@
 package server;
 
-import java.util.concurrent.ThreadLocalRandom;
 import java.time.LocalTime;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Physical-like environment state for a greenhouse node. Values evolve over time and are influenced
  * by actuators.
  */
 public class EnvironmentState {
+
   // --- Sensor Initial Values ---
   private double temperatureC = 22.0;
   private double humidityPct = 55.0;
@@ -73,17 +74,23 @@ public class EnvironmentState {
 
   // --- Dynamic calculation of outside parameters ---
 
-  /** Calculates the current outside temperature based on the time of day (sinusoidal model). */
+  /**
+   * Calculates the current outside temperature based on the time of day (sinusoidal model).
+   */
   public double getCurrentOutsideTempC() {
     double amplitude = (MAX_OUTSIDE_TEMP_C - MIN_OUTSIDE_TEMP_C) / 2.0;
     double average = (MAX_OUTSIDE_TEMP_C + MIN_OUTSIDE_TEMP_C) / 2.0;
-    return average + amplitude * Math.sin(2.0 * Math.PI * (timeOfDayHours - PEAK_TEMP_HOUR) / DAY_LENGTH_HOURS);
+    return average + amplitude * Math.sin(
+        2.0 * Math.PI * (timeOfDayHours - PEAK_TEMP_HOUR) / DAY_LENGTH_HOURS);
   }
 
-  /** Calculates the current outside light based on the time of day. */
+  /**
+   * Calculates the current outside light based on the time of day.
+   */
   public double getCurrentOutsideLightLux() {
     if (timeOfDayHours > DAY_START_HOUR && timeOfDayHours < DAY_END_HOUR) {
-      return DAYTIME_LIGHT_LUX * Math.sin(Math.PI * (timeOfDayHours - DAY_START_HOUR) / (DAY_END_HOUR - DAY_START_HOUR));
+      return DAYTIME_LIGHT_LUX * Math.sin(
+          Math.PI * (timeOfDayHours - DAY_START_HOUR) / (DAY_END_HOUR - DAY_START_HOUR));
     } else {
       return LIGHT_MIN;
     }
@@ -93,10 +100,10 @@ public class EnvironmentState {
    * Update the environment by dt seconds, considering actuator states.
    *
    * @param dtSeconds seconds elapsed
-   * @param fanOn the fan state
-   * @param pumpOn the water pump state
-   * @param co2On the CO2 generator state
-   * @param window the window openness level
+   * @param fanOn     the fan state
+   * @param pumpOn    the water pump state
+   * @param co2On     the CO2 generator state
+   * @param window    the window openness level
    */
   public void step(
       double dtSeconds, boolean fanOn, boolean pumpOn, boolean co2On, WindowLevel window) {
@@ -116,12 +123,14 @@ public class EnvironmentState {
     updatePh(dtSeconds, pumpOn, co2On);
   }
 
-  /** Update the time of day. */
+  /**
+   * Update the time of day.
+   */
   public void updateTime(double dtSeconds) {
-       LocalTime now = LocalTime.now();
-      timeOfDayHours = now.getHour()
-              + now.getMinute() / 60.0
-              + now.getSecond() / 3600.0;
+    LocalTime now = LocalTime.now();
+    timeOfDayHours = now.getHour()
+        + now.getMinute() / 60.0
+        + now.getSecond() / 3600.0;
   }
 
   /**
@@ -171,7 +180,8 @@ public class EnvironmentState {
     double fanHumidityLoss = fanOn ? FAN_HUMIDITY_LOSS : 0.0;
     double tempEffect = (temperatureC - TEMP_EFFECT_BASE) * TEMP_EFFECT_FACTOR;
 
-    humidityPct += (evap + fanHumidityLoss + windowHumidityLoss + tempEffect) * dtSeconds + noise(HUMIDITY_NOISE_AMPLITUDE);
+    humidityPct += (evap + fanHumidityLoss + windowHumidityLoss + tempEffect) * dtSeconds + noise(
+        HUMIDITY_NOISE_AMPLITUDE);
     humidityPct = Math.max(MIN_HUMIDITY, Math.min(MAX_HUMIDITY, humidityPct));
   }
 
@@ -221,7 +231,9 @@ public class EnvironmentState {
     ph = Math.max(MIN_PH, Math.min(MAX_PH, ph));
   }
 
-  /** Window openness enum aligned with protocol. CLOSED/HALF/OPEN */
+  /**
+   * Window openness enum aligned with protocol. CLOSED/HALF/OPEN
+   */
   public enum WindowLevel {
     CLOSED,
     HALF,
