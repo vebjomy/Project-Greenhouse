@@ -44,8 +44,6 @@ public class MainApp extends Application {
 
         this.primaryStage = stage;
         primaryStage.setTitle("Green House Control");
-        primaryStage.centerOnScreen();
-        primaryStage.setMaximized(true);
 
         // Load custom font
         Font customFont = Font.loadFont(
@@ -57,13 +55,29 @@ public class MainApp extends Application {
             System.out.println("Font is loaded: " + customFont.getFamily());
         }
 
-        // Initiate the connection loop.
-        attemptInitialConnection(stage);
 
         // Show the stage immediately
         primaryStage.setMinHeight(SCENE_HEIGHT);
         primaryStage.setMinWidth(SCENE_WIDTH);
+
+        //  Sentralize the stage on the screen
+        centerStageOnScreen();
+
+        // Minimum size
+        primaryStage.setMinHeight(1100);
+        primaryStage.setMinWidth(800);
+
+        // Initiate the connection loop.
+        attemptInitialConnection(stage);
         primaryStage.show();
+    }
+
+    /**
+     * Centers the primary stage on the screen.
+     */
+
+    private void centerStageOnScreen() {
+        primaryStage.centerOnScreen();
     }
 
     /**
@@ -205,7 +219,7 @@ public class MainApp extends Application {
         Scene scene = new Scene(splash.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Green House Control - Welcome");
-        primaryStage.setMaximized(true);
+        centerStageOnScreen();
     }
 
     public void showRegistrationScreen() {
@@ -213,7 +227,7 @@ public class MainApp extends Application {
         Scene scene = new Scene(registration.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Green House Control - Register");
-        primaryStage.setMaximized(true);
+        centerStageOnScreen();
     }
 
     public void showLoginScreen() {
@@ -223,7 +237,7 @@ public class MainApp extends Application {
         Scene scene = new Scene(loginScreenView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Green House Control - Login");
-        primaryStage.setMaximized(true);
+        centerStageOnScreen();
     }
 
     public boolean isConnected() {
@@ -248,12 +262,12 @@ public class MainApp extends Application {
             dashboardView = new DashboardView(this, api);
             dashboardScene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
             dashboardView.initNetwork(api);
+            centerStageOnScreen();
         }
 
         dashboardView.setUserGreeting(username);
         primaryStage.setScene(dashboardScene);
         primaryStage.setTitle("Smart Farm Control");
-        primaryStage.setMaximized(true);
     }
 
 
