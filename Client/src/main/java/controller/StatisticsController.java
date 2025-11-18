@@ -1,11 +1,11 @@
 package controller;
 
+import java.util.Collection;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import model.Node;
 import ui.StatisticsView;
 
-import java.util.Collection;
 
 /**
  * Controller for the StatisticsView. It calculates and populates the
