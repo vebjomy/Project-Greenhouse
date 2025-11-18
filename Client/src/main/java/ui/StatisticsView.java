@@ -1,9 +1,12 @@
 package ui;
 
 import controller.StatisticsController;
+import java.util.Collection;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.chart.*;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
@@ -11,13 +14,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import model.Node;
 
-import java.util.Collection;
-
 /**
- * The View (UI) for the statistics page.
- * Displays charts and summary data about greenhouse nodes.
+ * The View (UI) for the statistics page. Displays charts and summary data about greenhouse nodes.
  */
 public class StatisticsView {
+
   private final BorderPane view;
   private final StatisticsController controller;
 
@@ -34,40 +35,45 @@ public class StatisticsView {
   private final BarChart<String, Number> lightBarChart;
   private final BarChart<String, Number> phBarChart;
 
+  /**
+   * Constructor for StatisticsView.
+   *
+   * @param nodes Collection of Node objects to display statistics for.
+   */
   public StatisticsView(Collection<Node> nodes) {
     // === Chart Axes ===
-    CategoryAxis xAxisTemp = new CategoryAxis();
-    xAxisTemp.setLabel("Node Name");
-    NumberAxis yAxisTemp = new NumberAxis();
-    yAxisTemp.setLabel("Temperature (°C)");
-    tempBarChart = new BarChart<>(xAxisTemp, yAxisTemp);
+    CategoryAxis xaxisTemp = new CategoryAxis();
+    xaxisTemp.setLabel("Node Name");
+    NumberAxis yaxisTemp = new NumberAxis();
+    yaxisTemp.setLabel("Temperature (°C)");
+    tempBarChart = new BarChart<>(xaxisTemp, yaxisTemp);
     tempBarChart.setTitle("Current Temperature by Node");
     tempBarChart.setLegendVisible(false);
     tempBarChart.setPrefHeight(300);
 
-    CategoryAxis xAxisHumidity = new CategoryAxis();
-    xAxisHumidity.setLabel("Node Name");
-    NumberAxis yAxisHumidity = new NumberAxis();
-    yAxisHumidity.setLabel("Humidity (%)");
-    humidityBarChart = new BarChart<>(xAxisHumidity, yAxisHumidity);
+    CategoryAxis xaxisHumidity = new CategoryAxis();
+    xaxisHumidity.setLabel("Node Name");
+    NumberAxis yaxisHumidity = new NumberAxis();
+    yaxisHumidity.setLabel("Humidity (%)");
+    humidityBarChart = new BarChart<>(xaxisHumidity, yaxisHumidity);
     humidityBarChart.setTitle("Current Humidity by Node");
     humidityBarChart.setLegendVisible(false);
     humidityBarChart.setPrefHeight(300);
 
-    CategoryAxis xAxisLight = new CategoryAxis();
-    xAxisLight.setLabel("Node Name");
-    NumberAxis yAxisLight = new NumberAxis();
-    yAxisLight.setLabel("Light Level (lx)");
-    lightBarChart = new BarChart<>(xAxisLight, yAxisLight);
+    CategoryAxis xaxisLight = new CategoryAxis();
+    xaxisLight.setLabel("Node Name");
+    NumberAxis yaxisLight = new NumberAxis();
+    yaxisLight.setLabel("Light Level (lx)");
+    lightBarChart = new BarChart<>(xaxisLight, yaxisLight);
     lightBarChart.setTitle("Current Light Level by Node");
     lightBarChart.setLegendVisible(false);
     lightBarChart.setPrefHeight(300);
 
-    CategoryAxis xAxisPh = new CategoryAxis();
-    xAxisPh.setLabel("Node Name");
-    NumberAxis yAxisPh = new NumberAxis();
-    yAxisPh.setLabel("pH Level");
-    phBarChart = new BarChart<>(xAxisPh, yAxisPh);
+    CategoryAxis xaxisPh = new CategoryAxis();
+    xaxisPh.setLabel("Node Name");
+    NumberAxis yaxisPh = new NumberAxis();
+    yaxisPh.setLabel("pH Level");
+    phBarChart = new BarChart<>(xaxisPh, yaxisPh);
     phBarChart.setTitle("Current pH Level by Node");
     phBarChart.setLegendVisible(false);
     phBarChart.setPrefHeight(300);
@@ -91,10 +97,15 @@ public class StatisticsView {
     titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
     // === Summary Panel ===
-    HBox summaryBox = new HBox(30, totalNodesLabel, avgTempLabel, avgHumidityLabel, avgLightLabel, avgPhLevelLabel);
+    HBox summaryBox = new HBox(30, totalNodesLabel, avgTempLabel, avgHumidityLabel, avgLightLabel,
+        avgPhLevelLabel);
     summaryBox.setAlignment(Pos.CENTER_LEFT);
     summaryBox.setPadding(new Insets(15));
-    summaryBox.setStyle("-fx-background-color: #ffffff; -fx-border-color: #d0d0d0; -fx-border-radius: 8; -fx-background-radius: 8;");
+    summaryBox.setStyle(
+        "-fx-background-color: #ffffff;"
+            + "-fx-border-color: #d0d0d0;"
+            + "-fx-border-radius: 8;"
+            + "-fx-background-radius: 8;");
 
     String summaryStyle = "-fx-font-size: 16px; -fx-font-weight: 500;";
     totalNodesLabel.setStyle(summaryStyle);
@@ -120,17 +131,44 @@ public class StatisticsView {
   }
 
   // === Getters for controller ===
-  public Label getTotalNodesLabel() { return totalNodesLabel; }
-  public Label getAvgTempLabel() { return avgTempLabel; }
-  public Label getAvgHumidityLabel() { return avgHumidityLabel; }
-  public Label getAvgLightLabel() { return avgLightLabel; }
-  public Label getAvgPhLevelLabel() { return avgPhLevelLabel; }
+  public Label getTotalNodesLabel() {
+    return totalNodesLabel;
+  }
 
-  public BarChart<String, Number> getTempBarChart() { return tempBarChart; }
-  public BarChart<String, Number> getHumidityBarChart() { return humidityBarChart; }
-  public BarChart<String, Number> getLightBarChart() { return lightBarChart; }
-  public BarChart<String, Number> getPhBarChart() { return phBarChart; }
+  public Label getAvgTempLabel() {
+    return avgTempLabel;
+  }
 
-  public BorderPane getView() { return view; }
+  public Label getAvgHumidityLabel() {
+    return avgHumidityLabel;
+  }
+
+  public Label getAvgLightLabel() {
+    return avgLightLabel;
+  }
+
+  public Label getAvgPhLevelLabel() {
+    return avgPhLevelLabel;
+  }
+
+  public BarChart<String, Number> getTempBarChart() {
+    return tempBarChart;
+  }
+
+  public BarChart<String, Number> getHumidityBarChart() {
+    return humidityBarChart;
+  }
+
+  public BarChart<String, Number> getLightBarChart() {
+    return lightBarChart;
+  }
+
+  public BarChart<String, Number> getPhBarChart() {
+    return phBarChart;
+  }
+
+  public BorderPane getView() {
+    return view;
+  }
 }
 
