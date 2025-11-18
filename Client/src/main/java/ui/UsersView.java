@@ -23,7 +23,9 @@ public class UsersView {
   private final UsersController controller;
   private final TableView<User> userTable = new TableView<>();
 
-  /** This class creates the user management view with a table and buttons. */
+  /**
+   * This class creates the user management view with a table and buttons.
+   */
   public UsersView(ClientApi clientApi) {
     controller = new UsersController(this, clientApi);
     view = createUsersView();
