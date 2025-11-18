@@ -1,6 +1,7 @@
 package server;
 
 import java.util.concurrent.ThreadLocalRandom;
+import java.time.LocalTime;
 
 /**
  * Physical-like environment state for a greenhouse node. Values evolve over time and are influenced
@@ -117,7 +118,10 @@ public class EnvironmentState {
 
   /** Update the time of day. */
   public void updateTime(double dtSeconds) {
-    timeOfDayHours = (timeOfDayHours + dtSeconds / SECONDS_PER_HOUR) % DAY_LENGTH_HOURS;
+       LocalTime now = LocalTime.now();
+      timeOfDayHours = now.getHour()
+              + now.getMinute() / 60.0
+              + now.getSecond() / 3600.0;
   }
 
   /**
