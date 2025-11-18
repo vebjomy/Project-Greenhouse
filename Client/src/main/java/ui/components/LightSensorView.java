@@ -31,10 +31,10 @@ import javafx.scene.text.FontWeight;
 public class LightSensorView {
 
   // Light level thresholds for color coding (lux)
-  private static final double LIGHT_LOW_THRESHOLD = 200.0;
-  private static final double LIGHT_HIGH_THRESHOLD = 1000.0;
+  private static final double LIGHT_LOW_THRESHOLD = 5000.0;
+  private static final double LIGHT_HIGH_THRESHOLD = 25000.0;
   private static final double LIGHT_MIN = 0.0;
-  private static final double LIGHT_MAX = 1500.0;
+  private static final double LIGHT_MAX = 50000.0;
 
   // Visual constants
   private static final double CARD_WIDTH = 250.0;
@@ -118,17 +118,23 @@ public class LightSensorView {
     }
     iconValueBox.getChildren().add(valueAndUnitBox);
 
+
     // --- 3. Light Spectrum Bar (Full Range Visual) ---
 
-    // Define the light gradient spectrum (Dark=0lx, Normal=200-1000lx, Bright=1500lx)
+    double darkToNormalStop = LIGHT_LOW_THRESHOLD / LIGHT_MAX; // ~5k/50k = 0.1
+    double normalToBrightStop = LIGHT_HIGH_THRESHOLD / LIGHT_MAX; // ~25k/50k = 0.5
+
     LinearGradient spectrumGradient = new LinearGradient(
         0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
-        new Stop(0.0, Color.web("#5C6BC0")),                    // Indigo - Dark (0 lx)
-        new Stop(LIGHT_LOW_THRESHOLD / LIGHT_MAX, Color.web("#66BB6A")), // Green transition
-        new Stop(0.5, Color.web("#66BB6A")),                    // Green - Normal (750 lx)
-        new Stop(LIGHT_HIGH_THRESHOLD / LIGHT_MAX, Color.web("#FFD54F")), // Yellow transition
-        new Stop(1.0, Color.web("#FFA000"))                     // Amber - Bright (1500 lx)
+        new Stop(0.0, Color.web("#5C6BC0")),                     // Indigo - DARK start
+        new Stop(darkToNormalStop, Color.web("#66BB6A")),         // Green - NORMAL start
+        new Stop(normalToBrightStop - 0.05, Color.web("#66BB6A")), // Green end,
+        new Stop(normalToBrightStop, Color.web("#DCE775")),        // LIMEx)
+        new Stop(normalToBrightStop + 0.05, Color.web("#FFD54F")), // Yellow star
+
+        new Stop(1.0, Color.web("#FFA000"))                      // Amber - BRIGHT end
     );
+
 
     // Background bar (the spectrum itself)
     Rectangle spectrumBar = new Rectangle(BAR_WIDTH, BAR_HEIGHT);

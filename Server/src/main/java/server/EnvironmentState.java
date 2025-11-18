@@ -7,35 +7,55 @@ import java.util.concurrent.ThreadLocalRandom;
  * by actuators.
  */
 public class EnvironmentState {
-  // Sensors
+  // --- Sensors ---
   private double temperatureC = 22.0; // °C
   private double humidityPct = 55.0; // % RH
   private int lightLux = 420; // lux
   private double ph = 8.4; // pH
 
-  // External environment assumptions (can be extended or randomized)
-  public double outsideTempC = 12.0; // °C
-  public int daytimeLightLux = 10000; // lux when "daylight" (demo)
+  // --- External environment and Time ---
+  // Simple time simulation for day/night cycle
+  private double timeOfDayHours = 12.0; // Starts at noon
+  private static final double DAY_LENGTH_HOURS = 24.0;
+  private static final double MIN_OUTSIDE_TEMP_C = 8.0; // °C
+  private static final double MAX_OUTSIDE_TEMP_C = 16.0; // °C
+  public int daytimeLightLux = 45000; // max lux when "daylight"
 
-  // CO2 heating effect parameters
-  private static final double CO2_HEATING_RATE = 0.25; // °C per second when CO2 is on
+  // --- CO2 heating effect parameters ---
+  private static final double CO2_HEATING_RATE = 0.25; // Constant heat added by CO2 (simplified)
   private static final double MAX_CO2_TEMP_INCREASE = 5.0; // Maximum temperature increase from CO2
 
-  // Light parameters
-  private static final double LIGHT_INCREASE_OPEN = 25.0; // lux/sec when window open
-  private static final double LIGHT_INCREASE_HALF = 12.0; // lux/sec when window half open
-  private static final double LIGHT_DECREASE_CLOSED = 8.0; // lux/sec when window closed
+  // --- Light parameters ---
   private static final int LIGHT_MIN = 50;
-  private static final int LIGHT_MAX = 20000;
+  private static final int LIGHT_MAX = 50000;
 
   // --- Simple noise helper ---
   private double noise(double amplitude) {
     return (ThreadLocalRandom.current().nextDouble() - 0.5) * 2.0 * amplitude;
   }
 
+  // --- Dynamic calculation of outside parameters ---
+
+  /** Calculates the current outside temperature based on the time of day (sinusoidal model). */
+  public double getCurrentOutsideTempC() {
+    double amplitude = (MAX_OUTSIDE_TEMP_C - MIN_OUTSIDE_TEMP_C) / 2.0;
+    double average = (MAX_OUTSIDE_TEMP_C + MIN_OUTSIDE_TEMP_C) / 2.0;
+    // Simple sinusoid peaking at 14:00 (2 PM)
+    return average + amplitude * Math.sin(2.0 * Math.PI * (timeOfDayHours - 14.0) / DAY_LENGTH_HOURS);
+  }
+
+  /** Calculates the current outside light based on the time of day. */
+  public double getCurrentOutsideLightLux() {
+    if (timeOfDayHours > 6.0 && timeOfDayHours < 18.0) {
+      // Simplified peak at noon (12:00) during a 12-hour day cycle
+      return daytimeLightLux * Math.sin(Math.PI * (timeOfDayHours - 6.0) / 12.0);
+    } else {
+      return LIGHT_MIN; // Minimal light at night
+    }
+  }
+
   /**
-   * Update the environment by dt seconds, considering actuator states. The model is deliberately
-   * simple and stable for demo purposes.
+   * Update the environment by dt seconds, considering actuator states.
    *
    * @param dtSeconds seconds elapsed
    * @param fanOn the fan state
@@ -45,111 +65,129 @@ public class EnvironmentState {
    */
   public void step(
       double dtSeconds, boolean fanOn, boolean pumpOn, boolean co2On, WindowLevel window) {
-    // --- Temperature dynamics ---
+    // 1. Update Time
+    updateTime(dtSeconds);
+
+    // 2. Temperature dynamics
     updateTemperature(dtSeconds, fanOn, co2On, window);
 
-    // --- Humidity dynamics ---
+    // 3. Humidity dynamics
     updateHumidity(dtSeconds, pumpOn, fanOn, window);
 
-    // --- Light dynamics ---
+    // 4. Light dynamics
     updateLight(dtSeconds, window);
 
-    // --- pH dynamics ---
+    // 5. pH dynamics
     updatePh(dtSeconds, pumpOn, co2On);
   }
 
-  /**
-   * Update temperature considering fan, CO2, and window state.
-   *
-   * @param dtSeconds seconds elapsed
-   * @param fanOn the fan state
-   * @param co2On the CO2 state
-   * @param window the window openness level
-   */
-  public void updateTemperature(
-      double dtSeconds, boolean fanOn, boolean co2On, WindowLevel window) {
-    double towardOutside =
-        (window == WindowLevel.OPEN) ? 0.15 : (window == WindowLevel.HALF ? 0.08 : 0.03);
-    double fanCooling = fanOn ? 0.10 : 0.0; // fan pushes toward outside temp too
-
-    // CO2 heating effect - increases temperature when CO2 is on
-    double co2Heating = co2On ? CO2_HEATING_RATE : 0.0;
-
-    double targetTemp =
-        outsideTempC + (temperatureC - outsideTempC) * (1.0 - (towardOutside + fanCooling));
-
-    // Apply CO2 heating effect
-    if (co2On && temperatureC < outsideTempC + MAX_CO2_TEMP_INCREASE) {
-      targetTemp += co2Heating * dtSeconds;
-    }
-
-    temperatureC += (targetTemp - temperatureC) * 0.10 * dtSeconds + noise(0.02);
+  /** Update the time of day. */
+  public void updateTime(double dtSeconds) {
+    timeOfDayHours = (timeOfDayHours + dtSeconds / 3600.0) % DAY_LENGTH_HOURS;
   }
 
   /**
-   * Update humidity considering pump, fan and window states.
-   *
-   * @param dtSeconds seconds elapsed
-   * @param pumpOn the pump state
-   * @param fanOn the fan state
-   * @param window the window openness level
+   * Update temperature considering fan, CO2, and window state. Uses a thermal exchange model.
+   */
+  public void updateTemperature(
+      double dtSeconds, boolean fanOn, boolean co2On, WindowLevel window) {
+    double outsideTempC = getCurrentOutsideTempC();
+
+    // Base heat exchange (e.g., insulation) - moves toward outsideTempC
+    double thermalConductivity = 0.03;
+    double windowHeatTransfer = 0.0;
+
+    // Increased heat loss/gain when the window is open
+    if (window == WindowLevel.OPEN) {
+      windowHeatTransfer = 0.12;
+    } else if (window == WindowLevel.HALF) {
+      windowHeatTransfer = 0.05;
+    }
+    // Fan also increases air circulation and heat exchange
+    double fanHeatTransfer = fanOn ? 0.07 : 0.0;
+
+    // Total heat exchange coefficient (how fast it moves toward outsideTempC)
+    double totalHeatTransfer = thermalConductivity + windowHeatTransfer + fanHeatTransfer;
+
+    // Apply heat exchange: (outsideTempC - temperatureC) * totalHeatTransfer
+    // If inside is warmer, tempChange is negative (cooling); if colder, tempChange is positive (warming)
+    double tempChange = (outsideTempC - temperatureC) * totalHeatTransfer;
+
+    // CO2 heating effect - constant addition of heat
+    if (co2On && temperatureC < outsideTempC + MAX_CO2_TEMP_INCREASE) {
+      tempChange += CO2_HEATING_RATE;
+    }
+
+    // Light heating: Small effect from high light levels (simplified sun heating)
+    double lightHeating = (lightLux / (double) daytimeLightLux) * 0.005;
+    tempChange += lightHeating;
+
+    temperatureC += tempChange * dtSeconds + noise(0.02);
+  }
+
+  /**
+   * Update humidity considering pump, fan, window states, and a small temperature effect.
    */
   public void updateHumidity(double dtSeconds, boolean pumpOn, boolean fanOn, WindowLevel window) {
-    double evap = pumpOn ? +0.35 : -0.08; // pump increases humidity, otherwise it slowly drops
+    // pump increases humidity (evaporation), otherwise it slowly drops
+    double evap = pumpOn ? +0.35 : -0.08;
+
+    // Fan and window cause loss of humidity (ventilation)
     double ventLoss =
         (fanOn ? -0.20 : 0.0)
             + (window == WindowLevel.OPEN ? -0.30 : (window == WindowLevel.HALF ? -0.15 : 0.0));
-    humidityPct += (evap + ventLoss) * dtSeconds + noise(0.15);
+
+    // Condensation/Evaporation effect: higher temp increases humidity (more evaporation)
+    double tempEffect = (temperatureC - 20.0) * 0.02; // Change factor: 0 at 20°C
+
+    humidityPct += (evap + ventLoss + tempEffect) * dtSeconds + noise(0.15);
     humidityPct = Math.max(0.0, Math.min(100.0, humidityPct));
   }
 
   /**
-   * Update light considering window state.
-   *
-   * @param dtSeconds seconds elapsed
-   * @param window the window openness level
+   * Update light considering window state. Light level now moves toward the current outside light.
    */
   public void updateLight(double dtSeconds, WindowLevel window) {
-    // Light depends on window state: closed = decreasing, open = increasing
-    double lightChange = 0.0;
+    double outsideLight = getCurrentOutsideLightLux();
+    double targetLight = outsideLight;
+    double windowFactor = 0.0;
 
     switch (window) {
       case OPEN:
-        // Moderate increase when window fully open
-        lightChange = LIGHT_INCREASE_OPEN;
+        // High rate of change towards outside light
+        windowFactor = 0.05;
         break;
       case HALF:
-        // Small increase when half open
-        lightChange = LIGHT_INCREASE_HALF;
+        // Medium rate of change towards outside light
+        windowFactor = 0.03;
         break;
       case CLOSED:
-        // Slow decrease when closed (no external light)
-        lightChange = -LIGHT_DECREASE_CLOSED;
+        // Slow change towards minimum light level (LIGHT_MIN)
+        targetLight = LIGHT_MIN;
+        windowFactor = 0.01;
         break;
       default:
-        lightChange = 0.0;
+        windowFactor = 0.0;
     }
 
-    // Apply the light change with some noise
+    // Change is proportional to the difference: (targetLight - currentLight) * windowFactor
+    double lightChange = (targetLight - lightLux) * windowFactor;
+
     lightLux += lightChange * dtSeconds + noise(5);
 
-    // Ensure light stays within reasonable bounds
     lightLux = Math.max(LIGHT_MIN, Math.min(LIGHT_MAX, lightLux));
   }
 
   /**
-   * Update the pH level of the environment considering pump and CO2 states. Very simplified: pump
-   * slightly increases pH toward 7, CO2 slightly lowers toward 6.0
-   *
-   * @param dtSeconds seconds elapsed
-   * @param pumpOn the pump state
-   * @param co2On the CO2 state
+   * Update the pH level of the environment considering pump and CO2 states.
    */
   public void updatePh(double dtSeconds, boolean pumpOn, boolean co2On) {
     double phTrend = 0.0;
+    // Pump tends to neutralize (move toward 7.0)
     if (pumpOn) {
       phTrend += (7.0 - ph) * 0.05;
     }
+    // CO2 tends to acidify (move toward 6.0)
     if (co2On) {
       phTrend += (6.0 - ph) * 0.04;
     }
@@ -179,5 +217,9 @@ public class EnvironmentState {
 
   public double getPh() {
     return ph;
+  }
+
+  public double getTimeOfDayHours() {
+    return timeOfDayHours;
   }
 }
