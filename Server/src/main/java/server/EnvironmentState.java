@@ -7,27 +7,63 @@ import java.util.concurrent.ThreadLocalRandom;
  * by actuators.
  */
 public class EnvironmentState {
-  // --- Sensors ---
-  private double temperatureC = 22.0; // °C
-  private double humidityPct = 55.0; // % RH
-  private int lightLux = 420; // lux
-  private double ph = 8.4; // pH
+  // --- Sensor Initial Values ---
+  private double temperatureC = 22.0;
+  private double humidityPct = 55.0;
+  private int lightLux = 420;
+  private double ph = 8.4;
 
-  // --- External environment and Time ---
-  // Simple time simulation for day/night cycle
-  private double timeOfDayHours = 12.0; // Starts at noon
+  // --- Time and External Environment ---
+  private double timeOfDayHours = 12.0;
   private static final double DAY_LENGTH_HOURS = 24.0;
-  private static final double MIN_OUTSIDE_TEMP_C = 8.0; // °C
-  private static final double MAX_OUTSIDE_TEMP_C = 16.0; // °C
-  public int daytimeLightLux = 45000; // max lux when "daylight"
+  private static final double SECONDS_PER_HOUR = 3600.0;
+  private static final double MIN_OUTSIDE_TEMP_C = 8.0;
+  private static final double MAX_OUTSIDE_TEMP_C = 16.0;
+  private static final int DAYTIME_LIGHT_LUX = 45000;
 
-  // --- CO2 heating effect parameters ---
-  private static final double CO2_HEATING_RATE = 0.25; // Constant heat added by CO2 (simplified)
-  private static final double MAX_CO2_TEMP_INCREASE = 5.0; // Maximum temperature increase from CO2
+  // Day/Night Cycle Constants
+  private static final double DAY_START_HOUR = 6.0;
+  private static final double DAY_END_HOUR = 18.0;
+  private static final double PEAK_TEMP_HOUR = 14.0; // 2 PM - peak temperature
 
-  // --- Light parameters ---
+  // --- Temperature Constants ---
+  private static final double BASE_THERMAL_CONDUCTIVITY = 0.03;
+  private static final double OPEN_WINDOW_HEAT_TRANSFER = 0.12;
+  private static final double HALF_WINDOW_HEAT_TRANSFER = 0.05;
+  private static final double FAN_HEAT_TRANSFER = 0.07;
+  private static final double CO2_HEATING_RATE = 0.25;
+  private static final double MAX_CO2_TEMP_INCREASE = 5.0;
+  private static final double LIGHT_HEATING_FACTOR = 0.005;
+  private static final double TEMPERATURE_NOISE_AMPLITUDE = 0.02;
+
+  // --- Humidity Constants ---
+  private static final double PUMP_HUMIDITY_GAIN = 0.35;
+  private static final double NATURAL_HUMIDITY_DECAY = -0.08;
+  private static final double FAN_HUMIDITY_LOSS = -0.20;
+  private static final double OPEN_WINDOW_HUMIDITY_LOSS = -0.30;
+  private static final double HALF_WINDOW_HUMIDITY_LOSS = -0.15;
+  private static final double TEMP_EFFECT_BASE = 20.0;
+  private static final double TEMP_EFFECT_FACTOR = 0.02;
+  private static final double HUMIDITY_NOISE_AMPLITUDE = 0.15;
+  private static final double MIN_HUMIDITY = 0.0;
+  private static final double MAX_HUMIDITY = 100.0;
+
+  // --- Light Constants ---
   private static final int LIGHT_MIN = 50;
   private static final int LIGHT_MAX = 50000;
+  private static final double OPEN_WINDOW_LIGHT_FACTOR = 0.05;
+  private static final double HALF_WINDOW_LIGHT_FACTOR = 0.03;
+  private static final double CLOSED_WINDOW_LIGHT_FACTOR = 0.01;
+  private static final double LIGHT_NOISE_AMPLITUDE = 5.0;
+
+  // --- pH Constants ---
+  private static final double NEUTRAL_PH = 7.0;
+  private static final double ACIDIC_PH = 6.0;
+  private static final double PUMP_PH_NEUTRALIZE_FACTOR = 0.05;
+  private static final double CO2_ACIDIFY_FACTOR = 0.04;
+  private static final double PH_NOISE_AMPLITUDE = 0.01;
+  private static final double MIN_PH = 0.0;
+  private static final double MAX_PH = 14.0;
 
   // --- Simple noise helper ---
   private double noise(double amplitude) {
@@ -40,17 +76,15 @@ public class EnvironmentState {
   public double getCurrentOutsideTempC() {
     double amplitude = (MAX_OUTSIDE_TEMP_C - MIN_OUTSIDE_TEMP_C) / 2.0;
     double average = (MAX_OUTSIDE_TEMP_C + MIN_OUTSIDE_TEMP_C) / 2.0;
-    // Simple sinusoid peaking at 14:00 (2 PM)
-    return average + amplitude * Math.sin(2.0 * Math.PI * (timeOfDayHours - 14.0) / DAY_LENGTH_HOURS);
+    return average + amplitude * Math.sin(2.0 * Math.PI * (timeOfDayHours - PEAK_TEMP_HOUR) / DAY_LENGTH_HOURS);
   }
 
   /** Calculates the current outside light based on the time of day. */
   public double getCurrentOutsideLightLux() {
-    if (timeOfDayHours > 6.0 && timeOfDayHours < 18.0) {
-      // Simplified peak at noon (12:00) during a 12-hour day cycle
-      return daytimeLightLux * Math.sin(Math.PI * (timeOfDayHours - 6.0) / 12.0);
+    if (timeOfDayHours > DAY_START_HOUR && timeOfDayHours < DAY_END_HOUR) {
+      return DAYTIME_LIGHT_LUX * Math.sin(Math.PI * (timeOfDayHours - DAY_START_HOUR) / (DAY_END_HOUR - DAY_START_HOUR));
     } else {
-      return LIGHT_MIN; // Minimal light at night
+      return LIGHT_MIN;
     }
   }
 
@@ -83,7 +117,7 @@ public class EnvironmentState {
 
   /** Update the time of day. */
   public void updateTime(double dtSeconds) {
-    timeOfDayHours = (timeOfDayHours + dtSeconds / 3600.0) % DAY_LENGTH_HOURS;
+    timeOfDayHours = (timeOfDayHours + dtSeconds / SECONDS_PER_HOUR) % DAY_LENGTH_HOURS;
   }
 
   /**
@@ -93,55 +127,48 @@ public class EnvironmentState {
       double dtSeconds, boolean fanOn, boolean co2On, WindowLevel window) {
     double outsideTempC = getCurrentOutsideTempC();
 
-    // Base heat exchange (e.g., insulation) - moves toward outsideTempC
-    double thermalConductivity = 0.03;
     double windowHeatTransfer = 0.0;
-
-    // Increased heat loss/gain when the window is open
     if (window == WindowLevel.OPEN) {
-      windowHeatTransfer = 0.12;
+      windowHeatTransfer = OPEN_WINDOW_HEAT_TRANSFER;
     } else if (window == WindowLevel.HALF) {
-      windowHeatTransfer = 0.05;
+      windowHeatTransfer = HALF_WINDOW_HEAT_TRANSFER;
     }
-    // Fan also increases air circulation and heat exchange
-    double fanHeatTransfer = fanOn ? 0.07 : 0.0;
 
-    // Total heat exchange coefficient (how fast it moves toward outsideTempC)
-    double totalHeatTransfer = thermalConductivity + windowHeatTransfer + fanHeatTransfer;
+    double fanHeatTransfer = fanOn ? FAN_HEAT_TRANSFER : 0.0;
+    double totalHeatTransfer = BASE_THERMAL_CONDUCTIVITY + windowHeatTransfer + fanHeatTransfer;
 
-    // Apply heat exchange: (outsideTempC - temperatureC) * totalHeatTransfer
-    // If inside is warmer, tempChange is negative (cooling); if colder, tempChange is positive (warming)
     double tempChange = (outsideTempC - temperatureC) * totalHeatTransfer;
 
-    // CO2 heating effect - constant addition of heat
+    // CO2 heating effect
     if (co2On && temperatureC < outsideTempC + MAX_CO2_TEMP_INCREASE) {
       tempChange += CO2_HEATING_RATE;
     }
 
-    // Light heating: Small effect from high light levels (simplified sun heating)
-    double lightHeating = (lightLux / (double) daytimeLightLux) * 0.005;
+    // Light heating effect
+    double lightHeating = (lightLux / (double) DAYTIME_LIGHT_LUX) * LIGHT_HEATING_FACTOR;
     tempChange += lightHeating;
 
-    temperatureC += tempChange * dtSeconds + noise(0.02);
+    temperatureC += tempChange * dtSeconds + noise(TEMPERATURE_NOISE_AMPLITUDE);
   }
 
   /**
    * Update humidity considering pump, fan, window states, and a small temperature effect.
    */
   public void updateHumidity(double dtSeconds, boolean pumpOn, boolean fanOn, WindowLevel window) {
-    // pump increases humidity (evaporation), otherwise it slowly drops
-    double evap = pumpOn ? +0.35 : -0.08;
+    double evap = pumpOn ? PUMP_HUMIDITY_GAIN : NATURAL_HUMIDITY_DECAY;
 
-    // Fan and window cause loss of humidity (ventilation)
-    double ventLoss =
-        (fanOn ? -0.20 : 0.0)
-            + (window == WindowLevel.OPEN ? -0.30 : (window == WindowLevel.HALF ? -0.15 : 0.0));
+    double windowHumidityLoss = 0.0;
+    if (window == WindowLevel.OPEN) {
+      windowHumidityLoss = OPEN_WINDOW_HUMIDITY_LOSS;
+    } else if (window == WindowLevel.HALF) {
+      windowHumidityLoss = HALF_WINDOW_HUMIDITY_LOSS;
+    }
 
-    // Condensation/Evaporation effect: higher temp increases humidity (more evaporation)
-    double tempEffect = (temperatureC - 20.0) * 0.02; // Change factor: 0 at 20°C
+    double fanHumidityLoss = fanOn ? FAN_HUMIDITY_LOSS : 0.0;
+    double tempEffect = (temperatureC - TEMP_EFFECT_BASE) * TEMP_EFFECT_FACTOR;
 
-    humidityPct += (evap + ventLoss + tempEffect) * dtSeconds + noise(0.15);
-    humidityPct = Math.max(0.0, Math.min(100.0, humidityPct));
+    humidityPct += (evap + fanHumidityLoss + windowHumidityLoss + tempEffect) * dtSeconds + noise(HUMIDITY_NOISE_AMPLITUDE);
+    humidityPct = Math.max(MIN_HUMIDITY, Math.min(MAX_HUMIDITY, humidityPct));
   }
 
   /**
@@ -154,27 +181,21 @@ public class EnvironmentState {
 
     switch (window) {
       case OPEN:
-        // High rate of change towards outside light
-        windowFactor = 0.05;
+        windowFactor = OPEN_WINDOW_LIGHT_FACTOR;
         break;
       case HALF:
-        // Medium rate of change towards outside light
-        windowFactor = 0.03;
+        windowFactor = HALF_WINDOW_LIGHT_FACTOR;
         break;
       case CLOSED:
-        // Slow change towards minimum light level (LIGHT_MIN)
         targetLight = LIGHT_MIN;
-        windowFactor = 0.01;
+        windowFactor = CLOSED_WINDOW_LIGHT_FACTOR;
         break;
       default:
         windowFactor = 0.0;
     }
 
-    // Change is proportional to the difference: (targetLight - currentLight) * windowFactor
     double lightChange = (targetLight - lightLux) * windowFactor;
-
-    lightLux += lightChange * dtSeconds + noise(5);
-
+    lightLux += lightChange * dtSeconds + noise(LIGHT_NOISE_AMPLITUDE);
     lightLux = Math.max(LIGHT_MIN, Math.min(LIGHT_MAX, lightLux));
   }
 
@@ -183,16 +204,17 @@ public class EnvironmentState {
    */
   public void updatePh(double dtSeconds, boolean pumpOn, boolean co2On) {
     double phTrend = 0.0;
-    // Pump tends to neutralize (move toward 7.0)
+
     if (pumpOn) {
-      phTrend += (7.0 - ph) * 0.05;
+      phTrend += (NEUTRAL_PH - ph) * PUMP_PH_NEUTRALIZE_FACTOR;
     }
-    // CO2 tends to acidify (move toward 6.0)
+
     if (co2On) {
-      phTrend += (6.0 - ph) * 0.04;
+      phTrend += (ACIDIC_PH - ph) * CO2_ACIDIFY_FACTOR;
     }
-    ph += phTrend * dtSeconds + noise(0.01);
-    ph = Math.max(0.0, Math.min(14.0, ph));
+
+    ph += phTrend * dtSeconds + noise(PH_NOISE_AMPLITUDE);
+    ph = Math.max(MIN_PH, Math.min(MAX_PH, ph));
   }
 
   /** Window openness enum aligned with protocol. CLOSED/HALF/OPEN */
