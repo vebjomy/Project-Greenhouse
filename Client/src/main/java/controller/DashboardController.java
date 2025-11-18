@@ -274,6 +274,10 @@ public class DashboardController {
    *   <li>If nodeState.name is null: Node was removed</li>
    * </ul>
    *
+   * <p><b>Update Behavior:</b>
+   * When a node is updated (e.g., sensors/actuators changed via Edit Node Dialog),
+   * this method updates the Node model and refreshes the UI card to reflect the changes.
+   *
    * @param nodeState The state object containing node information
    */
   private void handleNodeChange(core.ClientState.NodeState nodeState) {
@@ -291,7 +295,25 @@ public class DashboardController {
         );
       });
 
-      // Create UI card if it doesn't exist
+      // Update existing node configuration if it already exists
+      if (nodes.containsKey(nodeState.nodeId)) {
+        System.out.println("🔄 Updating existing node: " + nodeState.nodeId);
+        System.out.println("   Previous sensors: " + node.getSensorTypes());
+        System.out.println("   New sensors: " + nodeState.sensors);
+        System.out.println("   Previous actuators: " + node.getActuatorTypes());
+        System.out.println("   New actuators: " + nodeState.actuators);
+
+        // Update sensor and actuator lists via dedicated methods
+        node.updateSensorTypes(new ArrayList<>(nodeState.sensors));
+        node.updateActuatorTypes(new ArrayList<>(nodeState.actuators));
+
+        // Refresh the UI card to reflect the changes
+        refreshNodeCard(node);
+
+        logActivity(node.getName(), "Node configuration updated");
+      }
+
+      // Create UI card if it doesn't exist yet (new node)
       if (!nodeCards.containsKey(nodeState.nodeId)) {
         createNodeCard(node);
         logActivity(node.getName(), "Node added to dashboard");

@@ -80,6 +80,50 @@ public class Node {
     lastUpdate.set(timestamp);
   }
 
+  /**
+   * Updates the list of sensor types supported by this node.
+   *
+   * <p>This method is called when the node configuration changes on the server
+   * (e.g., via Edit Node Dialog). It replaces the entire sensor list with the
+   * new configuration.
+   *
+   * <p><b>Thread-safety:</b> This method is not thread-safe. It should only be
+   * called from the JavaFX Application Thread.
+   *
+   * @param newSensors New list of sensor type names (e.g., ["temperature", "humidity"])
+   * @throws NullPointerException if newSensors is null
+   */
+  public void updateSensorTypes(List<String> newSensors) {
+    if (newSensors == null) {
+      throw new NullPointerException("Sensor types list cannot be null");
+    }
+    this.sensorTypes.clear();
+    this.sensorTypes.addAll(newSensors);
+    System.out.println("   ✅ Sensors updated for node " + id + ": " + sensorTypes);
+  }
+
+  /**
+   * Updates the list of actuator types supported by this node.
+   *
+   * <p>This method is called when the node configuration changes on the server
+   * (e.g., via Edit Node Dialog). It replaces the entire actuator list with the
+   * new configuration.
+   *
+   * <p><b>Thread-safety:</b> This method is not thread-safe. It should only be
+   * called from the JavaFX Application Thread.
+   *
+   * @param newActuators New list of actuator type names (e.g., ["fan", "water_pump"])
+   * @throws NullPointerException if newActuators is null
+   */
+  public void updateActuatorTypes(List<String> newActuators) {
+    if (newActuators == null) {
+      throw new NullPointerException("Actuator types list cannot be null");
+    }
+    this.actuatorTypes.clear();
+    this.actuatorTypes.addAll(newActuators);
+    System.out.println("   ✅ Actuators updated for node " + id + ": " + actuatorTypes);
+  }
+
   // === Getters for basic properties ===
 
   public String getId() { return id; }
