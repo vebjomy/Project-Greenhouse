@@ -1,15 +1,20 @@
 package ui;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 
 /**
@@ -66,7 +71,8 @@ public class AddComponentDialog extends Dialog<List<String>> {
       return null;
     });
   }
-/**
+
+  /**
    * Creates a toggle button for a component with an icon and label.
    *
    * @param name     The name of the component.
@@ -75,12 +81,12 @@ public class AddComponentDialog extends Dialog<List<String>> {
    */
   private ToggleButton createComponentToggle(String name, String iconPath) {
 
-    final int ICON_SIZE = 40;
+    final int iconSize = 40;
     ImageView icon = new ImageView();
 
-
     try {
-      Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath)), ICON_SIZE, ICON_SIZE, true, true);
+      Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath)),
+          iconSize, iconSize, true, true);
       icon.setImage(image);
     } catch (Exception e) {
       System.err.println("Could not load icon: " + iconPath);
@@ -95,17 +101,19 @@ public class AddComponentDialog extends Dialog<List<String>> {
     button.setGraphic(content);
     button.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 
-    final int TILE_SIZE = 100;
-    button.setMinWidth(TILE_SIZE);
-    button.setMinHeight(TILE_SIZE);
-    button.setMaxWidth(TILE_SIZE);
-    button.setMaxHeight(TILE_SIZE);
+    final int tileSize = 100;
+    button.setMinWidth(tileSize);
+    button.setMinHeight(tileSize);
+    button.setMaxWidth(tileSize);
+    button.setMaxHeight(tileSize);
 
     button.getStyleClass().add("component-toggle-button");
 
     button.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
       if (isSelected) {
-        if (!selectedComponents.contains(name)) selectedComponents.add(name);
+        if (!selectedComponents.contains(name)) {
+          selectedComponents.add(name);
+        }
         button.getStyleClass().add("selected");
       } else {
         selectedComponents.remove(name);
