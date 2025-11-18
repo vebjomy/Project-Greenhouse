@@ -1,21 +1,31 @@
 package ui;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * A dialog for creating a new node, including its name, location, IP, and initial components.
  */
 public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
+
   private final TextField nameField = new TextField();
   private final TextField locationField = new TextField();
   private final TextField ipField = new TextField();
@@ -25,11 +35,15 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
    * Data class to hold the result of the node creation dialog.
    */
   public static class NodeCreationResult {
+
     public final String name;
     public final String location;
     public final String ip;
     public final List<String> components;
 
+    /**
+     * Constructs a NodeCreationResult.
+     */
     public NodeCreationResult(String name, String location, String ip, List<String> components) {
       this.name = name;
       this.location = location;
@@ -87,14 +101,14 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
     tilePane.setVgap(25);
     tilePane.setPrefColumns(4);
     tilePane.getChildren().addAll(
-            createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png"),
-            createComponentToggle("Light Sensor", "/icons/light_sensor.png"),
-            createComponentToggle("Humidity Sensor", "/icons/humidity_sensor.png"),
-            createComponentToggle("PH Sensor", "/icons/Ph.png"),
-            createComponentToggle("Fan", "/icons/fan.png"),
-            createComponentToggle("Water Pump", "/icons/waterpump.png"),
-            createComponentToggle("Window", "/icons/window.png"),
-            createComponentToggle("CO2 Generator", "/icons/ceo2.png")
+        createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png"),
+        createComponentToggle("Light Sensor", "/icons/light_sensor.png"),
+        createComponentToggle("Humidity Sensor", "/icons/humidity_sensor.png"),
+        createComponentToggle("PH Sensor", "/icons/Ph.png"),
+        createComponentToggle("Fan", "/icons/fan.png"),
+        createComponentToggle("Water Pump", "/icons/waterpump.png"),
+        createComponentToggle("Window", "/icons/window.png"),
+        createComponentToggle("CO2 Generator", "/icons/ceo2.png")
     );
 
     ScrollPane scrollPane = new ScrollPane(tilePane);
@@ -114,12 +128,12 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
 
     // Validation: name and IP required
     okButton.disableProperty().bind(
-            nameField.textProperty().isEmpty()
-                    .or(ipField.textProperty().isEmpty())
+        nameField.textProperty().isEmpty()
+            .or(ipField.textProperty().isEmpty())
     );
 
     getDialogPane().getStylesheets().add(
-            Objects.requireNonNull(getClass().getResource("/test.css")).toExternalForm()
+        Objects.requireNonNull(getClass().getResource("/test.css")).toExternalForm()
     );
 
     setResultConverter(dialogButton -> {
@@ -131,10 +145,10 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
         }
 
         return new NodeCreationResult(
-                nameField.getText().trim(),
-                locationField.getText().trim(),
-                ip,
-                new ArrayList<>(selectedComponents)
+            nameField.getText().trim(),
+            locationField.getText().trim(),
+            ip,
+            new ArrayList<>(selectedComponents)
         );
       }
       return null;
@@ -151,7 +165,7 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
 
     try {
       Image image = new Image(Objects.requireNonNull(
-              getClass().getResourceAsStream(iconPath)), 40, 40, true, true);
+          getClass().getResourceAsStream(iconPath)), 40, 40, true, true);
       icon.setImage(image);
     } catch (Exception e) {
       System.err.println("Could not load icon: " + iconPath);
@@ -174,7 +188,9 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
 
     button.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
       if (isSelected) {
-        if (!selectedComponents.contains(name)) selectedComponents.add(name);
+        if (!selectedComponents.contains(name)) {
+          selectedComponents.add(name);
+        }
         button.getStyleClass().add("selected");
       } else {
         selectedComponents.remove(name);
@@ -186,30 +202,38 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
   }
 
   /**
-   * Simple IP counter for auto-generation
+   * Simple IP counter for auto-generation.
    */
   private static int ipCounter = 50;
 
   private String generateNextIp() {
     String ip = "192.168.1." + ipCounter;
     ipCounter++;
-    if (ipCounter > 254) ipCounter = 50; // Wrap around
+    if (ipCounter > 254) {
+      ipCounter = 50; // Wrap around
+    }
     return ip;
   }
 
   /**
-   * Validate IP address format
+   * Validate IP address format.
    */
   private boolean isValidIp(String ip) {
-    if (ip == null || ip.isEmpty()) return false;
+    if (ip == null || ip.isEmpty()) {
+      return false;
+    }
 
     String[] parts = ip.split("\\.");
-    if (parts.length != 4) return false;
+    if (parts.length != 4) {
+      return false;
+    }
 
     try {
       for (String part : parts) {
         int value = Integer.parseInt(part);
-        if (value < 0 || value > 255) return false;
+        if (value < 0 || value > 255) {
+          return false;
+        }
       }
       return true;
     } catch (NumberFormatException e) {
@@ -218,7 +242,7 @@ public class AddNodeDialog extends Dialog<AddNodeDialog.NodeCreationResult> {
   }
 
   /**
-   * Show error alert
+   * Show error alert.
    */
   private void showError(String message) {
     Alert alert = new Alert(Alert.AlertType.ERROR);
