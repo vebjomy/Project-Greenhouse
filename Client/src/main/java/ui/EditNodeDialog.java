@@ -1,8 +1,20 @@
 package ui;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
@@ -10,23 +22,22 @@ import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import model.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 /**
- * Dialog for editing an existing greenhouse node.
- * Allows updating name, location, IP, and components (sensors/actuators).
+ * Dialog for editing an existing greenhouse node. Allows updating name, location, IP, and
+ * components (sensors/actuators).
  *
- * FIXES:
- * - PH Sensor now properly pre-selects
- * - Component deselection now works correctly
- * - Server format conversion is accurate
+ * <p>FIXES:
+ * <ul>
+ * <li>PH Sensor now properly pre-selects
+ * <li>Component deselection now works correctly
+ * <li>Server format conversion is accurate
+ * </ul>
  *
  * @author Green House Control Team
  * @version 1.1
  */
 public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
+
   private final TextField nameField = new TextField();
   private final TextField locationField = new TextField();
   private final TextField ipField = new TextField();
@@ -37,11 +48,20 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
    * Data class to hold the result of node editing.
    */
   public static class NodeEditResult {
+
     public final String name;
     public final String location;
     public final String ip;
     public final List<String> components;
 
+    /**
+     * Constructor.
+     *
+     * @param name       The name of the node
+     * @param location   The location of the node
+     * @param ip         The IP address of the node
+     * @param components The list of components
+     */
     public NodeEditResult(String name, String location, String ip, List<String> components) {
       this.name = name;
       this.location = location;
@@ -103,14 +123,14 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
 
     // Map sensor types from server format to UI format
     for (String s : node.getSensorTypes()) {
-      String uiName = mapSensorToUI(s);
+      String uiName = mapSensorToUi(s);
       existingComponents.add(uiName);
       System.out.println("   Pre-selecting sensor: " + uiName);
     }
 
     // Map actuator types from server format to UI format
     for (String a : node.getActuatorTypes()) {
-      String uiName = mapActuatorToUI(a);
+      String uiName = mapActuatorToUi(a);
       existingComponents.add(uiName);
       System.out.println("   Pre-selecting actuator: " + uiName);
     }
@@ -120,14 +140,20 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
     System.out.println("🔧 Existing components: " + existingComponents);
 
     tilePane.getChildren().addAll(
-            createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png", existingComponents.contains("Temperature Sensor")),
-            createComponentToggle("Light Sensor", "/icons/light_sensor.png", existingComponents.contains("Light Sensor")),
-            createComponentToggle("Humidity Sensor", "/icons/humidity_sensor.png", existingComponents.contains("Humidity Sensor")),
-            createComponentToggle("PH Sensor", "/icons/Ph.png", existingComponents.contains("PH Sensor")),
-            createComponentToggle("Fan", "/icons/fan.png", existingComponents.contains("Fan")),
-            createComponentToggle("Water Pump", "/icons/waterpump.png", existingComponents.contains("Water Pump")),
-            createComponentToggle("Window", "/icons/window.png", existingComponents.contains("Window")),
-            createComponentToggle("CO2 Generator", "/icons/ceo2.png", existingComponents.contains("CO2 Generator"))
+        createComponentToggle("Temperature Sensor", "/icons/temp_sensor.png",
+            existingComponents.contains("Temperature Sensor")),
+        createComponentToggle("Light Sensor", "/icons/light_sensor.png",
+            existingComponents.contains("Light Sensor")),
+        createComponentToggle("Humidity Sensor", "/icons/humidity_sensor.png",
+            existingComponents.contains("Humidity Sensor")),
+        createComponentToggle("PH Sensor", "/icons/Ph.png",
+            existingComponents.contains("PH Sensor")),
+        createComponentToggle("Fan", "/icons/fan.png", existingComponents.contains("Fan")),
+        createComponentToggle("Water Pump", "/icons/waterpump.png",
+            existingComponents.contains("Water Pump")),
+        createComponentToggle("Window", "/icons/window.png", existingComponents.contains("Window")),
+        createComponentToggle("CO2 Generator", "/icons/ceo2.png",
+            existingComponents.contains("CO2 Generator"))
     );
 
     ScrollPane scrollPane = new ScrollPane(tilePane);
@@ -147,12 +173,12 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
 
     // Validation: name and IP required
     okButton.disableProperty().bind(
-            nameField.textProperty().isEmpty()
-                    .or(ipField.textProperty().isEmpty())
+        nameField.textProperty().isEmpty()
+            .or(ipField.textProperty().isEmpty())
     );
 
     getDialogPane().getStylesheets().add(
-            Objects.requireNonNull(getClass().getResource("/test.css")).toExternalForm()
+        Objects.requireNonNull(getClass().getResource("/test.css")).toExternalForm()
     );
 
     setResultConverter(dialogButton -> {
@@ -166,10 +192,10 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
         System.out.println("✅ Dialog OK clicked - selected components: " + selectedComponents);
 
         return new NodeEditResult(
-                nameField.getText().trim(),
-                locationField.getText().trim(),
-                ip,
-                new ArrayList<>(selectedComponents)
+            nameField.getText().trim(),
+            locationField.getText().trim(),
+            ip,
+            new ArrayList<>(selectedComponents)
         );
       }
       return null;
@@ -179,8 +205,8 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
   /**
    * Creates a ToggleButton for component selection.
    *
-   * @param name Component name
-   * @param iconPath Path to icon resource
+   * @param name        Component name
+   * @param iconPath    Path to icon resource
    * @param preSelected Whether this component should be pre-selected
    * @return Configured ToggleButton
    */
@@ -191,7 +217,7 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
 
     try {
       Image image = new Image(Objects.requireNonNull(
-              getClass().getResourceAsStream(iconPath)), 40, 40, true, true);
+          getClass().getResourceAsStream(iconPath)), 40, 40, true, true);
       icon.setImage(image);
     } catch (Exception e) {
       System.err.println("Could not load icon: " + iconPath);
@@ -223,12 +249,14 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
       if (isSelected) {
         if (!selectedComponents.contains(name)) {
           selectedComponents.add(name);
-          System.out.println("   ➕ Selected: " + name + " (total: " + selectedComponents.size() + ")");
+          System.out.println(
+              "   ➕ Selected: " + name + " (total: " + selectedComponents.size() + ")");
         }
         button.getStyleClass().add("selected");
       } else {
         selectedComponents.remove(name);
-        System.out.println("   ➖ Deselected: " + name + " (total: " + selectedComponents.size() + ")");
+        System.out.println(
+            "   ➖ Deselected: " + name + " (total: " + selectedComponents.size() + ")");
         button.getStyleClass().remove("selected");
       }
     });
@@ -237,11 +265,10 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
   }
 
   /**
-   * Maps internal sensor names to UI display names.
-   * Server uses lowercase: "temperature", "humidity", "light", "ph"
-   * UI uses: "Temperature Sensor", "Humidity Sensor", etc.
+   * Maps internal sensor names to UI display names. Server uses lowercase: "temperature",
+   * "humidity", "light", "ph" UI uses: "Temperature Sensor", "Humidity Sensor", etc.
    */
-  private String mapSensorToUI(String sensor) {
+  private String mapSensorToUi(String sensor) {
     return switch (sensor.toLowerCase()) {
       case "temperature" -> "Temperature Sensor";
       case "humidity" -> "Humidity Sensor";
@@ -254,7 +281,7 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
   /**
    * Maps internal actuator names to UI display names.
    */
-  private String mapActuatorToUI(String actuator) {
+  private String mapActuatorToUi(String actuator) {
     return switch (actuator) {
       case "water_pump" -> "Water Pump";
       case "co2" -> "CO2 Generator";
@@ -268,7 +295,9 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
    * Capitalizes first letter of string.
    */
   private String capitalize(String str) {
-    if (str == null || str.isEmpty()) return str;
+    if (str == null || str.isEmpty()) {
+      return str;
+    }
     return str.substring(0, 1).toUpperCase() + str.substring(1);
   }
 
@@ -276,15 +305,21 @@ public class EditNodeDialog extends Dialog<EditNodeDialog.NodeEditResult> {
    * Validates IP address format.
    */
   private boolean isValidIp(String ip) {
-    if (ip == null || ip.isEmpty()) return false;
+    if (ip == null || ip.isEmpty()) {
+      return false;
+    }
 
     String[] parts = ip.split("\\.");
-    if (parts.length != 4) return false;
+    if (parts.length != 4) {
+      return false;
+    }
 
     try {
       for (String part : parts) {
         int value = Integer.parseInt(part);
-        if (value < 0 || value > 255) return false;
+        if (value < 0 || value > 255) {
+          return false;
+        }
       }
       return true;
     } catch (NumberFormatException e) {

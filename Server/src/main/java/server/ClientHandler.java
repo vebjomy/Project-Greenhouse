@@ -1,18 +1,39 @@
 package server;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import dto.*;
+import dto.Ack;
+import dto.Auth;
+import dto.AuthResponse;
+import dto.Command;
+import dto.CreateNode;
+import dto.DeleteNode;
+import dto.DeleteUserRequest;
+import dto.GetUsersRequest;
+import dto.NodeChange;
+import dto.Pong;
+import dto.RegisterRequest;
+import dto.RegisterResponse;
+import dto.SetSampling;
+import dto.Subscribe;
+import dto.Topology;
+import dto.Unsubscribe;
+import dto.UpdateNode;
+import dto.UpdateUserRequest;
+import dto.UsersListResponse;
+import dto.Welcome;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.*;
 import net.MessageCodec;
 
-/** Single client connection: subscriptions + requests + acks. */
+/**
+ * Single client connection: subscriptions + requests + acks.
+ */
 public class ClientHandler implements Runnable {
+
   private final Socket socket;
   private final NodeManager nodeManager;
   private final ClientRegistry registry;
@@ -28,10 +49,10 @@ public class ClientHandler implements Runnable {
    * Initializes references for node management, client session registry, sensor engine callbacks,
    * and user management. No I/O is performed here.
    *
-   * @param socket the client socket used for reading and writing messages
+   * @param socket      the client socket used for reading and writing messages
    * @param nodeManager manager for node CRUD and operations
-   * @param registry registry that tracks sessions and broadcasts server events
-   * @param engine sensor engine notified on topology changes
+   * @param registry    registry that tracks sessions and broadcasts server events
+   * @param engine      sensor engine notified on topology changes
    * @param userService user management service for auth and user operations
    */
   public ClientHandler(
@@ -50,7 +71,7 @@ public class ClientHandler implements Runnable {
   @Override
   public void run() {
     try (BufferedReader in =
-            new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+        new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
         PrintWriter writer =
             new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true)) {
       this.out = writer;
