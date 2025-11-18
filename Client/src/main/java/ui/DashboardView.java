@@ -93,6 +93,7 @@ public class DashboardView {
     // Greeting and additional information
     userGreetingLabel = new Label("Hello + !!username!!" );
     Label additionalInfo = new Label("System Status:" + " NODE SIZE ");
+    additionalInfo.setId("system-status-label");
     userGreetingLabel.setStyle("-fx-font-size: 31px; -fx-font-weight: 500;" +
             " -fx-text-fill: #333333;");
     additionalInfo.setStyle("-fx-font-size: 14px; -fx-text-fill: #00796b;");
@@ -106,6 +107,21 @@ public class DashboardView {
     topBar.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #e0e0e0; " +
             "-fx-border-width: 0 0 1 0;");
     return topBar;
+  }
+
+  /**
+   * Updates the system status label with the current number of nodes.
+   * Should be called whenever nodes are added, removed, or on initial load.
+   *
+   * @param nodeCount The current number of nodes in the system
+   */
+  public void updateNodeCount(int nodeCount) {
+    Platform.runLater(() -> {
+      Label statusLabel = (Label) root.lookup("#system-status-label");
+      if (statusLabel != null) {
+        statusLabel.setText("System Status: " + nodeCount + " node(s)");
+      }
+    });
   }
 
   // --- LEFT SIDEBAR ---
@@ -260,8 +276,13 @@ public class DashboardView {
     commandOutputArea.setEditable(false);
     commandOutputArea.setFocusTraversable(false);
     commandOutputArea.setWrapText(true);
-    commandOutputArea.setText("Console initialized. Type 'help' for available commands.\n" +
-            "Auto-connecting to: " + mainApp.getServerAddress() + ":" + mainApp.getServerPort() + "\n");
+    commandOutputArea.setText("Console initialized. Type 'help' for available commands.\n");
+    String serverAddress = mainApp.getServerAddress();
+    if (serverAddress != null && !serverAddress.isEmpty()) {
+      commandOutputArea.appendText("Connected to: " + serverAddress + ":" + mainApp.getServerPort() + "\n");
+    } else {
+      commandOutputArea.appendText("Server: Not connected\n");
+    }
     commandOutputArea.setStyle("-fx-control-inner-background: #1e1e1e; " +
             "-fx-font-family: 'Consolas'; -fx-text-fill: #ffffff; -fx-font-size: 12px;");
     VBox.setVgrow(commandOutputArea, Priority.ALWAYS);
@@ -423,6 +444,9 @@ public class DashboardView {
       // Now it's safe to call manualRefresh
       controller.manualRefresh();
       controller.logActivity("System", "Dashboard initialized successfully");
+
+      // Update the node count display
+        updateNodeCount(0); // Initial count is 0, will be updated on refresh
 
       isInitialized = true;
     }

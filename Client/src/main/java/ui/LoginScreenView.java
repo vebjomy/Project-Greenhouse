@@ -67,7 +67,7 @@ public class LoginScreenView {
 
     Text subtitle = new Text("Green House\nA Project that can\nchange your life\n");
     subtitle.getStyleClass().add("login-title-subtitle");
-    Text prompt = new Text("Welcome back, please log in\nto your account");
+    Text prompt = new Text("Welcome back! Please log in\nto your account");
     prompt.getStyleClass().add("login-prompt");
     TextFlow headerFlow = new TextFlow(subtitle, prompt);
     headerFlow.setTextAlignment(TextAlignment.LEFT);

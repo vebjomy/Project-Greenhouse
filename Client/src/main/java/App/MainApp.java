@@ -42,15 +42,6 @@ public class MainApp extends Application {
     public void start(Stage stage) {
         api = new ClientApi();
 
-        // Create the dashboard view
-        dashboardView = new DashboardView(this, api);
-
-        // Create the dashboard scene ONCE and cache it
-        dashboardScene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
-
-        // Initialize network AFTER UI is set up
-        dashboardView.initNetwork(api);
-
         this.primaryStage = stage;
         primaryStage.setTitle("Green House Control");
         primaryStage.centerOnScreen();
@@ -150,21 +141,30 @@ public class MainApp extends Application {
             return;
         }
 
-        // Connection Logic (UNCHANGED)
+        // Update dynamic server address
+        this.dynamicServerAddress = serverAddress;
+        System.out.println("🔧 Server address set to: " + this.dynamicServerAddress);
+
+        // Connection Logic
         api.connect(serverAddress, SERVER_PORT).thenRun(() -> {
             System.out.println("✅ Connected to server at " + serverAddress);
             isConnected = true;
-            this.dynamicServerAddress = serverAddress;
 
             Platform.runLater(() -> {
+                if (dashboardView == null) {
+                    dashboardView = new DashboardView(this, api);
+                    dashboardScene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
+                    dashboardView.initNetwork(api);
+                }
+
                 api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
-                    .thenRun(() -> {
-                        System.out.println("✅ Subscribed to updates");
-                        api.getTopology().thenAccept(topology -> {
-                            System.out.println("✅ Initial topology loaded: " +
-                                (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
+                        .thenRun(() -> {
+                            System.out.println("✅ Subscribed to updates");
+                            api.getTopology().thenAccept(topology -> {
+                                System.out.println("✅ Initial topology loaded: " +
+                                        (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
+                            });
                         });
-                    });
 
                 showSplashScreen();
 
@@ -178,6 +178,9 @@ public class MainApp extends Application {
                 "Please check the IP address and ensure the server is running.";
             System.err.println("❌ Failed to connect to server: " + ex.getMessage());
             isConnected = false;
+
+            //Reset dynamic server address on failure
+            this.dynamicServerAddress = null;
 
             Platform.runLater(() -> {
                 Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -231,6 +234,7 @@ public class MainApp extends Application {
         return dynamicServerAddress;
     }
 
+
     public ClientApi getClientApi() {
         return api;
     }
@@ -239,6 +243,13 @@ public class MainApp extends Application {
      * Displays the dashboard view.
      */
     public void showDashboard(String username) {
+        // Create dashboard if it doesn't exist yet
+        if (dashboardView == null) {
+            dashboardView = new DashboardView(this, api);
+            dashboardScene = new Scene(dashboardView.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
+            dashboardView.initNetwork(api);
+        }
+
         dashboardView.setUserGreeting(username);
         primaryStage.setScene(dashboardScene);
         primaryStage.setTitle("Smart Farm Control");

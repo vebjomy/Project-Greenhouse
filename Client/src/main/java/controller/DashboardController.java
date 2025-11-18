@@ -322,6 +322,9 @@ public class DashboardController {
       // Node was removed
       System.out.println("➖ Removing node: " + nodeState.nodeId);
       removeNodeCard(nodeState.nodeId);
+
+      // Update node count in UI
+      view.updateNodeCount(nodes.size());
     }
   }
 
@@ -706,6 +709,9 @@ public class DashboardController {
     // Initial render of sensors and actuators
     refreshNodeCard(node);
 
+    // Update node count in UI
+    view.updateNodeCount(nodes.size());
+
     System.out.println("✅ Node card created for: " + node.getName());
   }
 
@@ -816,6 +822,9 @@ public class DashboardController {
                       level -> sendWindowCommand(node.getId(), level)
               )
       );
+
+      // Update node count in UI
+      view.updateNodeCount(nodes.size());
     }
   }
 
@@ -832,6 +841,9 @@ public class DashboardController {
     nodes.remove(nodeId);
 
     System.out.println("🗑️ Node card removed: " + nodeId);
+
+    // Update node count in UI
+    view.updateNodeCount(nodes.size());
   }
 
   // ========== Command Sending ==========
