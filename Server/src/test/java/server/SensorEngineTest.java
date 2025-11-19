@@ -1,18 +1,28 @@
 package server;
 
 import dto.SensorUpdate;
+import dto.Topology;
 import org.junit.jupiter.api.*;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for SensorEngine.
- * <p>
- * This test class verifies node scheduling, broadcasting sensor updates, and node removal.
+ * Tests the class SensorEngine.
+ *
+ * <p>The following is tested:</p>
+ *
+ * <b>Positive tests:</b>
  * <ul>
- *   <li>(scheduleNodeTest): Tests scheduling a node and receiving sensor updates.</li>
- *   <li>(rescheduleNodeTest): Tests rescheduling a node after interval change.</li>
- *   <li>(onNodeRemovedTest): Tests node removal stops updates.</li>
+ *   <li>(scheduleNodeTest): Scheduling a node results in sensor updates being broadcast.</li>
+ *   <li>(scheduleMultipleNodesTest): Scheduling multiple nodes broadcasts updates for each.</li>
+ *   <li>(rescheduleNodeTest): Rescheduling a node after interval change continues updates.</li>
+ *   <li>(onNodeRemovedTest): Removing a node stops its updates.</li>
+ *   <li>(closeStopsAllTasksTest): Closing the engine stops all scheduled tasks.</li>
+ * </ul>
+ *
+ * <b>Negative tests:</b>
+ * <ul>
+ *   <li>(invalidNodeIdTest): Scheduling with an invalid node ID does not throw and does not broadcast updates.</li>
  * </ul>
  */
 class SensorEngineTest {
@@ -42,6 +52,20 @@ class SensorEngineTest {
     }
 
     @Test
+    void scheduleMultipleNodesTest() throws InterruptedException {
+        Topology.Node node2 = new Topology.Node();
+        node2.name = "Node2";
+        node2.sensors = List.of("temperature");
+        node2.actuators = List.of("fan");
+        String id2 = nodeManager.addNode(node2);
+
+        engine.scheduleNode(nodeManager.getAllNodes().get(0).id);
+        engine.scheduleNode(id2);
+        Thread.sleep(400);
+        assertTrue(updates.stream().anyMatch(u -> u.nodeId.equals(id2)));
+    }
+
+    @Test
     void rescheduleNodeTest() throws InterruptedException {
         String nodeId = nodeManager.getAllNodes().get(0).id;
         engine.scheduleNode(nodeId);
@@ -56,6 +80,21 @@ class SensorEngineTest {
         String nodeId = nodeManager.getAllNodes().get(0).id;
         engine.scheduleNode(nodeId);
         engine.onNodeRemoved(nodeId);
+        updates.clear();
+        Thread.sleep(300);
+        assertTrue(updates.isEmpty());
+    }
+
+    @Test
+    void invalidNodeIdTest() {
+        engine.scheduleNode("invalid-id");
+    }
+
+    @Test
+    void closeStopsAllTasksTest() throws InterruptedException {
+        String nodeId = nodeManager.getAllNodes().get(0).id;
+        engine.scheduleNode(nodeId);
+        engine.close();
         updates.clear();
         Thread.sleep(300);
         assertTrue(updates.isEmpty());

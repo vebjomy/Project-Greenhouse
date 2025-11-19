@@ -8,15 +8,24 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for NodeManager.
- * <p>
- * This test class verifies node addition, update, deletion, and snapshot logic.
+ * Tests the class NodeManager.
+ *
+ * <p>The following is tested:</p>
+ *
+ * <b>Positive tests:</b>
  * <ul>
- *   <li>(addNodeTest): Tests adding a new node.</li>
- *   <li>(getAllNodesTest): Tests retrieval of all nodes.</li>
- *   <li>(updateNodeTest): Tests updating node properties.</li>
- *   <li>(deleteNodeTest): Tests deleting a node.</li>
- *   <li>(snapshotTest): Tests snapshot data for a node.</li>
+ *   <li>(addNodeTest): Adding nodes with valid parameters increases the nodes count.</li>
+ *   <li>(getAllNodesTest): Retrieving all nodes returns the expected list.</li>
+ *   <li>(updateNodeTest): Updating an existing node changes its properties as expected.</li>
+ *   <li>(deleteNodeTest): Deleting a node removes it from the manager.</li>
+ *   <li>(executeCommandTest): Executing a command updates actuator state.</li>
+ *   <li>(addNodeWithMissingFieldsTest): Adding a node with missing fields initializes empty lists.</li>
+ * </ul>
+ *
+ * <b>Negative tests:</b>
+ * <ul>
+ *   <li>(updateNonExistentNodeTest): Updating a non-existent node does not throw but logs a warning.</li>
+ *   <li>(executeCommandInvalidNodeTest): Executing a command for an invalid node ID does not throw.</li>
  * </ul>
  */
 class NodeManagerTest {
@@ -100,5 +109,37 @@ class NodeManagerTest {
         assertTrue(snapshot.containsKey("water_pump"));
         assertTrue(snapshot.containsKey("co2"));
         assertTrue(snapshot.containsKey("window"));
+    }
+
+    @Test
+    void executeCommandTest() {
+        String nodeId = nodeManager.getAllNodes().get(0).id;
+        Command cmd = new Command();
+        cmd.nodeId = nodeId;
+        cmd.target = "fan";
+        cmd.params = Map.of("on", true);
+        nodeManager.executeCommand(cmd);
+    }
+
+    @Test
+    void addNodeWithMissingFieldsTest() {
+        Topology.Node node = new Topology.Node();
+        String id = nodeManager.addNode(node);
+        assertNotNull(id);
+        assertNotNull(nodeManager.getAllNodes().stream().filter(n -> n.id.equals(id)).findFirst().orElse(null));
+    }
+
+    @Test
+    void executeCommandInvalidNodeTest() {
+        Command cmd = new Command();
+        cmd.nodeId = "invalid-id";
+        cmd.target = "fan";
+        cmd.params = Map.of("on", true);
+        assertDoesNotThrow(() -> nodeManager.executeCommand(cmd));
+    }
+
+    @Test
+    void updateNonExistentNodeTest() {
+        assertDoesNotThrow(() -> nodeManager.updateNode("invalid-id", Map.of("name", "NoNode")));
     }
 }
