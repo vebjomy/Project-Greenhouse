@@ -445,9 +445,20 @@ public class ClientApi implements AutoCloseable {
         case MessageTypes.USERS_LIST -> {
           requests.complete(id, root);
         }
-        case MessageTypes.ACK, MessageTypes.ERROR, MessageTypes.LAST_VALUES, MessageTypes.PONG -> {
+        case MessageTypes.ACK, MessageTypes.LAST_VALUES, MessageTypes.PONG -> {
           // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
           requests.complete(id, root);
+        }
+        case MessageTypes.ERROR -> {
+          // Handle error message from server
+          String errorCode = root.path("code").asText("UNKNOWN");
+          String errorMessage = root.path("message").asText("Unknown error");
+          System.err.println("❌ [Client] Server error: " + errorCode + " - " + errorMessage);
+
+          // Complete the future with an exception so the calling code can handle it
+          if (id != null) {
+            requests.fail(id, new RuntimeException(errorCode + ": " + errorMessage));
+          }
         }
         case MessageTypes.TOPOLOGY -> {
           Topology topo = mapper.convertValue(root, Topology.class);
@@ -470,9 +481,15 @@ public class ClientApi implements AutoCloseable {
             state.removeNode(nc.nodeId);
           }
         }
-        default -> System.out.println("Unknown message: " + line);
+        default -> System.out.println(" [Client] Unknown message type: " + type);
       }
-    } catch (Exception e) { e.printStackTrace(); }
+    } catch (com.fasterxml.jackson.core.JsonParseException e) {
+      System.err.println("❌ [Client] JSON parse error: " + e.getMessage());
+      e.printStackTrace();
+    } catch (Exception e) {
+      System.err.println("❌ [Client] Error processing message: " + e.getMessage());
+      e.printStackTrace();
+    }
   }
 
 

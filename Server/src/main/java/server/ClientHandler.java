@@ -105,10 +105,33 @@ public class ClientHandler implements Runnable {
     }
   }
 
+  /**
+   * Processes an incoming message line from the client.
+   *
+   * <p>This method parses the JSON message, determines its type, and routes it to
+   * the appropriate handler method. It implements comprehensive error handling for:
+   * <ul>
+   *   <li>JSON parsing errors (malformed JSON)</li>
+   *   <li>Unknown message types</li>
+   *   <li>Runtime exceptions during message processing</li>
+   * </ul>
+   *
+   * <p>In case of any error, an appropriate {@link dto.ErrorMsg} is sent back to
+   * the client with a descriptive error code and message.
+   *
+   * <p><b>Supported Message Types:</b>
+   * {@code hello}, {@code auth}, {@code register}, {@code get_users}, {@code update_user},
+   * {@code delete_user}, {@code get_topology}, {@code create_node}, {@code update_node},
+   * {@code delete_node}, {@code set_sampling}, {@code subscribe}, {@code unsubscribe},
+   * {@code command}, {@code ping}
+   *
+   * @param line the raw JSON message line received from the client
+   */
   private void process(String line) {
     try {
       JsonNode root = codec.mapper().readTree(line);
       String type = root.path("type").asText("");
+      String requestId = root.path("id").asText(null);
       switch (type) {
         case "hello" -> handleHello(root);
         case "auth" -> handleAuth(root);
@@ -125,10 +148,18 @@ public class ClientHandler implements Runnable {
         case "unsubscribe" -> handleUnsubscribe(root);
         case "command" -> handleCommand(root);
         case "ping" -> handlePing(root);
-        default -> System.out.println("Unknown type: " + type);
+        default -> {
+          System.out.println("Unknown type: " + type);
+        sendError(requestId, "UNSUPPORTED", "Unknown message type: " + type);
+        }
       }
+    } catch (com.fasterxml.jackson.core.JsonParseException e) {
+      System.err.println("❌ JSON parse error: " + e.getMessage());
+      sendError(null, "INVALID_JSON", "Malformed JSON: " + e.getMessage());
     } catch (Exception e) {
+      System.err.println("❌ Processing error: " + e.getMessage());
       e.printStackTrace();
+      sendError(null, "INTERNAL", "Internal server error: " + e.getMessage());
     }
   }
 
@@ -273,17 +304,22 @@ public class ClientHandler implements Runnable {
    * @throws Exception If an error occurs.
    */
   private void handleCreateNode(JsonNode msg) throws Exception {
+    String requestId = msg.path("id").asText(null);
+    try {
     System.out.println("📥 [Server] Received create_node request");
-    System.out.println("   Raw JSON: " + msg.toPrettyString());
-
     CreateNode cn = codec.fromJson(msg.toString(), CreateNode.class);
 
-    System.out.println("   Parsed node:");
-    System.out.println("   - Name: " + cn.node.name);
-    System.out.println("   - Location: " + cn.node.location);
-    System.out.println("   - IP: " + cn.node.ip);
-    System.out.println("   - Sensors: " + cn.node.sensors);
-    System.out.println("   - Actuators: " + cn.node.actuators);
+      // Validation
+      if (cn.node == null) {
+        sendError(requestId, "INVALID_ARG", "Node object is required");
+        return;
+      }
+
+      if (cn.node.name == null || cn.node.name.trim().isEmpty()) {
+        sendError(requestId, "INVALID_ARG", "Node name is required");
+        return;
+      }
+
 
     String id = nodeManager.addNode(cn.node);
     System.out.println("   ✅ Node added with ID: " + id);
@@ -307,6 +343,12 @@ public class ClientHandler implements Runnable {
     nc.node = cn.node;
     nc.node.id = id;
     registry.broadcast(nc);
+
+    } catch (Exception e) {
+      System.err.println("❌ Error creating node: " + e.getMessage());
+      e.printStackTrace();
+      sendError(requestId, "INTERNAL", "Failed to create node: " + e.getMessage());
+    }
   }
 
   /**
@@ -316,9 +358,25 @@ public class ClientHandler implements Runnable {
    * @throws Exception If an error occurs.
    */
   private void handleUpdateNode(JsonNode msg) throws Exception {
+    String requestId = msg.path("id").asText(null);
+
+    try {
     UpdateNode m = codec.fromJson(msg.toString(), UpdateNode.class);
+
+      // Validation
+      if (m.nodeId == null || m.nodeId.trim().isEmpty()) {
+        sendError(requestId, "INVALID_ARG", "Node ID is required");
+        return;
+      }
+
+      if (nodeManager.getAllNodes().stream().noneMatch(n -> n.id.equals(m.nodeId))) {
+        sendError(requestId, "NOT_FOUND", "Node not found: " + m.nodeId);
+        return;
+      }
+
     nodeManager.updateNode(m.nodeId, m.patch);
     ack(msg, "ok");
+
     // broadcast node_change updated
     NodeChange nc = new NodeChange();
     nc.op = "updated";
@@ -328,6 +386,12 @@ public class ClientHandler implements Runnable {
             .findFirst()
             .orElse(null);
     registry.broadcast(nc);
+
+    } catch (Exception e) {
+      System.err.println("❌ Error updating node: " + e.getMessage());
+      e.printStackTrace();
+      sendError(requestId, "INTERNAL", "Failed to update node: " + e.getMessage());
+    }
   }
 
   /**
@@ -338,16 +402,38 @@ public class ClientHandler implements Runnable {
    * @throws Exception if deserialization or downstream operations fail
    */
   private void handleDeleteNode(JsonNode msg) throws Exception {
+    String requestId = msg.path("id").asText(null);
+
+    try {
     DeleteNode m = codec.fromJson(msg.toString(), DeleteNode.class);
-    nodeManager.deleteNode(m.nodeId);
+
+      // Validation
+      if (m.nodeId == null || m.nodeId.trim().isEmpty()) {
+        sendError(requestId, "INVALID_ARG", "Node ID is required");
+        return;
+      }
+
+      if (nodeManager.getAllNodes().stream().noneMatch(n -> n.id.equals(m.nodeId))) {
+        sendError(requestId, "NOT_FOUND", "Node not found: " + m.nodeId);
+        return;
+      }
+
+      nodeManager.deleteNode(m.nodeId);
     engine.onNodeRemoved(m.nodeId);
     ack(msg, "ok");
+
     // broadcast node_change deleted
     NodeChange nc = new NodeChange();
     nc.op = "deleted";
     nc.node = new Topology.Node();
     nc.node.id = m.nodeId;
     registry.broadcast(nc);
+
+    } catch (Exception e) {
+      System.err.println("❌ Error deleting node: " + e.getMessage());
+      e.printStackTrace();
+      sendError(requestId, "INTERNAL", "Failed to delete node: " + e.getMessage());
+    }
   }
 
 
@@ -371,9 +457,31 @@ public class ClientHandler implements Runnable {
   }
 
   private void handleCommand(JsonNode msg) throws Exception {
+    String requestId = msg.path("id").asText(null);
+
+    try {
     Command c = codec.fromJson(msg.toString(), Command.class);
+
+      // Validation
+      if (c.nodeId == null || c.target == null || c.action == null) {
+        sendError(requestId, "INVALID_ARG", "Command requires nodeId, target, and action");
+        return;
+      }
+
+      // Check if node exists
+      if (nodeManager.getAllNodes().stream().noneMatch(n -> n.id.equals(c.nodeId))) {
+        sendError(requestId, "NOT_FOUND", "Node not found: " + c.nodeId);
+        return;
+      }
+
     nodeManager.executeCommand(c);
     ack(msg, "ok");
+
+    } catch (Exception e) {
+      System.err.println("❌ Error executing command: " + e.getMessage());
+      e.printStackTrace();
+      sendError(requestId, "INTERNAL", "Failed to execute command: " + e.getMessage());
+    }
   }
 
   private void handlePing(JsonNode msg) {
@@ -399,6 +507,44 @@ public class ClientHandler implements Runnable {
       out.flush();
     } catch (Exception e) {
       e.printStackTrace();
+    }
+  }
+
+  /**
+   * Sends an error message to the client with the specified error code and message.
+   *
+   * <p>This method constructs and sends an {@link dto.ErrorMsg} to inform the client
+   * about a processing error, validation failure, or other exceptional condition.
+   * The error is logged on the server side for debugging purposes.
+   *
+   * <p><b>Supported Error Codes:</b>
+   * <ul>
+   *   <li>{@code INVALID_ARG} - Invalid or missing required parameters</li>
+   *   <li>{@code NOT_FOUND} - Requested resource (e.g., node) does not exist</li>
+   *   <li>{@code ALREADY_EXISTS} - Resource already exists (e.g., duplicate node)</li>
+   *   <li>{@code UNSUPPORTED} - Unsupported operation or message type</li>
+   *   <li>{@code FORBIDDEN} - Insufficient permissions for the operation</li>
+   *   <li>{@code INTERNAL} - Internal server error during processing</li>
+   *   <li>{@code INVALID_JSON} - Malformed JSON in client request</li>
+   * </ul>
+   *
+   * @param requestId the request ID (correlation ID) from the original client message;
+   *                  may be {@code null} if the request ID could not be extracted
+   * @param code the error code string identifying the error category
+   * @param message a human-readable error message describing the issue
+   *
+   * @see dto.ErrorMsg
+   */
+  private void sendError(String requestId, String code, String message) {
+    try {
+      dto.ErrorMsg error = new dto.ErrorMsg();
+      error.id = requestId;
+      error.code = code;
+      error.message = message;
+      send(error);
+      System.err.println("❌ [Server] Error sent: " + code + " - " + message);
+    } catch (Exception e) {
+      System.err.println("❌ Failed to send error message: " + e.getMessage());
     }
   }
 }
