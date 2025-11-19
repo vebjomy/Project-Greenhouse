@@ -352,6 +352,8 @@ public class DashboardController {
       if (!nodeCards.containsKey(nodeState.nodeId)) {
         createNodeCard(node);
         logActivity(node.getName(), "Node added to dashboard");
+        // Refresh the UI card to reflect the changes
+        refreshNodeCard(node);
       }
     } else {
       // Node was removed
