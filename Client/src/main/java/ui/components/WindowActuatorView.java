@@ -264,28 +264,7 @@ public class WindowActuatorView {
     statusBoxTop.setAlignment(Pos.CENTER_LEFT);
     HBox.setHgrow(statusBoxTop, Priority.ALWAYS);
 
-    // Delete Menu Button
-    Circle dot1 = new Circle(2.5, Color.web("#ffffff"));
-    Circle dot2 = new Circle(2.5, Color.web("#ffffff"));
-    Circle dot3 = new Circle(2.5, Color.web("#ffffff"));
-    HBox dots = new HBox(3, dot1, dot2, dot3);
-    dots.setAlignment(Pos.CENTER);
-
-    Button menuButton = new Button();
-    menuButton.setGraphic(dots);
-    menuButton.setStyle(
-        "-fx-background-color: transparent; -fx-padding: 5 10 5 10; -fx-cursor: hand;");
-
-    ContextMenu contextMenu = new ContextMenu();
-    MenuItem deleteItem = new MenuItem("Delete this actuator");
-    deleteItem.setStyle("-fx-text-fill: #0d0c0c;");
-    contextMenu.getItems().add(deleteItem);
-
-    menuButton.setOnMouseClicked(event -> {
-      contextMenu.show(menuButton, event.getScreenX(), event.getScreenY());
-    });
-
-    statusBar.getChildren().addAll(statusBoxTop, menuButton);
+    statusBar.getChildren().addAll(statusBoxTop);
 
     // === 6. Final Assembly (Card Style) ===
     VBox layout = new VBox();
