@@ -1,6 +1,7 @@
 package App;
 
 import core.ClientApi;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import javafx.application.Application;
@@ -50,6 +51,14 @@ public class MainApp extends Application {
     api = new ClientApi();
 
     this.primaryStage = stage;
+    primaryStage.setOnCloseRequest(event -> {
+      // Gracefully close the connection when the user closes the window
+      try {
+        api.close();
+      } catch (Exception e) {
+        System.err.println("Error during API close on window exit: " + e.getMessage());
+      }
+    });
     primaryStage.setTitle("Green House Control");
 
     // Load custom font
@@ -66,7 +75,7 @@ public class MainApp extends Application {
     primaryStage.setMinHeight(SCENE_HEIGHT);
     primaryStage.setMinWidth(SCENE_WIDTH);
 
-    //  Sentralize the stage on the screen
+    //  Center the stage on the screen
     centerStageOnScreen();
 
     // Minimum size
@@ -84,21 +93,26 @@ public class MainApp extends Application {
    */
   @Override
   public void stop() throws Exception {
-    System.out.println("MainApp shutting down. Closing ClientApi resources...");
-    try {
-      api.close();
-    } catch (Exception e) {
-      System.err.println("Error closing ClientApi during shutdown: " + e.getMessage());
+    System.out.println("Application is stopping. Performing cleanup...");
+    if (api != null) {
+      try {
+        // Shuts down the NetworkClient's
+        // background thread pool and closes the socket.
+        api.close();
+        System.out.println("NetworkClient successfully closed.");
+      } catch (IOException e) {
+        System.err.println("Error closing ClientApi: " + e.getMessage());
+      }
     }
+
+    // Call super.stop() and then Platform.exit() to ensure all JavaFX threads also terminate.
     super.stop();
-    // Since we explicitly shut down the non-daemon thread in api.close(),
-    // the JVM will exit automatically after this point.
+    Platform.exit();
   }
 
   /**
    * Centers the primary stage on the screen.
    */
-
   private void centerStageOnScreen() {
     primaryStage.centerOnScreen();
   }
