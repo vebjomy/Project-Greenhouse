@@ -189,6 +189,7 @@ public class ClientHandler implements Runnable {
       response.userId = userService.getUserId(auth.getUsername());
       response.role = userService.getUserRole(auth.getUsername());
       response.message = "Authentication successful";
+      session.userRole = response.role;
       System.out.println("   ✅ Authentication successful - Role: " + response.role);
     } else {
       response.message = "Invalid username or password";
@@ -214,7 +215,6 @@ public class ClientHandler implements Runnable {
       response.message = "Username already exists";
       System.out.println("   ❌ Registration failed - User exists");
     } else {
-      // Register new user
       int userId = userService.registerUser(req.getUsername(), req.getPassword(), req.getRole());
       response.success = true;
       response.userId = userId;
@@ -242,7 +242,8 @@ public class ClientHandler implements Runnable {
     System.out.println("📥 [Server] Received update_user request");
     UpdateUserRequest req = codec.fromJson(msg.toString(), UpdateUserRequest.class);
 
-    boolean success = userService.updateUser(req.userId, req.username, req.role);
+    String currentUserRole = session != null ? session.userRole : "Viewer";
+    boolean success = userService.updateUser(req.userId, req.username, req.role, currentUserRole);
 
     Ack ack = new Ack();
     ack.id = req.id;
@@ -256,7 +257,9 @@ public class ClientHandler implements Runnable {
     System.out.println("📥 [Server] Received delete_user request");
     DeleteUserRequest req = codec.fromJson(msg.toString(), DeleteUserRequest.class);
 
-    boolean success = userService.deleteUser(req.userId);
+    String currentUserRole = session != null ? session.clientId : "Viewer";
+    boolean success = userService.deleteUser(req.userId, currentUserRole);
+
 
     Ack ack = new Ack();
     ack.id = req.id;

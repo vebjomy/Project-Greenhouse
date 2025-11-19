@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service for managing users stored in a JSON file (`users.json`).
+ * Service for managing users stored in a JSON file ("users.json").
  *
  * <p>Responsibilities:
  *
@@ -20,9 +20,12 @@ import java.util.List;
  *   <li>Persist mutations immediately (except initial seeding).
  * </ul>
  *
- * <p>Concurrency: public mutating and listing methods (`getAllUsers`, `updateUser`, `deleteUser`)
- * are synchronized; registration and validation are not synchronized and may observe in-flight
- * changes. All information including passwords is currently stored in plain text.
+ * <p>Concurrency:</p>
+ * <ul>
+ *   <li>Public mutating and listing methods ("getAllUsers", "updateUser", "deleteUser") are synchronized.</li>
+ *   <li>Registration and validation are not synchronized and may observe in flight changes.</li>
+ * </ul>
+ * <p>All information including passwords is currently stored in plain text.</p>
  */
 public class UserService {
   private static final String USERS_FILE = "users.json";
@@ -30,35 +33,44 @@ public class UserService {
   private ArrayNode users;
   private final String usersFile;
 
+  /**
+   * Constructs a UserService and loads users from the default file, creating default users if absent.
+   */
   public UserService() {
-    this("users.json");
+    this.usersFile = USERS_FILE;
+    loadUsers();
   }
 
-  /** Constructor loads users from file or creates default users if file absent. */
+  /**
+   * Constructs a UserService and loads users from the specified file, creating default users if absent.
+   *
+   * @param usersFile the path to the users JSON file
+   */
   public UserService(String usersFile) {
     this.usersFile = usersFile;
     loadUsers();
   }
 
-
+  /** Load users from json file. */
   private void loadUsers() {
     try {
       File file = new File(usersFile);
 
-      if (!file.exists() || file.length() == 0) {
+      if (!file.exists()) {
         users = mapper.createArrayNode();
         createDefaultUsers();
         saveUsers();
-        System.out.println("✅ Created users.json in root directory");
+        System.out.println("✅ Created users file: " + usersFile);
       } else {
         var node = mapper.readTree(file);
-        if (node.isMissingNode() || !node.isArray()) {
+        if (node == null || !node.isArray()) {
           users = mapper.createArrayNode();
+          System.out.println("⚠️ Users file was empty or malformed, initialized empty users list.");
         } else {
           users = (ArrayNode) node;
+          System.out.println("✅ Loaded users file: " + usersFile);
+          System.out.println("   Users loaded: " + users.size());
         }
-        System.out.println("✅ Loaded users.json from root directory");
-        System.out.println("   Users loaded: " + users.size());
       }
     } catch (IOException e) {
       System.err.println("❌ Failed to load users.json: " + e.getMessage());
@@ -90,7 +102,7 @@ public class UserService {
   }
 
   /**
-   * Register a new user and save to file.
+   * Registers a new user and saves to file.
    *
    * @param username the username
    * @param password the password
@@ -126,14 +138,14 @@ public class UserService {
   private void saveUsers() {
     try {
       mapper.writerWithDefaultPrettyPrinter().writeValue(new File(usersFile), users);
-      System.out.println("✅ Saved users to root directory");
+      System.out.println("✅ Saved users to: " + usersFile);
     } catch (IOException e) {
       System.err.println("❌ Failed to save users: " + e.getMessage());
     }
   }
 
   /**
-   * Validate user credentials.
+   * Validates user credentials.
    *
    * @param username the username
    * @param password the password
@@ -151,7 +163,7 @@ public class UserService {
   }
 
   /**
-   * Get user ID by username.
+   * Gets user ID by username.
    *
    * @param username the username
    * @return the user ID, or -1 if not found
@@ -167,7 +179,7 @@ public class UserService {
   }
 
   /**
-   * Get user role by username.
+   * Gets user role by username.
    *
    * @param username the username
    * @return the user role, or null if not found
@@ -183,8 +195,8 @@ public class UserService {
   }
 
   /**
-   * Get a snapshot list of all users (id, username, role). Thread-safe via synchronization; returns
-   * a new list.
+   * Gets a snapshot list of all users (id, username, role).
+   * Thread-safe via synchronization; returns a new list.
    *
    * @return list of user data
    */
@@ -202,14 +214,19 @@ public class UserService {
   }
 
   /**
-   * Update a user's username and role by ID and persist.
+   * Updates a user's username and role by ID and persists changes.
    *
    * @param userId target user ID
    * @param newUsername new username
    * @param newRole new role
-   * @return true if updated; false if not found
+   * @param currentUserRole role of the user performing the update (must be "Admin")
+   * @return true if updated; false if not found or permission denied
    */
-  public synchronized boolean updateUser(int userId, String newUsername, String newRole) {
+  public synchronized boolean updateUser(int userId, String newUsername, String newRole, String currentUserRole) {
+    if (!"Admin".equalsIgnoreCase(currentUserRole)) {
+      System.err.println("❌ Permission denied: Only Admin can update users.");
+      return false;
+    }
     for (int i = 0; i < users.size(); i++) {
       ObjectNode u = (ObjectNode) users.get(i);
       if (u.get("id").asInt() == userId) {
@@ -226,12 +243,17 @@ public class UserService {
   }
 
   /**
-   * Delete a user by ID and persist changes.
+   * Deletes a user by ID and persists changes.
    *
    * @param userId target user ID
-   * @return true if deleted; false if not found
+   * @param currentUserRole role of the user performing the deletion (must be "Admin")
+   * @return true if deleted; false if not found or permission denied
    */
-  public synchronized boolean deleteUser(int userId) {
+  public synchronized boolean deleteUser(int userId, String currentUserRole) {
+    if (!"Admin".equalsIgnoreCase(currentUserRole)) {
+      System.err.println("❌ Permission denied: Only Admin can delete users.");
+      return false;
+    }
     for (int i = 0; i < users.size(); i++) {
       ObjectNode u = (ObjectNode) users.get(i);
       if (u.get("id").asInt() == userId) {
