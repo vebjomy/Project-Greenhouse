@@ -252,39 +252,6 @@ public class ClientApi implements AutoCloseable {
     return fut;
   }
 
-  /**
-   * Adds a component to a node.
-   *
-   * @param nodeId the node ID
-   * @param kind   the component kind
-   * @param name   the component name
-   * @return a CompletableFuture that completes when the addition is acknowledged
-   */
-  public CompletableFuture<Void> addComponent(String nodeId, String kind, String name){
-    String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
-    AddComponent m = new AddComponent();
-    m.id = id; m.nodeId = nodeId; m.component = Map.of("kind", kind, "name", name);
-    send(m);
-    return fut;
-  }
-
-  /**
-   * Removes a component from a node.
-   *
-   * @param nodeId the node ID
-   * @param kind   the component kind
-   * @param name   the component name
-   * @return a CompletableFuture that completes when the removal is acknowledged
-   */
-  public CompletableFuture<Void> removeComponent(String nodeId, String kind, String name){
-    String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
-    RemoveComponent m = new RemoveComponent();
-    m.id = id; m.nodeId = nodeId; m.component = Map.of("kind", kind, "name", name);
-    send(m);
-    return fut;
-  }
 
   /**
    * Sets the sampling interval for a node.
@@ -323,22 +290,6 @@ public class ClientApi implements AutoCloseable {
     return fut;
   }
 
-  // ---------- Pull ----------
-
-  /**
-   * Requests the last sensor values for a node.
-   *
-   * @param nodeId the node ID
-   * @return a CompletableFuture with the last values DTO
-   */
-  public CompletableFuture<LastValues> getLastValues(String nodeId){
-    String id = requests.newId();
-    var fut = requests.register(id).thenApply(js -> tcp.codec().mapper().convertValue(js, LastValues.class));
-    GetLastValues m = new GetLastValues();
-    m.id = id; m.nodeId = nodeId;
-    send(m);
-    return fut;
-  }
 
   /**
    * Sends a ping message to the server.
