@@ -56,7 +56,8 @@ public class LoginController {
       Platform.runLater(() -> {
         if (response.success) {
           System.out.println("✅ Login successful - Role: " + response.getRole());
-          mainApp.showDashboard(username); // ✅ Navigate to dashboard
+          String userRole = response.getRole();
+          mainApp.showDashboard(username, userRole);  // ✅ Navigate to dashboard
         } else {
           showError(response.getMessage());
         }

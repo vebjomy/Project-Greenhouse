@@ -26,8 +26,9 @@ public class UsersView {
   /**
    * This class creates the user management view with a table and buttons.
    */
-  public UsersView(ClientApi clientApi) {
-    controller = new UsersController(this, clientApi);
+  public UsersView(UsersController controller) {
+    this.controller = controller;
+    controller.setView(this);
     view = createUsersView();
     controller.loadUsers();
   }

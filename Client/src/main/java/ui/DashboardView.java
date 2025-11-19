@@ -2,6 +2,7 @@ package ui;
 
 import App.MainApp;
 import controller.DashboardController;
+import controller.UsersController;
 import core.ClientApi;
 import core.CommandProcessor;
 import javafx.application.Platform;
@@ -49,6 +50,9 @@ public class DashboardView {
   // Reference to mainApp
   private final MainApp mainApp;
 
+  private final UsersController usersController;
+  private final UsersView usersView;
+
   // Initialization flag
   private boolean isInitialized = false;
 
@@ -62,6 +66,10 @@ public class DashboardView {
     this.mainApp = mainApp;
     this.clientApi = api;
     controller = new DashboardController(this, mainApp, api);
+
+    this.usersController = new UsersController(null, clientApi);
+    this.usersView = new UsersView(usersController);
+    this.usersController.setView(usersView);
 
     setupUi();
   }
@@ -170,10 +178,7 @@ public class DashboardView {
     });
 
     usersBtn.setOnAction(e -> {
-      if (usersContent == null) {
-        usersContent = new UsersView(clientApi).getView();
-      }
-      root.setCenter(usersContent);
+      root.setCenter(usersView.getView());
       setActiveButton(usersBtn, navButtons, buttonStyle, buttonActiveStyle);
     });
 
@@ -482,6 +487,10 @@ public class DashboardView {
     centerContainer.setPadding(new Insets(20));
     centerContainer.setStyle("-fx-background-color: #ffffff;");
     return centerContainer;
+  }
+
+  public UsersController getUsersController() {
+    return usersController;
   }
 
   /**

@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 /**
@@ -30,6 +31,20 @@ public class RegistrationView {
   public RegistrationView(MainApp mainApp) {
     root = new BorderPane();
     root.setStyle("-fx-background-color: #ffffff;");
+
+
+      Button backButton = new Button("← Back");
+    backButton.setStyle(
+            "-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 20; " +
+                    "-fx-background-radius: 20; -fx-font-size: 16px; -fx-cursor: hand;"
+    );
+    backButton.setOnAction(e -> mainApp.showSplashScreen());
+
+// Place back button in an HBox aligned to the right
+    HBox topBar = new HBox(backButton);
+    topBar.setAlignment(Pos.TOP_RIGHT);
+    topBar.setPadding(new Insets(40, 40, 0, 0)); // Move down and right
+    root.setTop(topBar);
 
     Label title = new Label("User Registration");
     title.setStyle("-fx-font-size: 60px; -fx-font-weight: bold; -fx-text-fill: #333333;");
