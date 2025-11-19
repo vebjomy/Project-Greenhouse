@@ -28,23 +28,35 @@ public class UserService {
   private static final String USERS_FILE = "users.json";
   private final ObjectMapper mapper = new ObjectMapper();
   private ArrayNode users;
+  private final String usersFile;
+
+  public UserService() {
+    this("users.json");
+  }
 
   /** Constructor loads users from file or creates default users if file absent. */
-  public UserService() {
+  public UserService(String usersFile) {
+    this.usersFile = usersFile;
     loadUsers();
   }
 
+
   private void loadUsers() {
     try {
-      File file = new File(USERS_FILE);
+      File file = new File(usersFile);
 
-      if (!file.exists()) {
+      if (!file.exists() || file.length() == 0) {
         users = mapper.createArrayNode();
         createDefaultUsers();
         saveUsers();
         System.out.println("✅ Created users.json in root directory");
       } else {
-        users = (ArrayNode) mapper.readTree(file);
+        var node = mapper.readTree(file);
+        if (node.isMissingNode() || !node.isArray()) {
+          users = mapper.createArrayNode();
+        } else {
+          users = (ArrayNode) node;
+        }
         System.out.println("✅ Loaded users.json from root directory");
         System.out.println("   Users loaded: " + users.size());
       }
@@ -53,6 +65,7 @@ public class UserService {
       users = mapper.createArrayNode();
     }
   }
+
 
   /** Create default users. */
   private void createDefaultUsers() {
@@ -112,7 +125,7 @@ public class UserService {
   /** Save users to the JSON file. */
   private void saveUsers() {
     try {
-      mapper.writerWithDefaultPrettyPrinter().writeValue(new File(USERS_FILE), users);
+      mapper.writerWithDefaultPrettyPrinter().writeValue(new File(usersFile), users);
       System.out.println("✅ Saved users to root directory");
     } catch (IOException e) {
       System.err.println("❌ Failed to save users: " + e.getMessage());
@@ -130,7 +143,7 @@ public class UserService {
     for (int i = 0; i < users.size(); i++) {
       ObjectNode user = (ObjectNode) users.get(i);
       if (user.get("username").asText().equals(username)
-          && user.get("password").asText().equals(password)) {
+              && user.get("password").asText().equals(password)) {
         return true;
       }
     }
@@ -204,7 +217,7 @@ public class UserService {
         u.put("role", newRole);
         saveUsers();
         System.out.println(
-            "✅ Updated user ID " + userId + " -> username: " + newUsername + ", role: " + newRole);
+                "✅ Updated user ID " + userId + " -> username: " + newUsername + ", role: " + newRole);
         return true;
       }
     }
