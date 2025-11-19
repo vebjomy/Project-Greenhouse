@@ -63,6 +63,9 @@ public class RegisterController {
         if (response.success) {
           showAlert("Success", "Registration successful! You can now login.");
           mainApp.showLoginScreen();  // ✅ Navigate to login
+          if (mainApp.getDashboardView() != null) {
+            mainApp.getDashboardView().getUsersController().loadUsers();
+          }
         } else {
           showAlert("Error", response.message);
         }

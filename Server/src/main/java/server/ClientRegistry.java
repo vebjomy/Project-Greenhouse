@@ -41,6 +41,7 @@ public class ClientRegistry {
     public final String sessionId; // internal server id
     public volatile String clientId; // from client's "hello"
     private final ClientSender sender; // lambda to send line back to this client
+    public volatile String userRole;
 
     // event -> set of node IDs (or "*" for all)
     private final Map<String, Set<String>> subs = new ConcurrentHashMap<>();

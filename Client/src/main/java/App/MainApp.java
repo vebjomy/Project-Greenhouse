@@ -37,6 +37,7 @@ public class MainApp extends Application {
     private boolean isConnected = false;
     private final int SERVER_PORT = 5555;
     private String dynamicServerAddress;
+    private String currentUserRole;
 
     @Override
     public void start(Stage stage) {
@@ -248,15 +249,22 @@ public class MainApp extends Application {
         return dynamicServerAddress;
     }
 
+    public DashboardView getDashboardView() {
+        return dashboardView;
+    }
 
     public ClientApi getClientApi() {
         return api;
     }
 
+    public String getCurrentUserRole() {
+        return currentUserRole;
+    }
+
     /**
      * Displays the dashboard view.
      */
-    public void showDashboard(String username) {
+    public void showDashboard(String username, String userRole) {
         // Create dashboard if it doesn't exist yet
         if (dashboardView == null) {
             dashboardView = new DashboardView(this, api);
@@ -266,6 +274,11 @@ public class MainApp extends Application {
         }
 
         dashboardView.setUserGreeting(username);
+
+        dashboardView.getUsersController().setCurrentUserRole(userRole);
+        // Set the current user role for access control in node management
+        this.currentUserRole = userRole;
+
         primaryStage.setScene(dashboardScene);
         primaryStage.setTitle("Smart Farm Control");
     }

@@ -21,12 +21,29 @@ import java.util.UUID;
  * Handles loading, adding, editing, and deleting users via the UI and communicates with the server API.
  */
 public class UsersController {
-  private final UsersView view;
+  /**
+   * Returns the UsersView managed by this controller.
+   */
+  public UsersView getView() {
+    return view;
+  }
+  private UsersView view;
   private final ClientApi clientApi;
+  private String currentUserRole = "Viewer";
 
   public UsersController(UsersView view, ClientApi clientApi) {
     this.view = view;
     this.clientApi = clientApi;
+  }
+
+  public void setCurrentUserRole(String role) {
+    System.out.println("[DEBUG] UsersController.setCurrentUserRole called with role=" + role);
+    this.currentUserRole = role;
+    System.out.println("[DEBUG] UsersController.currentUserRole now=" + this.currentUserRole);
+  }
+
+  public void setView(UsersView view) {
+    this.view = view;
   }
 
   /**
@@ -54,6 +71,11 @@ public class UsersController {
    * Opens dialogs to collect user information and sends a request to add a new user.
    */
   public void addUser() {
+    System.out.println("[DEBUG] addUser called. currentUserRole=" + currentUserRole);
+    if (!"Admin".equalsIgnoreCase(currentUserRole)) {
+      showAlert(Alert.AlertType.ERROR, "Permission Denied", "Only Admins can add users. Current role: " + currentUserRole);
+      return;
+    }
     // Username
     TextInputDialog usernameDialog = new TextInputDialog();
     usernameDialog.setTitle("Add User");
@@ -118,6 +140,10 @@ public class UsersController {
    * Opens dialogs to edit the selected user's details and updates the user on the server.
    */
   public void editUser() {
+    if (!"Admin".equalsIgnoreCase(currentUserRole)) {
+      showAlert(Alert.AlertType.ERROR, "Permission Denied", "Only Admins can edit users. Current role: " + currentUserRole);
+      return;
+    }
     User selectedUser = view.getUserTable().getSelectionModel().getSelectedItem();
     if (selectedUser == null) {
       showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a user to edit.");
@@ -167,6 +193,10 @@ public class UsersController {
    * Deletes the selected user after confirmation and updates the view.
    */
   public void deleteUser() {
+    if (!"Admin".equalsIgnoreCase(currentUserRole)) {
+      showAlert(Alert.AlertType.ERROR, "Permission Denied", "Only Admins can delete users. Current role: " + currentUserRole);
+      return;
+    }
     User selectedUser = view.getUserTable().getSelectionModel().getSelectedItem();
     if (selectedUser == null) {
       showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a user to delete.");

@@ -61,7 +61,7 @@ class UserServiceTest {
     @Test
     void UpdateUserTest() {
         int id = userService.registerUser("oldname", "pass", "Viewer");
-        boolean updated = userService.updateUser(id, "newname", "Admin");
+        boolean updated = userService.updateUser(id, "newname", "Admin", "Admin");
         assertTrue(updated);
         assertEquals("newname", userService.getAllUsers().stream()
                 .filter(u -> u.id == id).findFirst().get().username);
@@ -71,7 +71,7 @@ class UserServiceTest {
     @Test
     void DeleteUserTest() {
         int id = userService.registerUser("todelete", "pass", "Viewer");
-        assertTrue(userService.deleteUser(id));
+        assertTrue(userService.deleteUser(id, "Admin"));
         assertEquals(-1, userService.getUserId("todelete"));
     }
 

@@ -17,10 +17,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -390,6 +387,14 @@ public class DashboardController {
       return;
     }
 
+    // Role check: Only Admins and Operators can add nodes
+    String role = mainApp.getCurrentUserRole();
+    if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
+      logActivity("Permission Denied", "Only Admins and Operators can edit nodes. Current role: " + role);
+      showUnauthorizedNodeActionAlert();
+      return;
+    }
+
     AddNodeDialog dialog = new AddNodeDialog();
     Optional<AddNodeDialog.NodeCreationResult> result = dialog.showAndWait();
 
@@ -459,6 +464,14 @@ public class DashboardController {
   public void editNode(Node node) {
     if (api == null) {
       logActivity("System", "Cannot edit node: API not initialized");
+      return;
+    }
+
+    // Role check: Only Admins and Operators can edit nodes
+    String role = mainApp.getCurrentUserRole();
+    if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
+      logActivity("Permission Denied", "Only Admins and Operators can edit nodes. Current role: " + role);
+      showUnauthorizedNodeActionAlert();
       return;
     }
 
@@ -612,6 +625,14 @@ public class DashboardController {
   public void deleteNode(Node node) {
     if (api == null) {
       logActivity("System", "Cannot delete node: API not initialized");
+      return;
+    }
+
+    // Role check: Only Admins and Operators can delete nodes
+    String role = mainApp.getCurrentUserRole();
+    if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
+      logActivity("Permission Denied", "Only Admins and Operators can delete nodes. Current role: " + role);
+      showUnauthorizedNodeActionAlert();
       return;
     }
 
@@ -1195,6 +1216,19 @@ public class DashboardController {
       return "";
     }
     return str.substring(0, 1).toUpperCase() + str.substring(1);
+  }
+
+  /**
+   * Show an alert dialog for unauthorized node actions.
+   */
+  private void showUnauthorizedNodeActionAlert() {
+    Platform.runLater(() -> {
+      Alert alert = new Alert(Alert.AlertType.ERROR);
+      alert.setTitle("Permission Denied");
+      alert.setHeaderText(null);
+      alert.setContentText("You do not have permission to perform this node action.");
+      alert.showAndWait();
+    });
   }
 
 }
