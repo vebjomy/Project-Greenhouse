@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -53,6 +54,7 @@ public class NetworkClient implements AutoCloseable {
   private void readLoop() {
     try {
       String line;
+      // This readLine() is the blocking call that holds the thread
       while ((line = in.readLine()) != null) {
         if (onLine != null) {
           onLine.accept(line);
@@ -62,8 +64,11 @@ public class NetworkClient implements AutoCloseable {
         onError.accept(new IOException("Connection closed by server"));
       }
     } catch (Throwable t) {
-      if (onError != null) {
-        onError.accept(t);
+      // Ignore exceptions if the socket is closed during shutdown
+      if (socket == null || !socket.isClosed()) {
+        if (onError != null) {
+          onError.accept(t);
+        }
       }
     }
   }
@@ -82,15 +87,41 @@ public class NetworkClient implements AutoCloseable {
     out.flush();
   }
 
+  /**
+   * Gracefully shuts down the network client, closing the socket and the reader thread pool.
+   */
   @Override
   public void close() throws IOException {
+    System.out.println("Shutting down NetworkClient...");
+
+    // 1. Close the Socket/Streams (interrupts the blocking readLine in readLoop)
     try {
-      if (socket != null) {
+      if (socket != null && !socket.isClosed()) {
         socket.close();
       }
+    } catch (IOException e) {
+      System.err.println("Error closing socket: " + e.getMessage());
     } finally {
+      socket = null;
+      in = null;
+      out = null;
+    }
+
+    // 2. Shut down the ExecutorService
+    reader.shutdown();
+    try {
+      // Wait a short time for the reader loop to terminate
+      if (!reader.awaitTermination(500, TimeUnit.MILLISECONDS)) {
+        System.err.println("TCP reader thread did not stop, forcing shutdown.");
+        // If it doesn't stop, force it (though closing the socket should have worked)
+        reader.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       reader.shutdownNow();
     }
+
+    System.out.println("NetworkClient stopped.");
   }
 
   /**
