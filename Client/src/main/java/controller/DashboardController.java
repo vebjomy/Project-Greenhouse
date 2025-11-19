@@ -990,6 +990,87 @@ public class DashboardController {
       logActivity("System", "Auto-refresh: Dashboard timestamp updated");
     }
   }
+  /**
+   * Saves the current activity log to a JSON file in the datalog folder OUTSIDE project
+   */
+  public void saveLogToJson() {
+    try {
+      StringBuilder jsonBuilder = new StringBuilder();
+      jsonBuilder.append("[\n");
+
+      List<String> entries = new ArrayList<>();
+
+      // Extract data from log content
+      for (javafx.scene.Node node : logContent.getChildren()) {
+        if (node instanceof HBox) {
+          HBox entryBox = (HBox) node;
+          if (entryBox.getChildren().size() >= 2) {
+            Label timeLabel = (Label) entryBox.getChildren().get(0);
+            Label messageLabel = (Label) entryBox.getChildren().get(1);
+
+            String fullText = messageLabel.getText();
+            String[] parts = fullText.split(": ", 2);
+
+            String source = parts.length > 0 ? parts[0] : "Unknown";
+            String message = parts.length > 1 ? parts[1] : fullText;
+
+            // Create JSON object manually
+            String entry = String.format(
+                "  {\n    \"timestamp\": \"%s\",\n    \"source\": \"%s\",\n    \"message\": \"%s\",\n    \"fullEntry\": \"%s\"\n  }",
+                timeLabel.getText().replace("\"", "\\\""),
+                source.replace("\"", "\\\""),
+                message.replace("\"", "\\\""),
+                fullText.replace("\"", "\\\"")
+            );
+
+            entries.add(entry);
+          }
+        }
+      }
+
+      // Reverse to have chronological order (oldest first)
+      Collections.reverse(entries);
+      jsonBuilder.append(String.join(",\n", entries));
+      jsonBuilder.append("\n]");
+
+      java.nio.file.Path projectDir = java.nio.file.Paths.get("").toAbsolutePath();
+      java.nio.file.Path parentDir = projectDir.getParent(); // Go up one level
+      java.nio.file.Path datalogDir;
+
+      if (parentDir != null) {
+        datalogDir = parentDir.resolve("datalog"); // ../datalog/
+      } else {
+        // Fallback: use system temp directory
+        datalogDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "greenhouse_datalog");
+      }
+
+      // Create directory if it doesn't exist
+      if (!java.nio.file.Files.exists(datalogDir)) {
+        java.nio.file.Files.createDirectories(datalogDir);
+        System.out.println("✅ Created datalog directory: " + datalogDir.toAbsolutePath());
+      }
+
+      // Generate filename with timestamp
+      String timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+      String filename = "activity_log_" + timestamp + ".json";
+
+      // Full path to the file
+      java.nio.file.Path filePath = datalogDir.resolve(filename);
+
+      // Write to file
+      java.nio.file.Files.write(filePath, jsonBuilder.toString().getBytes());
+
+      // Log success with full path
+      String fullPath = filePath.toAbsolutePath().toString();
+      logActivity("System", "Log saved to: " + fullPath);
+
+      System.out.println("✅ Log saved successfully to: " + fullPath);
+
+    } catch (Exception ex) {
+      System.err.println("❌ Error saving log: " + ex.getMessage());
+      logActivity("System", "Failed to save log: " + ex.getMessage());
+    }
+  }
 
   /**
    * Sets the automatic refresh interval and starts/stops the refresh timeline.
@@ -1116,4 +1197,5 @@ public class DashboardController {
     }
     return str.substring(0, 1).toUpperCase() + str.substring(1);
   }
+
 }

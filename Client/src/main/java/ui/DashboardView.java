@@ -248,17 +248,12 @@ public class DashboardView {
         + " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
     clearLogBtn.setOnAction(e -> logContent.getChildren().clear());
 
-    Button updateLogBtn = new Button("Update Log");
-    updateLogBtn.setStyle("-fx-background-color: #1a73e8; -fx-text-fill: white;"
-        + " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-    updateLogBtn.setOnAction(e -> controller.logActivity("System", "Log updated manually"));
-
     Button saveLogBtn = new Button("Save Log");
     saveLogBtn.setStyle("-fx-background-color: #34A853; -fx-text-fill: white;"
         + " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
-    saveLogBtn.setOnAction(e -> controller.logActivity("System", "Save log initiated"));
+    saveLogBtn.setOnAction(e -> controller.saveLogToJson());
 
-    rightPanel.getChildren().addAll(header, scrollLog, clearLogBtn, updateLogBtn, saveLogBtn);
+    rightPanel.getChildren().addAll(header, scrollLog, clearLogBtn,saveLogBtn);
     rightPanel.setAlignment(Pos.TOP_LEFT);
     return rightPanel;
   }
