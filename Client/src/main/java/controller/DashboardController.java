@@ -342,10 +342,7 @@ public class DashboardController {
         node.updateSensorTypes(new ArrayList<>(nodeState.sensors));
         node.updateActuatorTypes(new ArrayList<>(nodeState.actuators));
 
-        // Refresh the UI card to reflect the changes
-        refreshNodeCard(node);
-
-        logActivity(node.getName(), "Node configuration updated");
+       logActivity(node.getName(), "Node configuration updated");
       }
 
       // Create UI card if it doesn't exist yet (new node)
