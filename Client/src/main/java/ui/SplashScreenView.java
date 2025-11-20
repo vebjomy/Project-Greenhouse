@@ -1,6 +1,7 @@
 package ui;
 
 import app.MainApp;
+import java.util.Objects;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -27,7 +28,8 @@ public class SplashScreenView {
     root = new BorderPane();
     root.setStyle("-fx-background-color: #ffffff;");
 
-    root.getStylesheets().add(getClass().getResource("/client.css").toExternalForm());
+    root.getStylesheets()
+        .add(Objects.requireNonNull(getClass().getResource("/client.css")).toExternalForm());
 
     // Log In Button
     Button goButton = new Button("Log In");
@@ -52,7 +54,8 @@ public class SplashScreenView {
     titleMain.getStyleClass().add("splash-title");
     // Load and configure image
     ImageView imageView = new ImageView(
-        new Image(getClass().getResourceAsStream("/images/Farm house.png")));
+        new Image(
+            Objects.requireNonNull(getClass().getResourceAsStream("/images/Farm house.png"))));
     imageView.setFitWidth(1000);
     imageView.setFitHeight(650);
     imageView.setPreserveRatio(true);
