@@ -1,8 +1,16 @@
 package dto;
 
+/**
+ * Represents a generic acknowledgement message from the server.
+ * Contains status and optional node ID for certain replies.
+ */
 public class Ack {
+  /** Message type identifier. */
   public String type = "ack";
+  /** Request identifier. */
   public String id;
+  /** Status of the acknowledgement. */
   public String status;
-  public String nodeId; // optional (e.g., create_node reply)
+  /** Optional node ID (e.g., for create_node reply). */
+  public String nodeId;
 }
