@@ -199,7 +199,7 @@ public class EnvironmentState {
     };
 
     double lightChange = (targetLight - lightLux) * windowFactor;
-    lightLux += lightChange * dtSeconds + noise(LIGHT_NOISE_AMPLITUDE);
+    lightLux += (int) (lightChange * dtSeconds + noise(LIGHT_NOISE_AMPLITUDE));
     lightLux = Math.max(LIGHT_MIN, Math.min(LIGHT_MAX, lightLux));
   }
 
