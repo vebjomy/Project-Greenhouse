@@ -937,7 +937,8 @@ public class DashboardController {
         })
         .exceptionally(ex -> {
           System.err.println("❌ Command failed: " + ex.getMessage());
-          Platform.runLater(() -> logActivity("System", "Failed to send command: " + ex.getMessage()));
+          Platform.runLater(
+              () -> logActivity("System", "Failed to send command: " + ex.getMessage()));
           return null;
         });
   }
@@ -970,7 +971,8 @@ public class DashboardController {
         })
         .exceptionally(ex -> {
           System.err.println("❌ Command failed: " + ex.getMessage());
-          Platform.runLater(() -> logActivity("System", "Failed to send command: " + ex.getMessage()));
+          Platform.runLater(
+              () -> logActivity("System", "Failed to send command: " + ex.getMessage()));
           return null;
         });
   }
