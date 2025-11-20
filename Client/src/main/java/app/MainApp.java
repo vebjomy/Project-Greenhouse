@@ -181,10 +181,8 @@ public class MainApp extends Application {
         api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
             .thenRun(() -> {
               System.out.println("✅ Subscribed to updates");
-              api.getTopology().thenAccept(topology -> {
-                System.out.println("✅ Initial topology loaded: " +
-                    (topology.nodes != null ? topology.nodes.size() : 0) + " nodes");
-              });
+              api.getTopology().thenAccept(topology -> System.out.println("✅ Initial topology loaded: " +
+                  (topology.nodes != null ? topology.nodes.size() : 0) + " nodes"));
             });
 
         showSplashScreen();
