@@ -276,10 +276,7 @@ public class DashboardController {
     }
 
     // Build data map combining sensors and actuators
-    Map<String, Object> data = new HashMap<>();
-
-    // Add sensor readings (numeric values)
-    nodeState.sensorValues.forEach(data::put);
+    Map<String, Object> data = new HashMap<>(nodeState.sensorValues);
 
     // Add actuator states (string values)
     data.put("fan", nodeState.fanStatus.get());
