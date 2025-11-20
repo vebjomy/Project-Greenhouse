@@ -1,22 +1,27 @@
 package model;
 
-import javafx.beans.property.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javafx.beans.property.LongProperty;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
-import java.util.*;
 
 /**
- * Client-side Node representation: stores only data received from the server.
- * Does NOT contain simulation logic - that's handled by the server.
+ * Client-side Node representation: stores only data received from the server. Does NOT contain
+ * simulation logic - that's handled by the server.
  *
- * This class acts as a pure data model that receives updates via sensor_update
- * messages and provides observable properties for UI binding.
+ * <p>This class acts as a pure data model that receives updates via sensor_update messages and
+ * provides observable properties for UI binding.
  *
  * @author Green House Control Team
  * @version 2.0
  * @since 1.0
  */
 public class Node {
+
   private final String id;
   private final String name;
   private final String location;
@@ -28,9 +33,9 @@ public class Node {
 
   // Live DATA from sensor_update (current values)
   private final ObservableMap<String, Double> sensorData =
-          FXCollections.observableHashMap();
+      FXCollections.observableHashMap();
   private final ObservableMap<String, String> actuatorStates =
-          FXCollections.observableHashMap();
+      FXCollections.observableHashMap();
 
   // Timestamp of last update
   private final LongProperty lastUpdate = new SimpleLongProperty(0);
@@ -38,15 +43,15 @@ public class Node {
   /**
    * Constructs a new Node with the specified parameters.
    *
-   * @param id Unique node identifier (e.g., "node-1")
-   * @param name Human-readable node name (e.g., "Greenhouse A-1")
-   * @param location Physical location description
-   * @param ip IP address of the node
-   * @param sensors List of sensor types this node supports
+   * @param id        Unique node identifier (e.g., "node-1")
+   * @param name      Human-readable node name (e.g., "Greenhouse A-1")
+   * @param location  Physical location description
+   * @param ip        IP address of the node
+   * @param sensors   List of sensor types this node supports
    * @param actuators List of actuator types this node supports
    */
   public Node(String id, String name, String location, String ip,
-              List<String> sensors, List<String> actuators) {
+      List<String> sensors, List<String> actuators) {
     this.id = id;
     this.name = name;
     this.location = location;
@@ -60,11 +65,11 @@ public class Node {
   }
 
   /**
-   * Updates node data from a sensor_update message received from the server.
-   * This method distinguishes between sensor readings (numeric values) and
-   * actuator states (string values like "ON"/"OFF").
+   * Updates node data from a sensor_update message received from the server. This method
+   * distinguishes between sensor readings (numeric values) and actuator states (string values like
+   * "ON"/"OFF").
    *
-   * @param data Map containing both sensor readings and actuator states
+   * @param data      Map containing both sensor readings and actuator states
    * @param timestamp Unix timestamp (milliseconds) of the update
    */
   public void updateFromServer(Map<String, Object> data, long timestamp) {
@@ -84,8 +89,7 @@ public class Node {
    * Updates the list of sensor types supported by this node.
    *
    * <p>This method is called when the node configuration changes on the server
-   * (e.g., via Edit Node Dialog). It replaces the entire sensor list with the
-   * new configuration.
+   * (e.g., via Edit Node Dialog). It replaces the entire sensor list with the new configuration.
    *
    * <p><b>Thread-safety:</b> This method is not thread-safe. It should only be
    * called from the JavaFX Application Thread.
@@ -106,8 +110,7 @@ public class Node {
    * Updates the list of actuator types supported by this node.
    *
    * <p>This method is called when the node configuration changes on the server
-   * (e.g., via Edit Node Dialog). It replaces the entire actuator list with the
-   * new configuration.
+   * (e.g., via Edit Node Dialog). It replaces the entire actuator list with the new configuration.
    *
    * <p><b>Thread-safety:</b> This method is not thread-safe. It should only be
    * called from the JavaFX Application Thread.
@@ -126,99 +129,150 @@ public class Node {
 
   // === Getters for basic properties ===
 
-  public String getId() { return id; }
-  public String getName() { return name; }
-  public String getLocation() { return location; }
-  public String getIpAddress() { return ipAddress; }
+  public String getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getLocation() {
+    return location;
+  }
+
+  public String getIpAddress() {
+    return ipAddress;
+  }
 
   /**
    * Returns an immutable list of sensor types supported by this node.
+   *
    * @return List of sensor type names (e.g., ["temperature", "humidity"])
    */
-  public List<String> getSensorTypes() { return Collections.unmodifiableList(sensorTypes); }
+  public List<String> getSensorTypes() {
+    return Collections.unmodifiableList(sensorTypes);
+  }
 
   /**
    * Returns an immutable list of actuator types supported by this node.
+   *
    * @return List of actuator type names (e.g., ["fan", "water_pump"])
    */
-  public List<String> getActuatorTypes() { return Collections.unmodifiableList(actuatorTypes); }
+  public List<String> getActuatorTypes() {
+    return Collections.unmodifiableList(actuatorTypes);
+  }
 
   /**
-   * Returns the observable map of sensor data for UI binding.
-   * Keys are sensor types (e.g., "temperature"), values are current readings.
+   * Returns the observable map of sensor data for UI binding. Keys are sensor types (e.g.,
+   * "temperature"), values are current readings.
+   *
    * @return Observable map of sensor data
    */
-  public ObservableMap<String, Double> getSensorData() { return sensorData; }
+  public ObservableMap<String, Double> getSensorData() {
+    return sensorData;
+  }
 
   /**
-   * Returns the observable map of actuator states for UI binding.
-   * Keys are actuator types (e.g., "fan"), values are states (e.g., "ON", "OFF").
+   * Returns the observable map of actuator states for UI binding. Keys are actuator types (e.g.,
+   * "fan"), values are states (e.g., "ON", "OFF").
+   *
    * @return Observable map of actuator states
    */
-  public ObservableMap<String, String> getActuatorStates() { return actuatorStates; }
+  public ObservableMap<String, String> getActuatorStates() {
+    return actuatorStates;
+  }
 
   /**
-   * Returns the property tracking the timestamp of the last update.
-   * Useful for displaying "last updated" information in the UI.
+   * Returns the property tracking the timestamp of the last update. Useful for displaying "last
+   * updated" information in the UI.
+   *
    * @return LongProperty containing the last update timestamp
    */
-  public LongProperty lastUpdateProperty() { return lastUpdate; }
+  public LongProperty lastUpdateProperty() {
+    return lastUpdate;
+  }
 
   // === Convenience methods for common sensors ===
 
   /**
    * Gets the current temperature reading.
+   *
    * @return Temperature in Celsius, or null if not available
    */
-  public Double getTemperature() { return sensorData.get("temperature"); }
+  public Double getTemperature() {
+    return sensorData.get("temperature");
+  }
 
   /**
    * Gets the current humidity reading.
+   *
    * @return Humidity percentage (0-100), or null if not available
    */
-  public Double getHumidity() { return sensorData.get("humidity"); }
+  public Double getHumidity() {
+    return sensorData.get("humidity");
+  }
 
   /**
    * Gets the current light level reading.
+   *
    * @return Light level in lux, or null if not available
    */
-  public Double getLight() { return sensorData.get("light"); }
+  public Double getLight() {
+    return sensorData.get("light");
+  }
 
   /**
    * Gets the current pH reading.
+   *
    * @return pH level (0-14), or null if not available
    */
-  public Double getPh() { return sensorData.get("ph"); }
+  public Double getPh() {
+    return sensorData.get("ph");
+  }
 
   // === Convenience methods for common actuators ===
 
   /**
    * Gets the current fan state.
+   *
    * @return "ON", "OFF", or "UNKNOWN"
    */
-  public String getFanState() { return actuatorStates.getOrDefault("fan", "UNKNOWN"); }
+  public String getFanState() {
+    return actuatorStates.getOrDefault("fan", "UNKNOWN");
+  }
 
   /**
    * Gets the current water pump state.
+   *
    * @return "ON", "OFF", or "UNKNOWN"
    */
-  public String getPumpState() { return actuatorStates.getOrDefault("water_pump", "UNKNOWN"); }
+  public String getPumpState() {
+    return actuatorStates.getOrDefault("water_pump", "UNKNOWN");
+  }
 
   /**
    * Gets the current CO2 generator state.
+   *
    * @return "ON", "OFF", or "UNKNOWN"
    */
-  public String getCo2State() { return actuatorStates.getOrDefault("co2", "UNKNOWN"); }
+  public String getCo2State() {
+    return actuatorStates.getOrDefault("co2", "UNKNOWN");
+  }
 
   /**
    * Gets the current window state.
+   *
    * @return "CLOSED", "HALF", "OPEN", or "UNKNOWN"
    */
-  public String getWindowState() { return actuatorStates.getOrDefault("window", "UNKNOWN"); }
+  public String getWindowState() {
+    return actuatorStates.getOrDefault("window", "UNKNOWN");
+  }
 
   @Override
   public String toString() {
-    return String.format("Node{id='%s', name='%s', location='%s', ip='%s', sensors=%d, actuators=%d}",
-            id, name, location, ipAddress, sensorTypes.size(), actuatorTypes.size());
+    return String.format(
+        "Node{id='%s', name='%s', location='%s', ip='%s', sensors=%d, actuators=%d}",
+        id, name, location, ipAddress, sensorTypes.size(), actuatorTypes.size());
   }
 }

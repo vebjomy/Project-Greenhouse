@@ -1,6 +1,7 @@
 package controller;
 
 import java.util.Collection;
+import java.util.Objects;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.XYChart;
 import model.Node;
@@ -85,7 +86,7 @@ public class StatisticsController {
   private double calculateAverageTemperature() {
     return nodes.stream()
             .map(Node::getTemperature)
-            .filter(temp -> temp != null)
+            .filter(Objects::nonNull)
             .mapToDouble(Double::doubleValue)
             .average()
             .orElse(0.0);
@@ -97,7 +98,7 @@ public class StatisticsController {
   private double calculateAverageHumidity() {
     return nodes.stream()
             .map(Node::getHumidity)
-            .filter(humidity -> humidity != null)
+            .filter(Objects::nonNull)
             .mapToDouble(Double::doubleValue)
             .average()
             .orElse(0.0);
@@ -109,7 +110,7 @@ public class StatisticsController {
   private double calculateAverageLight() {
     return nodes.stream()
             .map(Node::getLight)
-            .filter(light -> light != null)
+            .filter(Objects::nonNull)
             .mapToDouble(Double::doubleValue)
             .average()
             .orElse(0.0);
@@ -121,7 +122,7 @@ public class StatisticsController {
   private double calculateAveragePh() {
     return nodes.stream()
             .map(Node::getPh)
-            .filter(ph -> ph != null)
+            .filter(Objects::nonNull)
             .mapToDouble(Double::doubleValue)
             .average()
             .orElse(0.0);

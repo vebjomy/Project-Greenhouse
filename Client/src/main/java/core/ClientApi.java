@@ -1,37 +1,58 @@
 package core;
 
-import dto.*;
-import net.MessageTypes;
-import net.NetworkClient;
 import com.fasterxml.jackson.databind.JsonNode;
-import javafx.application.Platform;
-
+import dto.Auth;
+import dto.AuthResponse;
+import dto.Command;
+import dto.CreateNode;
+import dto.DeleteNode;
+import dto.DeleteUserRequest;
+import dto.Hello;
+import dto.NodeChange;
+import dto.Ping;
+import dto.RegisterRequest;
+import dto.RegisterResponse;
+import dto.SensorUpdate;
+import dto.SetSampling;
+import dto.Subscribe;
+import dto.Topology;
+import dto.Unsubscribe;
+import dto.UpdateNode;
+import dto.UpdateUserRequest;
+import dto.UsersListResponse;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import javafx.application.Platform;
+import net.MessageTypes;
+import net.NetworkClient;
 
 /**
- * High-level client API for GUI: topology, subscriptions, commands, pull.
- * Works with real TCP server or local MockServer (development mode).
+ * High-level client API for GUI: topology, subscriptions, commands, pull. Works with real TCP
+ * server or local MockServer (development mode).
  */
 public class ClientApi implements AutoCloseable {
+
   private final ClientState state = new ClientState();
   private final NetworkClient tcp = new NetworkClient();
   private final RequestManager requests = new RequestManager();
 
   /**
-   * Constructs a new ClientApi instance, initializes the TCP client,
-   * sets up line and error handlers for incoming server messages.
+   * Constructs a new ClientApi instance, initializes the TCP client, sets up line and error
+   * handlers for incoming server messages.
    */
-  public ClientApi(){
+  public ClientApi() {
     tcp.setOnLine(this::handleLine);
     tcp.setOnError(err -> System.err.println("TCP error: " + err));
   }
 
   /**
-   * Connects to the server at the specified host and port, sends a hello message,
-   * and returns a future that completes when the server responds.
+   * Connects to the server at the specified host and port, sends a hello message, and returns a
+   * future that completes when the server responds.
    *
    * @param host the server hostname
    * @param port the server port
@@ -44,7 +65,6 @@ public class ClientApi implements AutoCloseable {
 
       // Send "hello" message
       String id = requests.newId();
-      CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
 
       Hello h = new Hello();
       h.id = id;
@@ -53,6 +73,7 @@ public class ClientApi implements AutoCloseable {
       h.capabilities = List.of("topology", "commands", "subscribe");
       send(h);
 
+      CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
       fut.thenRun(() -> System.out.println("Connected to GreenhouseServer ✔"));
       return fut;
     } catch (IOException e) {
@@ -62,23 +83,50 @@ public class ClientApi implements AutoCloseable {
     }
   }
 
-
-
-
   // ---------- Listeners for GUI ----------
-  public void onSensorUpdate(Consumer<ClientState.NodeState> l){
+
+  /**
+   * Registers a listener to be notified when a sensor value update is received from the server. The
+   * listener is executed on the JavaFX Platform thread.
+   *
+   * @param l the consumer to be called with the updated {@link ClientState.NodeState}
+   */
+  public void onSensorUpdate(Consumer<ClientState.NodeState> l) {
     state.onSensorUpdate(ns -> Platform.runLater(() -> l.accept(ns)));
   }
-  public void onNodeChange(Consumer<ClientState.NodeState> l){
+
+  /**
+   * Registers a listener to be notified when the topology changes (a node is added, updated, or
+   * removed). The listener is executed on the JavaFX Platform thread.
+   *
+   * @param l the consumer to be called with the changed {@link ClientState.NodeState}
+   */
+  public void onNodeChange(Consumer<ClientState.NodeState> l) {
     state.onNodeChange(ns -> Platform.runLater(() -> l.accept(ns)));
   }
 
-  public ClientState state(){ return state; }
-
+  /**
+   * Returns the internal state object holding all current topology and sensor data. This object is
+   * the single source of truth for the client application's data model.
+   *
+   * @return the {@link ClientState} instance
+   */
+  public ClientState state() {
+    return state;
+  }
 
   // ---------- Topology ----------
 
-  public CompletableFuture<Topology> getTopology(){
+  /**
+   * Requests the full current topology of all nodes from the server.
+   *
+   * <p>This method sends a GET_TOPOLOGY message and waits for the server's response.
+   * Upon receiving the response, it updates the internal {@link ClientState} and returns the parsed
+   * {@link Topology} object.
+   *
+   * @return a CompletableFuture that completes with the full {@link Topology} object
+   */
+  public CompletableFuture<Topology> getTopology() {
     System.out.println("📤 [ClientApi] Requesting topology...");
 
     String id = requests.newId();
@@ -118,9 +166,9 @@ public class ClientApi implements AutoCloseable {
     return fut.thenApply(topology -> {
       System.out.println("🔧 [ClientApi] Processing topology in state...");
 
-      if (topology.nodes != null){
+      if (topology.nodes != null) {
         System.out.println("   Updating state with " + topology.nodes.size() + " nodes");
-        for (var n : topology.nodes){
+        for (var n : topology.nodes) {
           System.out.println("   - Patching node: " + n.id + " (" + n.name + ")");
           state.patchNode(n.id, n.name, n.location, n.ip, n.sensors, n.actuators);
         }
@@ -141,7 +189,7 @@ public class ClientApi implements AutoCloseable {
   public CompletableFuture<RegisterResponse> sendRegisterMessage(RegisterRequest req) {
     String id = req.getId();
     var fut = requests.register(id).thenApply(js ->
-            tcp.codec().mapper().convertValue(js, RegisterResponse.class)
+        tcp.codec().mapper().convertValue(js, RegisterResponse.class)
     );
     send(req);
     return fut;
@@ -156,13 +204,14 @@ public class ClientApi implements AutoCloseable {
    * @param events the event types to subscribe to
    * @return a CompletableFuture that completes when the subscription is acknowledged
    */
-  public CompletableFuture<Void> subscribe(Collection<String> nodes, Collection<String> events){
+  public CompletableFuture<Void> subscribe(Collection<String> nodes, Collection<String> events) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     Subscribe s = new Subscribe();
-    s.id = id; s.nodes = List.copyOf(nodes); s.events = List.copyOf(events);
+    s.id = id;
+    s.nodes = List.copyOf(nodes);
+    s.events = List.copyOf(events);
     send(s);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   /**
@@ -172,13 +221,14 @@ public class ClientApi implements AutoCloseable {
    * @param events the event types to unsubscribe from
    * @return a CompletableFuture that completes when the unsubscription is acknowledged
    */
-  public CompletableFuture<Void> unsubscribe(Collection<String> nodes, Collection<String> events){
+  public CompletableFuture<Void> unsubscribe(Collection<String> nodes, Collection<String> events) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     Unsubscribe s = new Unsubscribe();
-    s.id = id; s.nodes = List.copyOf(nodes); s.events = List.copyOf(events);
+    s.id = id;
+    s.nodes = List.copyOf(nodes);
+    s.events = List.copyOf(events);
     send(s);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   // ---------- Node management ----------
@@ -189,7 +239,7 @@ public class ClientApi implements AutoCloseable {
    * @param node the node DTO to create
    * @return a CompletableFuture with the new node's ID
    */
-  public CompletableFuture<String> createNode(Topology.Node node){
+  public CompletableFuture<String> createNode(Topology.Node node) {
     System.out.println("📤 [ClientApi] createNode called");
     System.out.println("   Name: " + node.name);
     System.out.println("   Location: " + node.location);
@@ -199,12 +249,6 @@ public class ClientApi implements AutoCloseable {
 
     String id = requests.newId();
     System.out.println("   Request ID: " + id);
-
-    var fut = requests.register(id).thenApply(js -> {
-      System.out.println("📥 [ClientApi] Server response received");
-      System.out.println("   Response: " + js.toPrettyString());
-      return js.has("nodeId") ? js.get("nodeId").asText() : null;
-    });
 
     CreateNode msg = new CreateNode();
     msg.id = id;
@@ -217,6 +261,12 @@ public class ClientApi implements AutoCloseable {
       System.err.println("❌ [ClientApi] Failed to serialize: " + e.getMessage());
     }
 
+    var fut = requests.register(id).thenApply(js -> {
+      System.out.println("📥 [ClientApi] Server response received");
+      System.out.println("   Response: " + js.toPrettyString());
+      return js.has("nodeId") ? js.get("nodeId").asText() : null;
+    });
+
     send(msg);
     return fut;
   }
@@ -228,13 +278,14 @@ public class ClientApi implements AutoCloseable {
    * @param patch  the patch data as a map
    * @return a CompletableFuture that completes when the update is acknowledged
    */
-  public CompletableFuture<Void> updateNode(String nodeId, Map<String,Object> patch){
+  public CompletableFuture<Void> updateNode(String nodeId, Map<String, Object> patch) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     UpdateNode m = new UpdateNode();
-    m.id = id; m.nodeId = nodeId; m.patch = patch;
+    m.id = id;
+    m.nodeId = nodeId;
+    m.patch = patch;
     send(m);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   /**
@@ -243,13 +294,13 @@ public class ClientApi implements AutoCloseable {
    * @param nodeId the ID of the node to delete
    * @return a CompletableFuture that completes when the deletion is acknowledged
    */
-  public CompletableFuture<Void> deleteNode(String nodeId){
+  public CompletableFuture<Void> deleteNode(String nodeId) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     DeleteNode m = new DeleteNode();
-    m.id = id; m.nodeId = nodeId;
+    m.id = id;
+    m.nodeId = nodeId;
     send(m);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
 
@@ -260,13 +311,14 @@ public class ClientApi implements AutoCloseable {
    * @param intervalMs the sampling interval in milliseconds
    * @return a CompletableFuture that completes when the interval is set
    */
-  public CompletableFuture<Void> setSampling(String nodeId, int intervalMs){
+  public CompletableFuture<Void> setSampling(String nodeId, int intervalMs) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     SetSampling m = new SetSampling();
-    m.id = id; m.nodeId = nodeId; m.intervalMs = intervalMs;
+    m.id = id;
+    m.nodeId = nodeId;
+    m.intervalMs = intervalMs;
     send(m);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   // ---------- Commands ----------
@@ -280,14 +332,18 @@ public class ClientApi implements AutoCloseable {
    * @param params the command parameters
    * @return a CompletableFuture that completes when the command is acknowledged
    */
-  public CompletableFuture<Void> sendCommand(String nodeId, String target, String action, Map<String,Object> params){
+  public CompletableFuture<Void> sendCommand(String nodeId, String target, String action,
+      Map<String, Object> params) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     Command c = new Command();
-    c.id = id; c.nodeId = nodeId; c.target = target; c.action = action; c.params = params;
+    c.id = id;
+    c.nodeId = nodeId;
+    c.target = target;
+    c.action = action;
+    c.params = params;
     send(c);
 
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
 
@@ -296,10 +352,11 @@ public class ClientApi implements AutoCloseable {
    *
    * @return a CompletableFuture with the server's response as a JsonNode
    */
-  public CompletableFuture<JsonNode> ping(){
+  public CompletableFuture<JsonNode> ping() {
     String id = requests.newId();
     CompletableFuture<JsonNode> fut = requests.register(id);
-    Ping p = new Ping(); p.id = id;
+    Ping p = new Ping();
+    p.id = id;
     send(p);
     return fut;
   }
@@ -313,7 +370,7 @@ public class ClientApi implements AutoCloseable {
   public CompletableFuture<AuthResponse> sendAuthMessage(Auth auth) {
     String id = auth.getId();
     var fut = requests.register(id).thenApply(js ->
-            tcp.codec().mapper().convertValue(js, AuthResponse.class)
+        tcp.codec().mapper().convertValue(js, AuthResponse.class)
     );
     send(auth);
     return fut;
@@ -346,7 +403,6 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> updateUser(int userId, String username, String role) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
 
     UpdateUserRequest req = new UpdateUserRequest();
     req.id = id;
@@ -354,7 +410,7 @@ public class ClientApi implements AutoCloseable {
     req.username = username;
     req.role = role;
     send(req);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   /**
@@ -365,17 +421,16 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> deleteUser(int userId) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
 
     DeleteUserRequest req = new DeleteUserRequest();
     req.id = id;
     req.userId = userId;
     send(req);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   // ---------- Incoming processing ----------
-  private void handleLine(String line){
+  private void handleLine(String line) {
     try {
       var mapper = tcp.codec().mapper();
       JsonNode root = mapper.readTree(line);
@@ -383,23 +438,15 @@ public class ClientApi implements AutoCloseable {
       String id = root.has("id") ? root.get("id").asText(null) : null;
 
       switch (type) {
-        case MessageTypes.WELCOME -> {
-          // complete "hello" future if present
-          requests.complete(id, root);
-        }
-        case MessageTypes.REGISTER_RESPONSE -> {
-          requests.complete(id, root);
-        }
-        case MessageTypes.AUTH_RESPONSE -> {
-          requests.complete(id, root);
-        }
-        case MessageTypes.USERS_LIST -> {
-          requests.complete(id, root);
-        }
-        case MessageTypes.ACK, MessageTypes.LAST_VALUES, MessageTypes.PONG -> {
-          // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
-          requests.complete(id, root);
-        }
+        case MessageTypes.WELCOME -> // complete "hello" future if present
+            requests.complete(id, root);
+        case MessageTypes.REGISTER_RESPONSE -> requests.complete(id, root);
+        case MessageTypes.AUTH_RESPONSE -> requests.complete(id, root);
+        case MessageTypes.USERS_LIST -> requests.complete(id, root);
+        case MessageTypes.ACK, MessageTypes.LAST_VALUES,
+             MessageTypes.PONG ->
+            // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
+            requests.complete(id, root);
         case MessageTypes.ERROR -> {
           // Handle error message from server
           String errorCode = root.path("code").asText("UNKNOWN");
@@ -413,8 +460,8 @@ public class ClientApi implements AutoCloseable {
         }
         case MessageTypes.TOPOLOGY -> {
           Topology topo = mapper.convertValue(root, Topology.class);
-          if (topo.nodes != null){
-            for (var n : topo.nodes){
+          if (topo.nodes != null) {
+            for (var n : topo.nodes) {
               state.patchNode(n.id, n.name, n.location, n.ip, n.sensors, n.actuators);
             }
           }
@@ -444,14 +491,17 @@ public class ClientApi implements AutoCloseable {
   }
 
 
-  private void send(Object dto){
+  private void send(Object dto) {
     try {
       String line = tcp.codec().toJsonLine(dto);
       tcp.sendLine(line);
-    } catch (Exception e) { e.printStackTrace(); }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
-  @Override public void close() throws IOException {
+  @Override
+  public void close() throws IOException {
     tcp.close();
   }
 
@@ -461,13 +511,19 @@ public class ClientApi implements AutoCloseable {
    * Helper DTO for sending simple ID-based messages.
    */
   static class SimpleIdMessage {
-    public String type; public String id;
+
+    public String type;
+    public String id;
+
     /**
      * Constructs a SimpleIdMessage with the specified type and ID.
      *
      * @param type the message type
      * @param id   the message ID
      */
-    SimpleIdMessage(String type, String id){ this.type=type; this.id=id; }
+    SimpleIdMessage(String type, String id) {
+      this.type = type;
+      this.id = id;
+    }
   }
 }

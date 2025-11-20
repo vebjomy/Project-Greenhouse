@@ -1,6 +1,6 @@
 package controller;
 
-import App.MainApp;
+import app.MainApp;
 import core.ClientApi;
 import dto.Topology;
 import java.time.LocalDateTime;
@@ -17,7 +17,11 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -244,14 +248,10 @@ public class DashboardController {
     this.api = api;
 
     // Register listener for sensor updates
-    this.api.onSensorUpdate(nodeState -> {
-      Platform.runLater(() -> updateNodeData(nodeState));
-    });
+    this.api.onSensorUpdate(nodeState -> Platform.runLater(() -> updateNodeData(nodeState)));
 
     // Register listener for node changes (add/update/remove)
-    this.api.onNodeChange(nodeState -> {
-      Platform.runLater(() -> handleNodeChange(nodeState));
-    });
+    this.api.onNodeChange(nodeState -> Platform.runLater(() -> handleNodeChange(nodeState)));
 
     System.out.println("✅ ClientApi configured with update listeners");
   }
@@ -276,10 +276,7 @@ public class DashboardController {
     }
 
     // Build data map combining sensors and actuators
-    Map<String, Object> data = new HashMap<>();
-
-    // Add sensor readings (numeric values)
-    nodeState.sensorValues.forEach(data::put);
+    Map<String, Object> data = new HashMap<>(nodeState.sensorValues);
 
     // Add actuator states (string values)
     data.put("fan", nodeState.fanStatus.get());
@@ -339,7 +336,7 @@ public class DashboardController {
         node.updateSensorTypes(new ArrayList<>(nodeState.sensors));
         node.updateActuatorTypes(new ArrayList<>(nodeState.actuators));
 
-       logActivity(node.getName(), "Node configuration updated");
+        logActivity(node.getName(), "Node configuration updated");
       }
 
       // Create UI card if it doesn't exist yet (new node)
@@ -390,7 +387,8 @@ public class DashboardController {
     // Role check: Only Admins and Operators can add nodes
     String role = mainApp.getCurrentUserRole();
     if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
-      logActivity("Permission Denied", "Only Admins and Operators can edit nodes. Current role: " + role);
+      logActivity("Permission Denied",
+          "Only Admins and Operators can edit nodes. Current role: " + role);
       showUnauthorizedNodeActionAlert();
       return;
     }
@@ -444,9 +442,7 @@ public class DashboardController {
         System.err.println("❌ Server error: " + ex.getMessage());
         ex.printStackTrace();
 
-        Platform.runLater(() -> {
-          logActivity("System", "Failed to create node: " + ex.getMessage());
-        });
+        Platform.runLater(() -> logActivity("System", "Failed to create node: " + ex.getMessage()));
         return null;
       });
     });
@@ -470,7 +466,8 @@ public class DashboardController {
     // Role check: Only Admins and Operators can edit nodes
     String role = mainApp.getCurrentUserRole();
     if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
-      logActivity("Permission Denied", "Only Admins and Operators can edit nodes. Current role: " + role);
+      logActivity("Permission Denied",
+          "Only Admins and Operators can edit nodes. Current role: " + role);
       showUnauthorizedNodeActionAlert();
       return;
     }
@@ -548,9 +545,7 @@ public class DashboardController {
         System.err.println("❌ Server error: " + ex.getMessage());
         ex.printStackTrace();
 
-        Platform.runLater(() -> {
-          logActivity("System", "Failed to update node: " + ex.getMessage());
-        });
+        Platform.runLater(() -> logActivity("System", "Failed to update node: " + ex.getMessage()));
         return null;
       });
     });
@@ -631,7 +626,8 @@ public class DashboardController {
     // Role check: Only Admins and Operators can delete nodes
     String role = mainApp.getCurrentUserRole();
     if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
-      logActivity("Permission Denied", "Only Admins and Operators can delete nodes. Current role: " + role);
+      logActivity("Permission Denied",
+          "Only Admins and Operators can delete nodes. Current role: " + role);
       showUnauthorizedNodeActionAlert();
       return;
     }
@@ -640,18 +636,14 @@ public class DashboardController {
     String nodeName = node.getName();
 
     // Send delete request to server
-    api.deleteNode(nodeId).thenRun(() -> {
-      Platform.runLater(() -> {
-        removeNodeCard(nodeId);
-        logActivity("System", String.format(
-            "Node '%s' (ID: %s) deleted from server",
-            nodeName, nodeId
-        ));
-      });
-    }).exceptionally(ex -> {
-      Platform.runLater(() -> {
-        logActivity("System", "Failed to delete node: " + ex.getMessage());
-      });
+    api.deleteNode(nodeId).thenRun(() -> Platform.runLater(() -> {
+      removeNodeCard(nodeId);
+      logActivity("System", String.format(
+          "Node '%s' (ID: %s) deleted from server",
+          nodeName, nodeId
+      ));
+    })).exceptionally(ex -> {
+      Platform.runLater(() -> logActivity("System", "Failed to delete node: " + ex.getMessage()));
       return null;
     });
   }
@@ -945,9 +937,8 @@ public class DashboardController {
         })
         .exceptionally(ex -> {
           System.err.println("❌ Command failed: " + ex.getMessage());
-          Platform.runLater(() -> {
-            logActivity("System", "Failed to send command: " + ex.getMessage());
-          });
+          Platform.runLater(
+              () -> logActivity("System", "Failed to send command: " + ex.getMessage()));
           return null;
         });
   }
@@ -980,9 +971,8 @@ public class DashboardController {
         })
         .exceptionally(ex -> {
           System.err.println("❌ Command failed: " + ex.getMessage());
-          Platform.runLater(() -> {
-            logActivity("System", "Failed to send command: " + ex.getMessage());
-          });
+          Platform.runLater(
+              () -> logActivity("System", "Failed to send command: " + ex.getMessage()));
           return null;
         });
   }
@@ -1002,16 +992,13 @@ public class DashboardController {
    * not from this method. This only updates the "Last update" timestamp.
    */
   public void manualRefresh() {
-    //    if (lastUpdateLabel != null) {
-    //      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
-    //      lastUpdateLabel.setText("Date and time : " + currentTime);
-    //    }
     if (refreshIntervalSeconds > 0) {
       logActivity("System", "Auto-refresh: Dashboard timestamp updated");
     }
   }
+
   /**
-   * Saves the current activity log to a JSON file in the datalog folder OUTSIDE project
+   * Saves the current activity log to a JSON file in the datalog folder OUTSIDE project.
    */
   public void saveLogToJson() {
     try {
@@ -1022,8 +1009,7 @@ public class DashboardController {
 
       // Extract data from log content
       for (javafx.scene.Node node : logContent.getChildren()) {
-        if (node instanceof HBox) {
-          HBox entryBox = (HBox) node;
+        if (node instanceof HBox entryBox) {
           if (entryBox.getChildren().size() >= 2) {
             Label timeLabel = (Label) entryBox.getChildren().get(0);
             Label messageLabel = (Label) entryBox.getChildren().get(1);
@@ -1036,7 +1022,14 @@ public class DashboardController {
 
             // Create JSON object manually
             String entry = String.format(
-                "  {\n    \"timestamp\": \"%s\",\n    \"source\": \"%s\",\n    \"message\": \"%s\",\n    \"fullEntry\": \"%s\"\n  }",
+                """
+                      {
+                        "timestamp": "%s",
+                        "source": "%s",
+                        "message": "%s",
+                        "fullEntry": "%s"
+                      }\
+                    """,
                 timeLabel.getText().replace("\"", "\\\""),
                 source.replace("\"", "\\\""),
                 message.replace("\"", "\\\""),
@@ -1061,7 +1054,8 @@ public class DashboardController {
         datalogDir = parentDir.resolve("datalog"); // ../datalog/
       } else {
         // Fallback: use system temp directory
-        datalogDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "greenhouse_datalog");
+        datalogDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"),
+            "greenhouse_datalog");
       }
 
       // Create directory if it doesn't exist
@@ -1071,7 +1065,8 @@ public class DashboardController {
       }
 
       // Generate filename with timestamp
-      String timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+      String timestamp = java.time.LocalDateTime.now()
+          .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
       String filename = "activity_log_" + timestamp + ".json";
 
       // Full path to the file
@@ -1160,7 +1155,7 @@ public class DashboardController {
 
       String currentTime = LocalDateTime.now().format(TIME_FORMATTER);
       HBox entry = view.createLogEntry(currentTime, source, message);
-      logContent.getChildren().add(0, entry);
+      logContent.getChildren().addFirst(entry);
 
       // Limit log size to prevent memory issues
       if (logContent.getChildren().size() > 100) {

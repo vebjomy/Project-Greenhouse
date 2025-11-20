@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -41,8 +42,10 @@ public class NetworkClient implements AutoCloseable {
    */
   public void connect(String host, int port) throws IOException {
     socket = new Socket(host, port);
-    in = new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
-    out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"));
+    in = new BufferedReader(new InputStreamReader(socket.getInputStream(),
+        StandardCharsets.UTF_8));
+    out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(),
+        StandardCharsets.UTF_8));
     reader.submit(this::readLoop);
   }
 
@@ -99,8 +102,8 @@ public class NetworkClient implements AutoCloseable {
     }
 
     try {
-    out.write(jsonLine);
-    out.flush();
+      out.write(jsonLine);
+      out.flush();
     } catch (IOException e) {
       System.err.println("❌ [NetworkClient] Send error: " + e.getMessage());
       throw new IOException("Failed to send message: " + e.getMessage(), e);

@@ -1,7 +1,6 @@
 package ui;
 
 import controller.UsersController;
-import core.ClientApi;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -81,7 +80,9 @@ public class UsersView {
     roleCol.setCellValueFactory(cellData -> cellData.getValue().roleProperty());
     roleCol.setPrefWidth(150);
 
-    userTable.getColumns().addAll(idCol, usernameCol, roleCol);
+    userTable.getColumns().addAll(
+        java.util.Arrays.asList(idCol, usernameCol, roleCol)
+    );
   }
 
   /* getters for the user table and main view */

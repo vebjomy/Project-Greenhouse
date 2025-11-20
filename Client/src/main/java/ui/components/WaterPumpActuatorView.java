@@ -1,12 +1,11 @@
 package ui.components;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -55,7 +54,8 @@ public class WaterPumpActuatorView {
     ImageView pumpIcon = null;
     try {
       Image image = new Image(
-          WaterPumpActuatorView.class.getResourceAsStream("/icons/waterpump.png")
+          Objects.requireNonNull(
+              WaterPumpActuatorView.class.getResourceAsStream("/icons/waterpump.png"))
       );
       pumpIcon = new ImageView(image);
       pumpIcon.setFitWidth(ICON_SIZE);

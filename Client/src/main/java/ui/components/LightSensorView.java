@@ -1,11 +1,9 @@
 package ui.components;
 
+import java.util.Objects;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -27,7 +25,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -111,7 +108,8 @@ public class LightSensorView {
     ImageView icon = null;
     try {
       Image image = new Image(
-          LightSensorView.class.getResourceAsStream("/icons/light_sensor.png")
+          Objects.requireNonNull(
+              LightSensorView.class.getResourceAsStream("/icons/light_sensor.png"))
       );
       icon = new ImageView(image);
       icon.setFitWidth(ICON_SIZE + 25);

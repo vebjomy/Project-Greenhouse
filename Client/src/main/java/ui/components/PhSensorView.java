@@ -1,11 +1,9 @@
 package ui.components;
 
+import java.util.Objects;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -27,7 +25,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -107,7 +104,7 @@ public class PhSensorView {
     ImageView icon = null;
     try {
       Image image = new Image(
-          PhSensorView.class.getResourceAsStream("/icons/Ph.png")
+          Objects.requireNonNull(PhSensorView.class.getResourceAsStream("/icons/Ph.png"))
       );
       icon = new ImageView(image);
       icon.setFitWidth(ICON_SIZE + 25);
@@ -226,15 +223,6 @@ public class PhSensorView {
 
     // Alkaline label at the right
     scaleBox.getChildren().add(alkalineLabel);
-
-    // Force a better visual alignment (optional: uncomment for a more proportional layout)
-    /*
-    scaleBox.getChildren().clear();
-    scaleBox.getChildren().addAll(acidicLabel, spacer1, neutralLabel, spacer2, alkalineLabel);
-    HBox.setMargin(acidicLabel, new Insets(0, 0, 0, 0)); // Start at 0
-    HBox.setMargin(neutralLabel, new Insets(0, 0, 0, (BAR_WIDTH * (7.0/PH_MAX)) - (acidicLabel.getWidth()/2) - (neutralLabel.getWidth()/2) - 10)); // Rough center alignment
-    HBox.setMargin(alkalineLabel, new Insets(0, 0, 0, BAR_WIDTH - (BAR_WIDTH * (7.5/PH_MAX)) - alkalineLabel.getWidth())); // Rough end alignment
-    */
 
     // Final Bar Assembly
     VBox barAssembly = new VBox(

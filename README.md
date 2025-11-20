@@ -270,7 +270,7 @@ Project-Greenhouse/
 │
 ├── Client/                          # JavaFX GUI Application
 │   ├── src/main/java/
-│   │   ├── App/                     # Application entry point
+│   │   ├── app/                     # Application entry point
 │   │   │   └── MainApp.java         # Main class
 │   │   ├── controller/              # MVC Controllers
 │   │   │   ├── DashboardController.java

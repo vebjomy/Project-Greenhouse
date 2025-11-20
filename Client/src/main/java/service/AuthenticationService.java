@@ -18,7 +18,7 @@ public class AuthenticationService {
   private ClientApi clientApi;
 
   /**
-   * Default contructor.
+   * Default constructor.
    */
   public AuthenticationService() {
   }
