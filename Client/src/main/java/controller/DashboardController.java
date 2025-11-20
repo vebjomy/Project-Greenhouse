@@ -17,7 +17,11 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -339,7 +343,7 @@ public class DashboardController {
         node.updateSensorTypes(new ArrayList<>(nodeState.sensors));
         node.updateActuatorTypes(new ArrayList<>(nodeState.actuators));
 
-       logActivity(node.getName(), "Node configuration updated");
+        logActivity(node.getName(), "Node configuration updated");
       }
 
       // Create UI card if it doesn't exist yet (new node)
@@ -390,7 +394,8 @@ public class DashboardController {
     // Role check: Only Admins and Operators can add nodes
     String role = mainApp.getCurrentUserRole();
     if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
-      logActivity("Permission Denied", "Only Admins and Operators can edit nodes. Current role: " + role);
+      logActivity("Permission Denied",
+          "Only Admins and Operators can edit nodes. Current role: " + role);
       showUnauthorizedNodeActionAlert();
       return;
     }
@@ -470,7 +475,8 @@ public class DashboardController {
     // Role check: Only Admins and Operators can edit nodes
     String role = mainApp.getCurrentUserRole();
     if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
-      logActivity("Permission Denied", "Only Admins and Operators can edit nodes. Current role: " + role);
+      logActivity("Permission Denied",
+          "Only Admins and Operators can edit nodes. Current role: " + role);
       showUnauthorizedNodeActionAlert();
       return;
     }
@@ -631,7 +637,8 @@ public class DashboardController {
     // Role check: Only Admins and Operators can delete nodes
     String role = mainApp.getCurrentUserRole();
     if (!("Admin".equalsIgnoreCase(role) || "Operator".equalsIgnoreCase(role))) {
-      logActivity("Permission Denied", "Only Admins and Operators can delete nodes. Current role: " + role);
+      logActivity("Permission Denied",
+          "Only Admins and Operators can delete nodes. Current role: " + role);
       showUnauthorizedNodeActionAlert();
       return;
     }
@@ -1010,8 +1017,9 @@ public class DashboardController {
       logActivity("System", "Auto-refresh: Dashboard timestamp updated");
     }
   }
+
   /**
-   * Saves the current activity log to a JSON file in the datalog folder OUTSIDE project
+   * Saves the current activity log to a JSON file in the datalog folder OUTSIDE project.
    */
   public void saveLogToJson() {
     try {
@@ -1036,7 +1044,11 @@ public class DashboardController {
 
             // Create JSON object manually
             String entry = String.format(
-                "  {\n    \"timestamp\": \"%s\",\n    \"source\": \"%s\",\n    \"message\": \"%s\",\n    \"fullEntry\": \"%s\"\n  }",
+                "  {\n"
+                    + "    \"timestamp\": \"%s\",\n"
+                    + "    \"source\": \"%s\",\n"
+                    + "    \"message\": \"%s\",\n"
+                    + "    \"fullEntry\": \"%s\"\n  }",
                 timeLabel.getText().replace("\"", "\\\""),
                 source.replace("\"", "\\\""),
                 message.replace("\"", "\\\""),
@@ -1061,7 +1073,8 @@ public class DashboardController {
         datalogDir = parentDir.resolve("datalog"); // ../datalog/
       } else {
         // Fallback: use system temp directory
-        datalogDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "greenhouse_datalog");
+        datalogDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"),
+            "greenhouse_datalog");
       }
 
       // Create directory if it doesn't exist
@@ -1071,7 +1084,8 @@ public class DashboardController {
       }
 
       // Generate filename with timestamp
-      String timestamp = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+      String timestamp = java.time.LocalDateTime.now()
+          .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
       String filename = "activity_log_" + timestamp + ".json";
 
       // Full path to the file
