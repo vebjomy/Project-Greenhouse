@@ -14,14 +14,15 @@ import ui.RegistrationView;
  * Manages user input validation, communicates with the authentication service, and updates the UI.
  */
 public class RegisterController {
+
   private final RegistrationView view;
   private final AuthenticationService authService;
   private final ClientApi clientApi;
   private final MainApp mainApp;
 
   /**
-   * Constructs a RegisterController with the given view, API client,
-   * and main application reference.
+   * Constructs a RegisterController with the given view, API client, and main application
+   * reference.
    *
    * @param view      the registration view UI
    * @param clientApi the client API for server communication
@@ -37,8 +38,8 @@ public class RegisterController {
 
 
   /**
-   * Handles the registration process by validating user input,
-   * sending registration requests, and updating the UI based on the result.
+   * Handles the registration process by validating user input, sending registration requests, and
+   * updating the UI based on the result.
    */
   public void handleRegister() {
     String username = view.getUsernameField().getText().trim();
@@ -58,22 +59,21 @@ public class RegisterController {
       showAlert("Error", "Password must be at least 6 characters long.");
       return;
     }
-    authService.register(username, password, "Admin").thenAccept(response -> {
-      Platform.runLater(() -> {
-        if (response.success) {
-          showAlert("Success", "Registration successful! You can now login.");
-          mainApp.showLoginScreen();  // ✅ Navigate to login
-          if (mainApp.getDashboardView() != null) {
-            mainApp.getDashboardView().getUsersController().loadUsers();
+    authService.register(username, password, "Admin")
+        .thenAccept(response -> Platform.runLater(() -> {
+          if (response.success) {
+            showAlert("Success", "Registration successful! You can now login.");
+            mainApp.showLoginScreen();  // ✅ Navigate to login
+            if (mainApp.getDashboardView() != null) {
+              mainApp.getDashboardView().getUsersController().loadUsers();
+            }
+          } else {
+            showAlert("Error", response.message);
           }
-        } else {
-          showAlert("Error", response.message);
-        }
-      });
-    }).exceptionally(ex -> {
-      Platform.runLater(() -> showAlert("Error", "Connection failed: " + ex.getMessage()));
-      return null;
-    });
+        })).exceptionally(ex -> {
+          Platform.runLater(() -> showAlert("Error", "Connection failed: " + ex.getMessage()));
+          return null;
+        });
   }
 
   /**
@@ -84,7 +84,7 @@ public class RegisterController {
    */
   private void showAlert(String title, String message) {
     Alert alert = new Alert(title.equals("Success") ? Alert.AlertType.INFORMATION :
-            Alert.AlertType.ERROR);
+        Alert.AlertType.ERROR);
     alert.setTitle(title);
     alert.setHeaderText(null);
     alert.setContentText(message);
