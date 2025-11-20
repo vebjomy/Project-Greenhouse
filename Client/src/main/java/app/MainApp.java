@@ -99,9 +99,9 @@ public class MainApp extends Application {
     DialogPane dialogPane = ipDialog.getDialogPane();
     // Inline CSS for Material Design
     dialogPane.setStyle(
-        "-fx-background-color: #FFFFFF;" +
-            "-fx-font-family: 'Segoe UI', sans-serif;" +
-            "-fx-font-size: 14px;"
+        "-fx-background-color: #FFFFFF;"
+            + "-fx-font-family: 'Segoe UI', sans-serif;"
+            + "-fx-font-size: 14px;"
     );
 
     // Layout
@@ -125,9 +125,9 @@ public class MainApp extends Application {
     ipComboBox.getSelectionModel().selectFirst();
     ipComboBox.setPrefWidth(350);
     ipComboBox.setStyle(
-        "-fx-background-color: #fdfdfd;" +
-            "-fx-border-color: #bdc3c7;" +
-            "-fx-border-radius: 4px;"
+        "-fx-background-color: #fdfdfd;"
+            + "-fx-border-color: #bdc3c7;"
+            + "-fx-border-radius: 4px;"
     );
 
     layout.getChildren().addAll(headerLabel, descLabel, ipComboBox);
@@ -139,11 +139,11 @@ public class MainApp extends Application {
 
     Button connectBtn = (Button) dialogPane.lookupButton(connectButtonType);
     connectBtn.setStyle(
-        "-fx-background-color: #2980b9;" +
-            "-fx-text-fill: white;" +
-            "-fx-font-weight: bold;" +
-            "-fx-background-radius: 4px;" +
-            "-fx-cursor: hand;"
+        "-fx-background-color: #2980b9;"
+            + "-fx-text-fill: white;"
+            + "-fx-font-weight: bold;"
+            + "-fx-background-radius: 4px;"
+            + "-fx-cursor: hand;"
     );
 
     ipDialog.setResultConverter(dialogButton -> {
@@ -181,8 +181,9 @@ public class MainApp extends Application {
         api.subscribe(List.of("*"), List.of("sensor_update", "node_change"))
             .thenRun(() -> {
               System.out.println("✅ Subscribed to updates");
-              api.getTopology().thenAccept(topology -> System.out.println("✅ Initial topology loaded: " +
-                  (topology.nodes != null ? topology.nodes.size() : 0) + " nodes"));
+              api.getTopology()
+                  .thenAccept(topology -> System.out.println("✅ Initial topology loaded: "
+                      + (topology.nodes != null ? topology.nodes.size() : 0) + " nodes"));
             });
 
         showSplashScreen();
@@ -193,12 +194,12 @@ public class MainApp extends Application {
       });
 
     }).exceptionally(ex -> {
-      String errorMsg = "Failed to connect to server (" + serverAddress + "). " +
-          "Please check the IP address and ensure the server is running.";
+      String errorMsg = "Failed to connect to server (" + serverAddress + "). "
+          + "Please check the IP address and ensure the server is running.";
       System.err.println("❌ Failed to connect to server: " + ex.getMessage());
       isConnected = false;
 
-      //Reset dynamic server address on failure
+      // Reset dynamic server address on failure
       this.dynamicServerAddress = null;
 
       Platform.runLater(() -> {
