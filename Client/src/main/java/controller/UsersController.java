@@ -3,6 +3,10 @@ package controller;
 import core.ClientApi;
 import dto.RegisterRequest;
 import dto.UsersListResponse;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -11,22 +15,19 @@ import javafx.scene.control.TextInputDialog;
 import model.User;
 import ui.UsersView;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 /**
- * Controller for managing user-related actions in the client application.
- * Handles loading, adding, editing, and deleting users via the UI and communicates with the server API.
+ * Controller for managing user-related actions in the client application. Handles loading, adding,
+ * editing, and deleting users via the UI and communicates with the server API.
  */
 public class UsersController {
+
   /**
    * Returns the UsersView managed by this controller.
    */
   public UsersView getView() {
     return view;
   }
+
   private UsersView view;
   private final ClientApi clientApi;
   private String currentUserRole = "Viewer";
@@ -50,18 +51,16 @@ public class UsersController {
    * Loads the list of users from the server and updates the user table in the view.
    */
   public void loadUsers() {
-    clientApi.getUsers().thenAccept(users -> {
-      Platform.runLater(() -> {
-        view.getUserTable().getItems().clear();
-        for (UsersListResponse.UserData userData : users) {
-          User user = new User(userData.id, userData.username, "", userData.role);
-          view.getUserTable().getItems().add(user);
-        }
-        System.out.println("✅ Loaded " + users.size() + " users");
-      });
-    }).exceptionally(ex -> {
+    clientApi.getUsers().thenAccept(users -> Platform.runLater(() -> {
+      view.getUserTable().getItems().clear();
+      for (UsersListResponse.UserData userData : users) {
+        User user = new User(userData.id, userData.username, "", userData.role);
+        view.getUserTable().getItems().add(user);
+      }
+      System.out.println("✅ Loaded " + users.size() + " users");
+    })).exceptionally(ex -> {
       Platform.runLater(() ->
-              showAlert(Alert.AlertType.ERROR, "Error", "Failed to load users: " + ex.getMessage())
+          showAlert(Alert.AlertType.ERROR, "Error", "Failed to load users: " + ex.getMessage())
       );
       return null;
     });
@@ -73,7 +72,8 @@ public class UsersController {
   public void addUser() {
     System.out.println("[DEBUG] addUser called. currentUserRole=" + currentUserRole);
     if (!"Admin".equalsIgnoreCase(currentUserRole)) {
-      showAlert(Alert.AlertType.ERROR, "Permission Denied", "Only Admins can add users. Current role: " + currentUserRole);
+      showAlert(Alert.AlertType.ERROR, "Permission Denied",
+          "Only Admins can add users. Current role: " + currentUserRole);
       return;
     }
     // Username
@@ -82,7 +82,9 @@ public class UsersController {
     usernameDialog.setHeaderText("Enter new username");
     usernameDialog.setContentText("Username:");
     Optional<String> usernameOpt = usernameDialog.showAndWait();
-    if (usernameOpt.isEmpty()) return;
+    if (usernameOpt.isEmpty()) {
+      return;
+    }
     String username = usernameOpt.get().trim();
     if (username.isEmpty()) {
       showAlert(Alert.AlertType.ERROR, "Invalid Input", "Username cannot be empty.");
@@ -95,7 +97,9 @@ public class UsersController {
     passwordDialog.setHeaderText("Enter password for " + username);
     passwordDialog.setContentText("Password:");
     Optional<String> passwordOpt = passwordDialog.showAndWait();
-    if (passwordOpt.isEmpty()) return;
+    if (passwordOpt.isEmpty()) {
+      return;
+    }
     String password = passwordOpt.get();
     if (password.length() < 6) {
       showAlert(Alert.AlertType.ERROR, "Invalid Input", "Password must be at least 6 characters.");
@@ -109,7 +113,9 @@ public class UsersController {
     roleDialog.setHeaderText("Select role for " + username);
     roleDialog.setContentText("Role:");
     Optional<String> roleOpt = roleDialog.showAndWait();
-    if (roleOpt.isEmpty()) return;
+    if (roleOpt.isEmpty()) {
+      return;
+    }
     String role = roleOpt.get();
 
     // Build and send register request
@@ -119,19 +125,18 @@ public class UsersController {
     req.password = password;
     req.role = role;
 
-    clientApi.sendRegisterMessage(req).thenAccept(resp -> {
-      Platform.runLater(() -> {
-        if (resp != null && resp.success) {
-          User newUser = new User(resp.userId, username, "", role);
-          view.getUserTable().getItems().add(newUser);
-          showAlert(Alert.AlertType.INFORMATION, "Success", "User registered successfully.");
-        } else {
-          String msg = (resp != null) ? resp.message : "Unknown error";
-          showAlert(Alert.AlertType.ERROR, "Registration Failed", msg);
-        }
-      });
-    }).exceptionally(ex -> {
-      Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Error", "Registration failed: " + ex.getMessage()));
+    clientApi.sendRegisterMessage(req).thenAccept(resp -> Platform.runLater(() -> {
+      if (resp != null && resp.success) {
+        User newUser = new User(resp.userId, username, "", role);
+        view.getUserTable().getItems().add(newUser);
+        showAlert(Alert.AlertType.INFORMATION, "Success", "User registered successfully.");
+      } else {
+        String msg = (resp != null) ? resp.message : "Unknown error";
+        showAlert(Alert.AlertType.ERROR, "Registration Failed", msg);
+      }
+    })).exceptionally(ex -> {
+      Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Error",
+          "Registration failed: " + ex.getMessage()));
       return null;
     });
   }
@@ -141,7 +146,8 @@ public class UsersController {
    */
   public void editUser() {
     if (!"Admin".equalsIgnoreCase(currentUserRole)) {
-      showAlert(Alert.AlertType.ERROR, "Permission Denied", "Only Admins can edit users. Current role: " + currentUserRole);
+      showAlert(Alert.AlertType.ERROR, "Permission Denied",
+          "Only Admins can edit users. Current role: " + currentUserRole);
       return;
     }
     User selectedUser = view.getUserTable().getSelectionModel().getSelectedItem();
@@ -156,7 +162,9 @@ public class UsersController {
     dialog.setContentText("Username:");
 
     Optional<String> usernameResult = dialog.showAndWait();
-    if (usernameResult.isEmpty()) return;
+    if (usernameResult.isEmpty()) {
+      return;
+    }
     String newUsername = usernameResult.get().trim();
     if (newUsername.isEmpty()) {
       showAlert(Alert.AlertType.ERROR, "Invalid Input", "Username cannot be empty.");
@@ -169,24 +177,24 @@ public class UsersController {
     roleDialog.setHeaderText("Select role for user ID: " + selectedUser.getId());
     roleDialog.setContentText("Role:");
     Optional<String> roleResult = roleDialog.showAndWait();
-    if (roleResult.isEmpty()) return;
+    if (roleResult.isEmpty()) {
+      return;
+    }
     String newRole = roleResult.get();
 
     clientApi.updateUser(selectedUser.getId(), newUsername, newRole)
-            .thenRun(() -> {
-              Platform.runLater(() -> {
-                selectedUser.setUsername(newUsername);
-                selectedUser.setRole(newRole);
-                view.getUserTable().refresh();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "User updated successfully!");
-              });
-            })
-            .exceptionally(ex -> {
-              Platform.runLater(() ->
-                      showAlert(Alert.AlertType.ERROR, "Error", "Failed to update user: " + ex.getMessage())
-              );
-              return null;
-            });
+        .thenRun(() -> Platform.runLater(() -> {
+          selectedUser.setUsername(newUsername);
+          selectedUser.setRole(newRole);
+          view.getUserTable().refresh();
+          showAlert(Alert.AlertType.INFORMATION, "Success", "User updated successfully!");
+        }))
+        .exceptionally(ex -> {
+          Platform.runLater(() ->
+              showAlert(Alert.AlertType.ERROR, "Error", "Failed to update user: " + ex.getMessage())
+          );
+          return null;
+        });
   }
 
   /**
@@ -194,7 +202,8 @@ public class UsersController {
    */
   public void deleteUser() {
     if (!"Admin".equalsIgnoreCase(currentUserRole)) {
-      showAlert(Alert.AlertType.ERROR, "Permission Denied", "Only Admins can delete users. Current role: " + currentUserRole);
+      showAlert(Alert.AlertType.ERROR, "Permission Denied",
+          "Only Admins can delete users. Current role: " + currentUserRole);
       return;
     }
     User selectedUser = view.getUserTable().getSelectionModel().getSelectedItem();
@@ -211,18 +220,17 @@ public class UsersController {
     Optional<ButtonType> result = confirmDialog.showAndWait();
     if (result.isPresent() && result.get() == ButtonType.OK) {
       clientApi.deleteUser(selectedUser.getId())
-              .thenRun(() -> {
-                Platform.runLater(() -> {
-                  view.getUserTable().getItems().remove(selectedUser);
-                  showAlert(Alert.AlertType.INFORMATION, "Success", "User deleted successfully!");
-                });
-              })
-              .exceptionally(ex -> {
-                Platform.runLater(() ->
-                        showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete user: " + ex.getMessage())
-                );
-                return null;
-              });
+          .thenRun(() -> Platform.runLater(() -> {
+            view.getUserTable().getItems().remove(selectedUser);
+            showAlert(Alert.AlertType.INFORMATION, "Success", "User deleted successfully!");
+          }))
+          .exceptionally(ex -> {
+            Platform.runLater(() ->
+                showAlert(Alert.AlertType.ERROR, "Error",
+                    "Failed to delete user: " + ex.getMessage())
+            );
+            return null;
+          });
     }
   }
 
