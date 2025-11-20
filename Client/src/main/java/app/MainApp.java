@@ -67,7 +67,7 @@ public class MainApp extends Application {
     primaryStage.setMinHeight(SCENE_HEIGHT);
     primaryStage.setMinWidth(SCENE_WIDTH);
 
-    //  Sentralize the stage on the screen
+    //  Center the stage on the screen
     centerStageOnScreen();
 
     // Minimum size
