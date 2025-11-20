@@ -1011,8 +1011,7 @@ public class DashboardController {
 
       // Extract data from log content
       for (javafx.scene.Node node : logContent.getChildren()) {
-        if (node instanceof HBox) {
-          HBox entryBox = (HBox) node;
+        if (node instanceof HBox entryBox) {
           if (entryBox.getChildren().size() >= 2) {
             Label timeLabel = (Label) entryBox.getChildren().get(0);
             Label messageLabel = (Label) entryBox.getChildren().get(1);
