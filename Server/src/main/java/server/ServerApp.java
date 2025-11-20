@@ -1,8 +1,11 @@
 package server;
 
 
-/** Entry point for Greenhouse Server. */
+/**
+ * Entry point for Greenhouse Server.
+ */
 public class ServerApp {
+
   /**
    * Main method to start the Greenhouse Server.
    *
