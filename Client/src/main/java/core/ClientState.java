@@ -171,20 +171,7 @@ public class ClientState {
     });
   }
 
-  /**
-   * Applies the last known sensor values for a given node.
-   *
-   * @param nodeId the ID of the node
-   * @param data   a map of sensor names to their last known values
-   */
-  public void applyLastValues(String nodeId, Map<String, Object> data) {
-    NodeState n = upsertNode(nodeId);
-    n.last.clear();
-    n.last.putAll(data);
-    notifySensor(n);
-  }
-
-  // listeners
+    // listeners
 
   /**
    * Registers a listener for sensor updates.

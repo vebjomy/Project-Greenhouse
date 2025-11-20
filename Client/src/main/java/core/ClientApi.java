@@ -490,7 +490,10 @@ public class ClientApi implements AutoCloseable {
     }
   }
 
-
+    /**
+     * Sends a DTO object to the server by serializing it to JSON and sending it over TCP.
+     * @param dto the data transfer object to send
+     */
   private void send(Object dto) {
     try {
       String line = tcp.codec().toJsonLine(dto);

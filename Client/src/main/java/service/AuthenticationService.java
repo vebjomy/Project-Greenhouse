@@ -79,29 +79,4 @@ public class AuthenticationService {
     });
   }
 
-  /**
-   * Gets the currently logged-in user.
-   *
-   * @return the current user or null if not logged in
-   */
-  public User getCurrentUser() {
-    return currentUser;
-  }
-
-  /**
-   * Logs out the current user.
-   */
-  public void logout() {
-    currentUser = null;
-  }
-
-  /**
-   * Checks if a user is currently logged in.
-   *
-   * @return true if logged in, false otherwise
-   */
-  public boolean isLoggedIn() {
-    return currentUser != null;
-  }
-
 }

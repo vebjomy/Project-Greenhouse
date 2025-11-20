@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+// Planned for future use but not yet integrated into the application.
 /**
  * Manages the connection to the SQLite database for storing and retrieving sensor data. This class
  * is responsible for establishing a connection and creating necessary tables.

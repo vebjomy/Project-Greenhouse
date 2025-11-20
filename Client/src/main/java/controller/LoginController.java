@@ -67,16 +67,7 @@ public class LoginController {
     });
   }
 
-  /**
-   * Returns the authentication service used for login operations.
-   *
-   * @return the authentication service
-   */
-  public AuthenticationService getAuthService() {
-    return authService;
-  }
-
-  /**
+    /**
    * Displays an error alert dialog with the specified message.
    *
    * @param message the error message to display

@@ -163,37 +163,7 @@ public class Node {
     return Collections.unmodifiableList(actuatorTypes);
   }
 
-  /**
-   * Returns the observable map of sensor data for UI binding. Keys are sensor types (e.g.,
-   * "temperature"), values are current readings.
-   *
-   * @return Observable map of sensor data
-   */
-  public ObservableMap<String, Double> getSensorData() {
-    return sensorData;
-  }
-
-  /**
-   * Returns the observable map of actuator states for UI binding. Keys are actuator types (e.g.,
-   * "fan"), values are states (e.g., "ON", "OFF").
-   *
-   * @return Observable map of actuator states
-   */
-  public ObservableMap<String, String> getActuatorStates() {
-    return actuatorStates;
-  }
-
-  /**
-   * Returns the property tracking the timestamp of the last update. Useful for displaying "last
-   * updated" information in the UI.
-   *
-   * @return LongProperty containing the last update timestamp
-   */
-  public LongProperty lastUpdateProperty() {
-    return lastUpdate;
-  }
-
-  // === Convenience methods for common sensors ===
+    // === Convenience methods for common sensors ===
 
   /**
    * Gets the current temperature reading.

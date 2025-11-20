@@ -2,15 +2,13 @@ package ui;
 
 import app.MainApp;
 import java.util.Objects;
-import java.util.Optional;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -21,7 +19,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
-import model.ServerConfig;
 
 
 /**
@@ -124,17 +121,7 @@ public class LoginScreenView {
 
     HBox buttonContainer = new HBox(loginButton);
     buttonContainer.setAlignment(Pos.CENTER);
-    // Login Button Action
-    //    loginButton.setOnAction(e -> {
-    //      // define login action here
-    //      String ipAddress = mainApp.getServerAddress(); // adjust as needed
-    //      if (mainApp.isConnected()) { // check server connection
-    //        System.out.println("Attempting login to: " + ipAddress);
-    //        mainApp.showDashboard();
-    //      } else {
-    //        new Alert(Alert.AlertType.ERROR, "Server is offline. Cannot log in.").showAndWait();
-    //      }
-    //    });
+
 
     // Assemble Left Pane
     pane.getChildren().addAll(
@@ -162,40 +149,7 @@ public class LoginScreenView {
     }
   }
 
-  /**
-   * Displays a dialog to input a custom server IP address.
-   *
-   * @param serverComboBox The ComboBox to update with the custom IP.
-   */
-  private void showCustomIpDialog(ComboBox<ServerConfig> serverComboBox) {
-    TextInputDialog dialog = new TextInputDialog("127.0.0.1");
-    dialog.setTitle("Set Custom Server IP");
-    dialog.setHeaderText("Enter the IP address of your Green House Server.");
-    dialog.setContentText("IP Address:");
-    ServerConfig currentSelection = serverComboBox.getSelectionModel().getSelectedItem();
-    if (currentSelection != null) {
-      dialog.getEditor().setText(currentSelection.getIpAddress());
-    }
-    Optional<String> result = dialog.showAndWait();
-
-    result.ifPresent(ip -> {
-      String trimmedIp = ip.trim();
-      if (!trimmedIp.isEmpty()) {
-        Optional<ServerConfig> existing = serverComboBox.getItems().stream()
-            .filter(sc -> sc.getIpAddress().equals(trimmedIp))
-            .findFirst();
-        if (existing.isPresent()) {
-          serverComboBox.getSelectionModel().select(existing.get());
-        } else {
-          ServerConfig customServer = new ServerConfig("Custom IP", trimmedIp);
-          serverComboBox.getItems().add(customServer);
-          serverComboBox.getSelectionModel().select(customServer);
-        }
-      }
-    });
-  }
-
-  /**
+    /**
    * Creates the right pane of the login screen containing navigation buttons and content area.
    *
    * @param mainApp Reference to the main application for navigation.

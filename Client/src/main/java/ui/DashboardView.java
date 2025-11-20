@@ -359,14 +359,7 @@ public class DashboardView {
     }
   }
 
-  /**
-   * Getter for log content.
-   */
-  public VBox getLogContent() {
-    return logContent;
-  }
-
-  // --- CENTER CONTENT CREATION ---
+    // --- CENTER CONTENT CREATION ---
   private VBox createCenterContent() {
     // --- Controls Bar (Add Node, Refresh Data) ---
     Button addNodeBtn = new Button("+ Add Node");

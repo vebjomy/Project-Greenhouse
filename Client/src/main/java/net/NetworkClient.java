@@ -110,6 +110,7 @@ public class NetworkClient implements AutoCloseable {
     }
   }
 
+  // Close the client and release resources.
   @Override
   public void close() throws IOException {
     try {

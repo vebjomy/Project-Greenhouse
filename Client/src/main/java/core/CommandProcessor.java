@@ -46,7 +46,7 @@ public class CommandProcessor {
         case "topology", "get_topology" -> handleGetTopology();
         case "create_node" -> handleCreateNode(parts);
         case "status" -> handleStatus();
-        case "exit", "quit" -> handleExit();
+       // case "exit", "quit" -> handleExit();
         default -> CompletableFuture.completedFuture(
             "Unknown command: "
                 + cmd
@@ -166,6 +166,7 @@ public class CommandProcessor {
     );
   }
 
+  // Planned but not implemented yet.
   private CompletableFuture<String> handleExit() {
     try {
       api.close();
@@ -185,7 +186,7 @@ public class CommandProcessor {
         create_node <name>     - Create new node
         status                 - Show connection status and cached nodes
         help                   - Show this help
-        exit/quit              - Exit application
+        
         
         Examples:
         > topology

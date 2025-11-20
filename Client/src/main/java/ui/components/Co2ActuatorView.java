@@ -212,17 +212,7 @@ public class Co2ActuatorView {
     return layout;
   }
 
-  /**
-   * Converts a Color to hex string format. (Retained from original)
-   */
-  private static String toHexString(Color color) {
-    return String.format("#%02X%02X%02X",
-        (int) (color.getRed() * 255),
-        (int) (color.getGreen() * 255),
-        (int) (color.getBlue() * 255));
-  }
-
-  /**
+    /**
    * Private constructor to prevent instantiation of utility class.
    */
   private Co2ActuatorView() {
