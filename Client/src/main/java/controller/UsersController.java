@@ -32,11 +32,22 @@ public class UsersController {
   private final ClientApi clientApi;
   private String currentUserRole = "Viewer";
 
+  /**
+   * Constructor for UsersController.
+   *
+   * @param view      the UsersView instance to control
+   * @param clientApi the ClientApi instance for server communication
+   */
   public UsersController(UsersView view, ClientApi clientApi) {
     this.view = view;
     this.clientApi = clientApi;
   }
 
+  /**
+   * Sets the role of the current user.
+   *
+   * @param role the role to set for the current user
+   */
   public void setCurrentUserRole(String role) {
     System.out.println("[DEBUG] UsersController.setCurrentUserRole called with role=" + role);
     this.currentUserRole = role;
@@ -116,13 +127,13 @@ public class UsersController {
     if (roleOpt.isEmpty()) {
       return;
     }
-    String role = roleOpt.get();
 
     // Build and send register request
     RegisterRequest req = new RegisterRequest();
     req.id = UUID.randomUUID().toString();
     req.username = username;
     req.password = password;
+    String role = roleOpt.get();
     req.role = role;
 
     clientApi.sendRegisterMessage(req).thenAccept(resp -> Platform.runLater(() -> {
