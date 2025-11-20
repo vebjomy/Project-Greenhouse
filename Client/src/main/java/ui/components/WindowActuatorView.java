@@ -1,12 +1,11 @@
 package ui.components;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.effect.DropShadow;
@@ -58,7 +57,7 @@ public class WindowActuatorView {
 
     try {
       Image image = new Image(
-          WindowActuatorView.class.getResourceAsStream("/icons/window.png")
+          Objects.requireNonNull(WindowActuatorView.class.getResourceAsStream("/icons/window.png"))
       );
       windowIcon = new ImageView(image);
       windowIcon.setFitWidth(ICON_SIZE);
