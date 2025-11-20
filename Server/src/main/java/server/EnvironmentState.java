@@ -189,22 +189,14 @@ public class EnvironmentState {
    */
   public void updateLight(double dtSeconds, WindowLevel window) {
     double targetLight = getCurrentOutsideLightLux();
-    double windowFactor;
-
-    switch (window) {
-      case OPEN:
-        windowFactor = OPEN_WINDOW_LIGHT_FACTOR;
-        break;
-      case HALF:
-        windowFactor = HALF_WINDOW_LIGHT_FACTOR;
-        break;
-      case CLOSED:
+    double windowFactor = switch (window) {
+      case OPEN -> OPEN_WINDOW_LIGHT_FACTOR;
+      case HALF -> HALF_WINDOW_LIGHT_FACTOR;
+      case CLOSED -> {
         targetLight = LIGHT_MIN;
-        windowFactor = CLOSED_WINDOW_LIGHT_FACTOR;
-        break;
-      default:
-        windowFactor = 0.0;
-    }
+        yield CLOSED_WINDOW_LIGHT_FACTOR;
+      }
+    };
 
     double lightChange = (targetLight - lightLux) * windowFactor;
     lightLux += lightChange * dtSeconds + noise(LIGHT_NOISE_AMPLITUDE);
