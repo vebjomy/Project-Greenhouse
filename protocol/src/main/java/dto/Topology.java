@@ -25,6 +25,10 @@ public class Topology {
     public List<String> sensors;
     public List<String> actuators;
 
+    /**
+     * Returns a string representation of the node.
+     * @return String describing the node
+     */
     @Override
     public String toString() {
       return String.format("Node{id='%s', name='%s', location='%s', ip='%s', sensors=%d, actuators=%d}",
@@ -34,6 +38,10 @@ public class Topology {
     }
   }
 
+  /**
+   * Returns a string representation of the topology.
+   * @return String describing the topology
+   */
   @Override
   public String toString() {
     return String.format("Topology{type='%s', nodes=%d}",
