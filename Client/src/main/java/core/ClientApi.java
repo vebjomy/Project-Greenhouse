@@ -447,7 +447,7 @@ public class ClientApi implements AutoCloseable {
   private void send(Object dto){
     try {
       String line = tcp.codec().toJsonLine(dto);
-        tcp.sendLine(line);
+      tcp.sendLine(line);
     } catch (Exception e) { e.printStackTrace(); }
   }
 
@@ -471,5 +471,3 @@ public class ClientApi implements AutoCloseable {
     SimpleIdMessage(String type, String id){ this.type=type; this.id=id; }
   }
 }
-
-
