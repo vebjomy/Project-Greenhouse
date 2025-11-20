@@ -75,7 +75,7 @@ public class MainApp extends Application {
     primaryStage.setMinWidth(800);
 
     // Initiate the connection loop.
-    attemptInitialConnection(stage);
+    attemptInitialConnection();
     primaryStage.show();
   }
 
@@ -90,7 +90,7 @@ public class MainApp extends Application {
   /**
    * Shows a styled dialog to get the IP address and attempts connection.
    */
-  private void attemptInitialConnection(Stage stage) {
+  private void attemptInitialConnection() {
     // --- VISUAL DESIGN START (MATERIAL STYLE) ---
     Dialog<String> ipDialog = new Dialog<>();
     ipDialog.setTitle("Server Connection Setup");
@@ -211,7 +211,7 @@ public class MainApp extends Application {
         alert.getDialogPane().setStyle("-fx-font-family: 'Segoe UI', sans-serif;");
         alert.showAndWait();
 
-        attemptInitialConnection(stage);
+        attemptInitialConnection();
       });
       return null;
     });
