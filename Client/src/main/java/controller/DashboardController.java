@@ -1044,11 +1044,14 @@ public class DashboardController {
 
             // Create JSON object manually
             String entry = String.format(
-                "  {\n"
-                    + "    \"timestamp\": \"%s\",\n"
-                    + "    \"source\": \"%s\",\n"
-                    + "    \"message\": \"%s\",\n"
-                    + "    \"fullEntry\": \"%s\"\n  }",
+                """
+                      {
+                        "timestamp": "%s",
+                        "source": "%s",
+                        "message": "%s",
+                        "fullEntry": "%s"
+                      }\
+                    """,
                 timeLabel.getText().replace("\"", "\\\""),
                 source.replace("\"", "\\\""),
                 message.replace("\"", "\\\""),
