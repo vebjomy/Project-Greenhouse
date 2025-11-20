@@ -1,6 +1,6 @@
 package controller;
 
-import App.MainApp;
+import app.MainApp;
 import core.ClientApi;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;

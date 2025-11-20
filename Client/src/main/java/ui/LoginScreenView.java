@@ -1,6 +1,6 @@
 package ui;
 
-import App.MainApp;
+import app.MainApp;
 import java.util.Optional;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;

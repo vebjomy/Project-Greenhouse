@@ -1,6 +1,6 @@
 package core;
 
-import App.MainApp;
+import app.MainApp;
 import dto.Topology;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;

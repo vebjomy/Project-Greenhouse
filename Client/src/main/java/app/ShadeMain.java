@@ -1,4 +1,4 @@
-package App;
+package app;
 
 /**
  * Serves as a starting point for the shaded jar. In order to create a shaded jar with JavaFX, a

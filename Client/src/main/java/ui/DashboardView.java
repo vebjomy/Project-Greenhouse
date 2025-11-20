@@ -1,6 +1,6 @@
 package ui;
 
-import App.MainApp;
+import app.MainApp;
 import controller.DashboardController;
 import controller.UsersController;
 import core.ClientApi;
