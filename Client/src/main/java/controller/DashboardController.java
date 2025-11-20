@@ -990,10 +990,6 @@ public class DashboardController {
    * not from this method. This only updates the "Last update" timestamp.
    */
   public void manualRefresh() {
-    //    if (lastUpdateLabel != null) {
-    //      String currentTime = LocalDateTime.now().format(FULL_TIME_FORMATTER);
-    //      lastUpdateLabel.setText("Date and time : " + currentTime);
-    //    }
     if (refreshIntervalSeconds > 0) {
       logActivity("System", "Auto-refresh: Dashboard timestamp updated");
     }
