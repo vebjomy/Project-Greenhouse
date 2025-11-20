@@ -26,7 +26,8 @@ Welcome to the **Smart Greenhouse Network System** – a distributed IoT applica
 
 <img width="1729" height="1057" alt="GreenHouse" src="https://github.com/user-attachments/assets/a43ebf60-d530-43dc-9536-949f5ae9ffd4" />
 
-![demo1gif](https://github.com/user-attachments/assets/d0919e58-5ce5-41f9-96dc-b83fff6d3bad)
+![gifdemo11](https://github.com/user-attachments/assets/69ee056b-0974-45e3-aa60-641492fb8609)
+
 
 
 This project is part of the **IDATA2304** course at **NTNU Ålesund** and demonstrates professional network programming practices using a custom **TCP-based application-layer protocol**.
