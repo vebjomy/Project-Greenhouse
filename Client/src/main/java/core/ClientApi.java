@@ -65,7 +65,6 @@ public class ClientApi implements AutoCloseable {
 
       // Send "hello" message
       String id = requests.newId();
-      CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
 
       Hello h = new Hello();
       h.id = id;
@@ -74,6 +73,7 @@ public class ClientApi implements AutoCloseable {
       h.capabilities = List.of("topology", "commands", "subscribe");
       send(h);
 
+      CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
       fut.thenRun(() -> System.out.println("Connected to GreenhouseServer ✔"));
       return fut;
     } catch (IOException e) {
@@ -206,13 +206,12 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> subscribe(Collection<String> nodes, Collection<String> events) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     Subscribe s = new Subscribe();
     s.id = id;
     s.nodes = List.copyOf(nodes);
     s.events = List.copyOf(events);
     send(s);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   /**
@@ -224,13 +223,12 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> unsubscribe(Collection<String> nodes, Collection<String> events) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     Unsubscribe s = new Unsubscribe();
     s.id = id;
     s.nodes = List.copyOf(nodes);
     s.events = List.copyOf(events);
     send(s);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   // ---------- Node management ----------
@@ -252,12 +250,6 @@ public class ClientApi implements AutoCloseable {
     String id = requests.newId();
     System.out.println("   Request ID: " + id);
 
-    var fut = requests.register(id).thenApply(js -> {
-      System.out.println("📥 [ClientApi] Server response received");
-      System.out.println("   Response: " + js.toPrettyString());
-      return js.has("nodeId") ? js.get("nodeId").asText() : null;
-    });
-
     CreateNode msg = new CreateNode();
     msg.id = id;
     msg.node = node;
@@ -268,6 +260,12 @@ public class ClientApi implements AutoCloseable {
     } catch (Exception e) {
       System.err.println("❌ [ClientApi] Failed to serialize: " + e.getMessage());
     }
+
+    var fut = requests.register(id).thenApply(js -> {
+      System.out.println("📥 [ClientApi] Server response received");
+      System.out.println("   Response: " + js.toPrettyString());
+      return js.has("nodeId") ? js.get("nodeId").asText() : null;
+    });
 
     send(msg);
     return fut;
@@ -282,13 +280,12 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> updateNode(String nodeId, Map<String, Object> patch) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     UpdateNode m = new UpdateNode();
     m.id = id;
     m.nodeId = nodeId;
     m.patch = patch;
     send(m);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   /**
@@ -299,12 +296,11 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> deleteNode(String nodeId) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     DeleteNode m = new DeleteNode();
     m.id = id;
     m.nodeId = nodeId;
     send(m);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
 
@@ -317,13 +313,12 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> setSampling(String nodeId, int intervalMs) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     SetSampling m = new SetSampling();
     m.id = id;
     m.nodeId = nodeId;
     m.intervalMs = intervalMs;
     send(m);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   // ---------- Commands ----------
@@ -340,7 +335,6 @@ public class ClientApi implements AutoCloseable {
   public CompletableFuture<Void> sendCommand(String nodeId, String target, String action,
       Map<String, Object> params) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
     Command c = new Command();
     c.id = id;
     c.nodeId = nodeId;
@@ -349,7 +343,7 @@ public class ClientApi implements AutoCloseable {
     c.params = params;
     send(c);
 
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
 
@@ -409,7 +403,6 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> updateUser(int userId, String username, String role) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
 
     UpdateUserRequest req = new UpdateUserRequest();
     req.id = id;
@@ -417,7 +410,7 @@ public class ClientApi implements AutoCloseable {
     req.username = username;
     req.role = role;
     send(req);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   /**
@@ -428,13 +421,12 @@ public class ClientApi implements AutoCloseable {
    */
   public CompletableFuture<Void> deleteUser(int userId) {
     String id = requests.newId();
-    CompletableFuture<Void> fut = requests.register(id).thenApply(js -> null);
 
     DeleteUserRequest req = new DeleteUserRequest();
     req.id = id;
     req.userId = userId;
     send(req);
-    return fut;
+    return requests.register(id).thenApply(js -> null);
   }
 
   // ---------- Incoming processing ----------
