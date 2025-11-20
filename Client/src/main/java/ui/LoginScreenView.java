@@ -1,6 +1,7 @@
 package ui;
 
 import app.MainApp;
+import java.util.Objects;
 import java.util.Optional;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -47,7 +48,8 @@ public class LoginScreenView {
     statusIndicator = new Circle(7);
     statusText = new Text("Server Status: Connecting...");
 
-    root.getStylesheets().add(getClass().getResource("/client.css").toExternalForm());
+    root.getStylesheets()
+        .add(Objects.requireNonNull(getClass().getResource("/client.css")).toExternalForm());
 
     // create left panel ---
     VBox leftPane = createLeftPane(mainApp);
@@ -208,12 +210,13 @@ public class LoginScreenView {
     imageView.setFitHeight(850);
     imageView.setPreserveRatio(true);
     // About Project Text
-    Text aboutText = new Text("Welcome to the Smart Greenhouse Network System – a distributed "
-        + "IoT application designed for real-time greenhouse monitoring and control.\n"
-        + "\n"
-        + "This project is part of the IDATA2304 course at NTNU Ålesund and "
-        + "demonstrates professional network programming practices using a custom "
-        + "TCP-based application-layer protocol.");
+    Text aboutText = new Text("""
+        Welcome to the Smart Greenhouse Network System – a distributed \
+        IoT application designed for real-time greenhouse monitoring and control.
+        
+        This project is part of the IDATA2304 course at NTNU Ålesund and \
+        demonstrates professional network programming practices using a custom \
+        TCP-based application-layer protocol.""");
     aboutText.setWrappingWidth(480);
     aboutText.setTextAlignment(TextAlignment.JUSTIFY);
     aboutText.setStyle(
@@ -221,13 +224,16 @@ public class LoginScreenView {
     aboutText.setVisible(false);
     // Creators Text
     Text creatorsText = new Text(
-        "Creators of the 'Green House Control' project:\n\n"
-            + "1. Vebjørn - Server Lead & Simulation Architect\n"
-            + "2. Dymitri - Network Engineer & Data Lead\n"
-            + "3. Eyob - Documentation Lead & User System\n"
-            + "4. Arkadii - GUI Lead & Client Developer\n\n"
-            + "Together, we combined our expertise to create an "
-            + "innovative solution for modern agriculture.");
+        """
+            Creators of the 'Green House Control' project:
+            
+            1. Vebjørn - Server Lead & Simulation Architect
+            2. Dymitri - Network Engineer & Data Lead
+            3. Eyob - Documentation Lead & User System
+            4. Arkadii - GUI Lead & Client Developer
+            
+            Together, we combined our expertise to create an \
+            innovative solution for modern agriculture.""");
     creatorsText.setWrappingWidth(480);
     creatorsText.setTextAlignment(TextAlignment.LEFT);
     creatorsText.setStyle(
