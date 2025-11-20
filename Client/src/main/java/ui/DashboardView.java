@@ -5,6 +5,7 @@ import controller.DashboardController;
 import controller.UsersController;
 import core.ClientApi;
 import core.CommandProcessor;
+import java.util.Objects;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -81,7 +82,8 @@ public class DashboardView {
   private void setupUi() {
     // --- Overall Styling ---
     root.setStyle("-fx-background-color: #ffffff;");
-    root.getStylesheets().add(getClass().getResource("/client.css").toExternalForm());
+    root.getStylesheets()
+        .add(Objects.requireNonNull(getClass().getResource("/client.css")).toExternalForm());
 
     // --- 1. TOP BAR (Title + Greeting + Info) ---
     root.setTop(createTopBar());
@@ -258,7 +260,7 @@ public class DashboardView {
         + " -fx-font-weight: bold; -fx-padding: 5 10; -fx-background-radius: 5; -fx-cursor: hand;");
     saveLogBtn.setOnAction(e -> controller.saveLogToJson());
 
-    rightPanel.getChildren().addAll(header, scrollLog, clearLogBtn,saveLogBtn);
+    rightPanel.getChildren().addAll(header, scrollLog, clearLogBtn, saveLogBtn);
     rightPanel.setAlignment(Pos.TOP_LEFT);
     return rightPanel;
   }
