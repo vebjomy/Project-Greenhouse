@@ -444,7 +444,8 @@ public class ClientApi implements AutoCloseable {
         case MessageTypes.AUTH_RESPONSE -> requests.complete(id, root);
         case MessageTypes.USERS_LIST -> requests.complete(id, root);
         case MessageTypes.ACK, MessageTypes.LAST_VALUES,
-             MessageTypes.PONG -> // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
+             MessageTypes.PONG ->
+            // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
             requests.complete(id, root);
         case MessageTypes.ERROR -> {
           // Handle error message from server
