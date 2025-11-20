@@ -1,13 +1,12 @@
 package ui.components;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.animation.RotateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -59,7 +58,7 @@ public class FanActuatorView {
 
     try {
       Image image = new Image(
-          FanActuatorView.class.getResourceAsStream("/icons/fan2.png")
+          Objects.requireNonNull(FanActuatorView.class.getResourceAsStream("/icons/fan2.png"))
       );
       fanIcon = new ImageView(image);
       fanIcon.setFitWidth(ICON_SIZE);
