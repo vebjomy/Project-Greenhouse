@@ -3,8 +3,8 @@ package net;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Utility class for JSON serialization and deserialization.
- * Each JSON message is newline-delimited ("\n").
+ * Utility class for JSON serialization and deserialization. Each JSON message is newline-delimited
+ * ("\n").
  */
 public class MessageCodec {
   private final ObjectMapper mapper = new ObjectMapper();
@@ -17,6 +17,7 @@ public class MessageCodec {
     return mapper.readValue(json, type);
   }
 
-  public ObjectMapper mapper() { return mapper; }
+  public ObjectMapper mapper() {
+    return mapper;
+  }
 }
-

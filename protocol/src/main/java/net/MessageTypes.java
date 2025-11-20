@@ -1,7 +1,8 @@
 package net;
 
 /**
- * A utility class that holds constants for different message types used in the network communication.
+ * A utility class that holds constants for different message types used in the network
+ * communication.
  */
 public final class MessageTypes {
   public static final String HELLO = "hello";
@@ -36,6 +37,5 @@ public final class MessageTypes {
 
   public static final String LAST_VALUES = "last_values";
 
-  private MessageTypes(){}
+  private MessageTypes() {}
 }
-
