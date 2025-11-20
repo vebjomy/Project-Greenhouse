@@ -248,14 +248,10 @@ public class DashboardController {
     this.api = api;
 
     // Register listener for sensor updates
-    this.api.onSensorUpdate(nodeState -> {
-      Platform.runLater(() -> updateNodeData(nodeState));
-    });
+    this.api.onSensorUpdate(nodeState -> Platform.runLater(() -> updateNodeData(nodeState)));
 
     // Register listener for node changes (add/update/remove)
-    this.api.onNodeChange(nodeState -> {
-      Platform.runLater(() -> handleNodeChange(nodeState));
-    });
+    this.api.onNodeChange(nodeState -> Platform.runLater(() -> handleNodeChange(nodeState)));
 
     System.out.println("✅ ClientApi configured with update listeners");
   }
