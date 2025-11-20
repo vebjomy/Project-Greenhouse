@@ -220,6 +220,9 @@ public class MainApp extends Application {
     return SERVER_PORT;
   }
 
+  /**
+   * Displays the splash screen.
+   */
   public void showSplashScreen() {
     SplashScreenView splash = new SplashScreenView(this);
     Scene scene = new Scene(splash.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
@@ -228,6 +231,9 @@ public class MainApp extends Application {
     centerStageOnScreen();
   }
 
+  /**
+   * Displays the registration screen.
+   */
   public void showRegistrationScreen() {
     RegistrationView registration = new RegistrationView(this);
     Scene scene = new Scene(registration.getRoot(), SCENE_WIDTH, SCENE_HEIGHT);
@@ -236,6 +242,9 @@ public class MainApp extends Application {
     centerStageOnScreen();
   }
 
+  /**
+   * Displays the login screen.
+   */
   public void showLoginScreen() {
     loginScreenView = new LoginScreenView(this);
     loginScreenView.updateServerStatus(isConnected);
@@ -289,6 +298,11 @@ public class MainApp extends Application {
   }
 
 
+  /**
+   * The main entry point of the application.
+   *
+   * @param args command line arguments.
+   */
   public static void main(String[] args) {
     launch(args);
   }
