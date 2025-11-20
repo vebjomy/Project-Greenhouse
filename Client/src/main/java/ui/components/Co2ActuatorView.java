@@ -1,12 +1,11 @@
 package ui.components;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
@@ -55,7 +54,7 @@ public class Co2ActuatorView {
     ImageView co2Icon = null;
     try {
       Image image = new Image(
-          Co2ActuatorView.class.getResourceAsStream("/icons/ceo2.png")
+          Objects.requireNonNull(Co2ActuatorView.class.getResourceAsStream("/icons/ceo2.png"))
       );
       co2Icon = new ImageView(image);
       co2Icon.setFitWidth(ICON_SIZE);
