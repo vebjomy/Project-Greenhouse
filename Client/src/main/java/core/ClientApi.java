@@ -438,23 +438,14 @@ public class ClientApi implements AutoCloseable {
       String id = root.has("id") ? root.get("id").asText(null) : null;
 
       switch (type) {
-        case MessageTypes.WELCOME -> {
-          // complete "hello" future if present
-          requests.complete(id, root);
-        }
-        case MessageTypes.REGISTER_RESPONSE -> {
-          requests.complete(id, root);
-        }
-        case MessageTypes.AUTH_RESPONSE -> {
-          requests.complete(id, root);
-        }
-        case MessageTypes.USERS_LIST -> {
-          requests.complete(id, root);
-        }
-        case MessageTypes.ACK, MessageTypes.LAST_VALUES, MessageTypes.PONG -> {
-          // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
-          requests.complete(id, root);
-        }
+        case MessageTypes.WELCOME -> // complete "hello" future if present
+            requests.complete(id, root);
+        case MessageTypes.REGISTER_RESPONSE -> requests.complete(id, root);
+        case MessageTypes.AUTH_RESPONSE -> requests.complete(id, root);
+        case MessageTypes.USERS_LIST -> requests.complete(id, root);
+        case MessageTypes.ACK, MessageTypes.LAST_VALUES,
+             MessageTypes.PONG -> // complete pending request future (ACK/ERROR/LastValues/PONG have the id)
+            requests.complete(id, root);
         case MessageTypes.ERROR -> {
           // Handle error message from server
           String errorCode = root.path("code").asText("UNKNOWN");
