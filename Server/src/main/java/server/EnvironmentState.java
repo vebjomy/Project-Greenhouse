@@ -18,7 +18,6 @@ public class EnvironmentState {
   // --- Time and External Environment ---
   private double timeOfDayHours = 12.0;
   private static final double DAY_LENGTH_HOURS = 24.0;
-  private static final double SECONDS_PER_HOUR = 3600.0;
   private static final double MIN_OUTSIDE_TEMP_C = 8.0;
   private static final double MAX_OUTSIDE_TEMP_C = 16.0;
   private static final int DAYTIME_LIGHT_LUX = 45000;
@@ -108,7 +107,7 @@ public class EnvironmentState {
   public void step(
       double dtSeconds, boolean fanOn, boolean pumpOn, boolean co2On, WindowLevel window) {
     // 1. Update Time
-    updateTime(dtSeconds);
+    updateTime();
 
     // 2. Temperature dynamics
     updateTemperature(dtSeconds, fanOn, co2On, window);
@@ -126,7 +125,7 @@ public class EnvironmentState {
   /**
    * Update the time of day.
    */
-  public void updateTime(double dtSeconds) {
+  public void updateTime() {
     LocalTime now = LocalTime.now();
     timeOfDayHours = now.getHour()
         + now.getMinute() / 60.0
@@ -189,9 +188,8 @@ public class EnvironmentState {
    * Update light considering window state. Light level now moves toward the current outside light.
    */
   public void updateLight(double dtSeconds, WindowLevel window) {
-    double outsideLight = getCurrentOutsideLightLux();
-    double targetLight = outsideLight;
-    double windowFactor = 0.0;
+    double targetLight = getCurrentOutsideLightLux();
+    double windowFactor;
 
     switch (window) {
       case OPEN:
