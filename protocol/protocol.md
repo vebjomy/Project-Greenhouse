@@ -90,7 +90,15 @@ Every message is a JSON object with at least these fields:
 ```
 ### Error codes:
 
-INVALID_ARG, NOT_FOUND, ALREADY_EXISTS, UNSUPPORTED, FORBIDDEN, INTERNAL.
+| Code           | Description                                      | Example Usage                          |
+|----------------|--------------------------------------------------|----------------------------------------|
+| `INVALID_JSON` | Malformed JSON in request                        | Client sends broken JSON               |
+| `INVALID_ARG`  | Missing or invalid required parameters           | Missing nodeId in command              |
+| `NOT_FOUND`    | Requested resource does not exist                | Node ID not found                      |
+| `UNSUPPORTED`  | Unknown message type or unsupported operation    | Invalid message type                   |
+| `INTERNAL`     | Internal server error during processing          | Exception during node creation         |
+
+
 
 ## 0.3. Heartbeat
 
@@ -120,13 +128,58 @@ Client announces itself; server responds with metadata.
 {
 "type":"welcome",
 "server":"greenhouse",
-"version":"1.0",
-"motd":"ready"
+"version":"1.0"
+}
+```
+## 1.2. Authentication
+
+### Login
+#### Client → Server
+```json
+{
+  "type": "auth",
+  "id": "c-2",
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+#### Server → Client
+```json
+{
+  "type": "auth_response",
+  "id": "c-2",
+  "success": true,
+  "userId": 1,
+  "role": "Admin",
+  "message": "Authentication successful"
+}
+```
+
+### Registration
+#### Client → Server
+```json
+{
+  "type": "register",
+  "id": "c-3",
+  "username": "newuser",
+  "password": "password123",
+  "role": "Viewer"
+}
+```
+
+#### Server → Client
+```json
+{
+  "type": "register_response",
+  "id": "c-3",
+  "success": true,
+  "userId": 5,
+  "message": "Registration successful"
 }
 ```
 
 
-Authentication is handled locally in the client; the protocol itself does not require credentials (can be extended later with token).
 
 # 2. Topology: Nodes, Sensors, Actuators
 ##   2.1. Node Model
@@ -200,18 +253,87 @@ Authentication is handled locally in the client; the protocol itself does not re
 {"type":"ack","id":"c-5","status":"ok"}
 ```
 
-##   3.3. Add / Remove Components
+## 3.3. Component Management via Edit Node
 
-### Add Sensor/Actuator
-```java
-{"type":"add_component","id":"c-6","nodeId":"node-1","component":{"kind":"sensor","name":"ph"}}
-        {"type":"ack","id":"c-6","status":"ok"}
+The system supports **atomic updates** to node components (sensors and actuators) through the `update_node` message. This replaces the entire component list in a single operation, ensuring consistency.
+
+### Workflow
+
+1. **Client** opens Edit Node Dialog (pre-populated with current components)
+2. **User** adds/removes sensors or actuators via UI toggles
+3. **Client** sends `update_node` with complete new lists
+4. **Server** replaces old lists atomically
+
+### Example: Adding a pH Sensor
+
+**Current state:**
+```json
+{
+  "nodeId": "node-1",
+  "sensors": ["temperature", "humidity", "light"],
+  "actuators": ["fan", "water_pump"]
+}
 ```
-### Remove Sensor/Actuator
-```java
-{"type":"remove_component","id":"c-7","nodeId":"node-1","component":{"kind":"actuator","name":"co2"}}
-        {"type":"ack","id":"c-7","status":"ok"}
+
+**Client → Server:**
+```json
+{
+  "type": "update_node",
+  "id": "c-4",
+  "nodeId": "node-1",
+  "patch": {
+    "sensors": ["temperature", "humidity", "light", "ph"],
+    "actuators": ["fan", "water_pump"]
+  }
+}
 ```
+
+**Server → Client:**
+```json
+{
+  "type": "ack",
+  "id": "c-4",
+  "status": "ok"
+}
+```
+
+**Server broadcasts to all subscribed clients:**
+```json
+{
+  "type": "node_change",
+  "op": "updated",
+  "node": {
+    "id": "node-1",
+    "name": "Demo Greenhouse",
+    "location": "Central",
+    "ip": "127.0.0.1",
+    "sensors": ["temperature", "humidity", "light", "ph"],
+    "actuators": ["fan", "water_pump"]
+  }
+}
+```
+
+### Example: Removing an Actuator
+
+**Client → Server:**
+```json
+{
+  "type": "update_node",
+  "id": "c-5",
+  "nodeId": "node-1",
+  "patch": {
+    "sensors": ["temperature", "humidity", "light", "ph"],
+    "actuators": ["fan"]
+  }
+}
+```
+
+### Benefits of Atomic Updates
+
+- **Consistency**: No race conditions when adding/removing multiple components
+- **Simplicity**: Single message type for all component changes
+- **Efficiency**: Reduces network overhead compared to multiple `add_component`/`remove_component` calls
+- **UI-friendly**: Matches the "Edit Node Dialog" workflow where user modifies all components at once
 ## 3.4. Sampling Interval
 ### Set Sampling Interval
 ```java
@@ -290,81 +412,108 @@ Server responds with ack for both:
         {"type":"command","id":"c-14","nodeId":"node-1","target":"co2","action":"set","params":{"on":true}}
 ```
 
-# 6. Data Retrieval (Pull)
+# 6. User Management
 
-##   6.1. get_last_values
-Client requests the latest known telemetry for a node.
-
+## 6.1. Get Users List
 ### Client → Server
-```java
+```json
 {
-  "type":"get_last_values",
-  "id":"c-15",
-  "nodeId":"node-1"
+  "type": "get_users",
+  "id": "c-15"
 }
 ```
-### Server → Client
-```java
-{
-"type":"last_values",
-  "id":"c-15",
-  "nodeId":"node-1",
-  "data":{"temperature":22.3,"humidity":54.8,"light":415,"ph":6.3},
-  "timestamp":1730123995000
-}
-```
-## 6.2. get_history
 
-Client requests historical telemetry data for a node.
-### Client → Server
-```java
-{
-  "type":"get_history","id":"c-16","nodeId":"node-1","from":1730120000000,"to":1730123999000,"limit":500
-}
-```
 ### Server → Client
-```java
+```json
 {
-"type":"error","id":"c-16","code":"UNSUPPORTED","message":"history disabled"
-}
-```
-Or, if supported:
-```java
-{
-"type":"history",
-  "id":"c-16",
-  "nodeId":"node-1",
-  "data":[
-    {"timestamp":1730121000000,"values":{"temperature":21.5,"humidity":53.2,"light":400,"ph":6.4}},
-    {"timestamp":1730122000000,"values":{"temperature":22.0,"humidity":54.0,"light":410,"ph":6.3}},
-    ...
+  "type": "users_list",
+  "id": "c-15",
+  "success": true,
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "role": "Admin"
+    },
+    {
+      "id": 2,
+      "username": "user",
+      "role": "Viewer"
+    }
   ]
 }
 ```
+
+## 6.2. Update User
+### Client → Server
+```json
+{
+  "type": "update_user",
+  "id": "c-16",
+  "userId": 2,
+  "username": "newname",
+  "role": "Admin"
+}
+```
+
+### Server → Client
+```json
+{
+  "type": "ack",
+  "id": "c-16",
+  "status": "ok"
+}
+```
+
+## 6.3. Delete User
+### Client → Server
+```json
+{
+  "type": "delete_user",
+  "id": "c-17",
+  "userId": 2
+}
+```
+
+### Server → Client
+```json
+{
+  "type": "ack",
+  "id": "c-17",
+  "status": "ok"
+}
+```
+
 # 7. Message Reference
-| Type               | Direction       | Purpose                    |
-| ------------------ | --------------- | -------------------------- |
-| `hello`            | Client → Server | Start session              |
-| `welcome`          | Server → Client | Server info                |
-| `ping` / `pong`    | Both            | Keep-alive                 |
-| `get_topology`     | Client → Server | Request node list          |
-| `topology`         | Server → Client | Node list                  |
-| `create_node`      | Client → Server | Add new node               |
-| `update_node`      | Client → Server | Modify node                |
-| `delete_node`      | Client → Server | Remove node                |
-| `add_component`    | Client → Server | Add sensor/actuator        |
-| `remove_component` | Client → Server | Remove component           |
-| `set_sampling`     | Client → Server | Set data interval          |
-| `subscribe`        | Client → Server | Subscribe to updates       |
-| `unsubscribe`      | Client → Server | Stop receiving updates     |
-| `sensor_update`    | Server → Client | Live telemetry             |
-| `node_change`      | Server → Client | Node added/updated/removed |
-| `command`          | Client → Server | Actuator control           |
-| `ack`              | Server → Client | Success response           |
-| `error`            | Server → Client | Failure response           |
-| `get_last_values`  | Client → Server | Fetch latest telemetry     |
-| `last_values`      | Server → Client | Return latest telemetry    |
-| `get_history`      | Client → Server | Historical data request    |
+| Type                | Direction       | Purpose                            |
+|---------------------| --------------- |------------------------------------|
+| `hello`             | Client → Server | Start session                      |
+| `welcome`           | Server → Client | Server info                        |
+| `ping` / `pong`     | Both            | Keep-alive                         |
+| `get_topology`      | Client → Server | Request node list                  |
+| `topology`          | Server → Client | Node list                          |
+| `create_node`       | Client → Server | Add new node                       |
+| `update_node`       | Client → Server | Modify node (including components) |
+| `delete_node`       | Client → Server | Remove node                        |
+| `set_sampling`      | Client → Server | Set data interval                  |
+| `subscribe`         | Client → Server | Subscribe to updates               |
+| `unsubscribe`       | Client → Server | Stop receiving updates             |
+| `sensor_update`     | Server → Client | Live telemetry                     |
+| `node_change`       | Server → Client | Node added/updated/removed         |
+| `command`           | Client → Server | Actuator control                   |
+| `ack`               | Server → Client | Success response                   |
+| `error`             | Server → Client | Failure response                   |
+| `get_users`         | Client → Server | Request users list                 |
+| `users_list`        | Server → Client | Users list                         |
+| `update_user`       | Client → Server | Modify user                        |
+| `delete_user`       | Client → Server | Remove user                        |
+| `auth`              | Client → Server | User authentication                |
+| `auth_response`     | Server → Client | Auth result                        |
+| `register`          | Client → Server | New user registration              |
+| `register_response` | Server → Client | Registration result                |
+
+
+
 
 # 8. Realistic Scenario
 
@@ -374,30 +523,37 @@ Or, if supported:
 
 3. Server responds `{"type":"welcome"}`.
 
-4. Client sends `{"type":"get_topology", "id":"c-2"}` to learn about the system.
+4. Client sends `{"type":"auth", "id":"c-2", "username":"admin", "password":"admin123"}`.
 
-5. Server responds `{"type":"topology", "id":"c-2", "nodes":[...]}`.
+5. Server responds `{"type":"auth_response", "id":"c-2", "success":true, "role":"Admin"}`.
 
-6. Client (UI) displays the nodes.
+6. Client sends `{"type":"get_topology", "id":"c-2"}` to learn about the system.
 
-7. Client sends `{"type":"subscribe", "id":"c-3", "nodes":["node-1"]}` to get live data for "node-1".
+7. Server responds `{"type":"topology", "id":"c-2", "nodes":[...]}`.
 
-8. Server responds `{"type":"ack", "id":"c-3"}`.
+8. Client (UI) displays the nodes.
 
-9. Server now starts pushing sensor_update messages to the client every *X* seconds.
+9. Client sends `{"type":"subscribe", "id":"c-3", "nodes":["node-1"]}` to get live data for "node-1".
 
-10. Client (UI) displays the incoming sensor data and actuator statuses.
+10. Server responds `{"type":"ack", "id":"c-3"}`.
 
-11. User clicks the *"Open Window"* button.
+11. Server now starts pushing sensor_update messages to the client every *X* seconds.
 
-12. Client sends `{"type":"command", "id":"c-4", "nodeId":"node-1", "target":"window", "params":{"level":"OPEN"}}`.
+12. Client (UI) displays the incoming sensor data and actuator statuses.
 
-13. Server receives the command, updates its simulation state, and responds `{"type":"ack", "id":"c-4"}`.
+13. User clicks the *"Open Window"* button.
 
-14. The next sensor_update message from the server will now contain "window": "OPEN" in its data object, automatically updating the client's UI.
+14. Client sends `{"type":"command", "id":"c-4", "nodeId":"node-1", "target":"window", "params":{"level":"OPEN"}}`.
+
+15. Server receives the command, updates its simulation state, and responds `{"type":"ack", "id":"c-4"}`.
+
+16. The next sensor_update message from the server will now contain "window": "OPEN" in its data object, automatically updating the client's UI.
 
 # 9. Security
-* No security mechanisms (authentication, authorization, encryption) are implemented in this protocol
+**Authentication:**
+- Username/password authentication via `auth` message
+- Passwords stored in plain text in `users.json`
+- Role-based access control (Admin/Operator/Viewer)
 
 # 10. Notes
 * The client generates id for requests; the server echoes it in ack or error.
