@@ -104,10 +104,6 @@ public class CommandProcessor {
           System.out.println("   Topology object: " + topology);
           System.out.println("   Nodes field: " + topology.nodes);
 
-          if (topology == null) {
-            return "❌ Received null topology";
-          }
-
           if (topology.nodes == null) {
             return "🗺️ Topology received: 0 nodes (nodes list is null)";
           }
