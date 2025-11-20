@@ -9,10 +9,11 @@ import ui.LoginScreenView;
 
 
 /**
- * Controller for handling user login logic and interactions with the LoginScreenView.
- * Manages user input validation, communicates with the authentication service, and updates the UI.
+ * Controller for handling user login logic and interactions with the LoginScreenView. Manages user
+ * input validation, communicates with the authentication service, and updates the UI.
  */
 public class LoginController {
+
   private final LoginScreenView view;
   private final AuthenticationService authService;
   private final ClientApi clientApi;
@@ -34,8 +35,8 @@ public class LoginController {
   }
 
   /**
-   * Handles the login process by validating user input,
-   * sending login requests, and updating the UI based on the result.
+   * Handles the login process by validating user input, sending login requests, and updating the UI
+   * based on the result.
    */
   public void handleLogin() {
     String username = view.getUsernameField().getText().trim();
@@ -52,20 +53,16 @@ public class LoginController {
       return;
     }
 
-    authService.login(username, password).thenAccept(response -> {
-      Platform.runLater(() -> {
-        if (response.success) {
-          System.out.println("✅ Login successful - Role: " + response.getRole());
-          String userRole = response.getRole();
-          mainApp.showDashboard(username, userRole);  // ✅ Navigate to dashboard
-        } else {
-          showError(response.getMessage());
-        }
-      });
-    }).exceptionally(ex -> {
-      Platform.runLater(() -> {
-        showError("Login failed: " + ex.getMessage());
-      });
+    authService.login(username, password).thenAccept(response -> Platform.runLater(() -> {
+      if (response.success) {
+        System.out.println("✅ Login successful - Role: " + response.getRole());
+        String userRole = response.getRole();
+        mainApp.showDashboard(username, userRole);  // ✅ Navigate to dashboard
+      } else {
+        showError(response.getMessage());
+      }
+    })).exceptionally(ex -> {
+      Platform.runLater(() -> showError("Login failed: " + ex.getMessage()));
       return null;
     });
   }
