@@ -27,6 +27,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import net.MessageCodec;
 
 /**
@@ -71,9 +72,10 @@ public class ClientHandler implements Runnable {
   @Override
   public void run() {
     try (BufferedReader in =
-        new BufferedReader(new InputStreamReader(socket.getInputStream(), "UTF-8"));
+        new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
         PrintWriter writer =
-            new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "UTF-8"), true)) {
+            new PrintWriter(
+                new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true)) {
       this.out = writer;
 
       session =
@@ -150,7 +152,7 @@ public class ClientHandler implements Runnable {
         case "ping" -> handlePing(root);
         default -> {
           System.out.println("Unknown type: " + type);
-        sendError(requestId, "UNSUPPORTED", "Unknown message type: " + type);
+          sendError(requestId, "UNSUPPORTED", "Unknown message type: " + type);
         }
       }
     } catch (com.fasterxml.jackson.core.JsonParseException e) {
@@ -291,7 +293,6 @@ public class ClientHandler implements Runnable {
     String currentUserRole = session != null ? session.clientId : "Viewer";
     boolean success = userService.deleteUser(req.userId, currentUserRole);
 
-
     Ack ack = new Ack();
     ack.id = req.id;
     ack.status = success ? "ok" : "error";
@@ -309,8 +310,8 @@ public class ClientHandler implements Runnable {
   private void handleCreateNode(JsonNode msg) throws Exception {
     String requestId = msg.path("id").asText(null);
     try {
-    System.out.println("📥 [Server] Received create_node request");
-    CreateNode cn = codec.fromJson(msg.toString(), CreateNode.class);
+      System.out.println("📥 [Server] Received create_node request");
+      CreateNode cn = codec.fromJson(msg.toString(), CreateNode.class);
 
       // Validation
       if (cn.node == null) {
@@ -323,29 +324,28 @@ public class ClientHandler implements Runnable {
         return;
       }
 
+      String id = nodeManager.addNode(cn.node);
+      System.out.println("   ✅ Node added with ID: " + id);
 
-    String id = nodeManager.addNode(cn.node);
-    System.out.println("   ✅ Node added with ID: " + id);
+      engine.onNodeAdded(id);
 
-    engine.onNodeAdded(id);
+      Ack a = new Ack();
+      a.id = cn.id;
+      a.status = "ok";
+      a.nodeId = id;
 
-    Ack a = new Ack();
-    a.id = cn.id;
-    a.status = "ok";
-    a.nodeId = id;
+      System.out.println("   📤 Sending ACK with nodeId: " + id);
+      send(a);
 
-    System.out.println("   📤 Sending ACK with nodeId: " + id);
-    send(a);
+      // Verify node was added
+      System.out.println("   📊 Total nodes now: " + nodeManager.getAllNodes().size());
 
-    // Verify node was added
-    System.out.println("   📊 Total nodes now: " + nodeManager.getAllNodes().size());
-
-    // broadcast node_change added
-    NodeChange nc = new NodeChange();
-    nc.op = "added";
-    nc.node = cn.node;
-    nc.node.id = id;
-    registry.broadcast(nc);
+      // broadcast node_change added
+      NodeChange nc = new NodeChange();
+      nc.op = "added";
+      nc.node = cn.node;
+      nc.node.id = id;
+      registry.broadcast(nc);
 
     } catch (Exception e) {
       System.err.println("❌ Error creating node: " + e.getMessage());
@@ -364,7 +364,7 @@ public class ClientHandler implements Runnable {
     String requestId = msg.path("id").asText(null);
 
     try {
-    UpdateNode m = codec.fromJson(msg.toString(), UpdateNode.class);
+      UpdateNode m = codec.fromJson(msg.toString(), UpdateNode.class);
 
       // Validation
       if (m.nodeId == null || m.nodeId.trim().isEmpty()) {
@@ -377,18 +377,18 @@ public class ClientHandler implements Runnable {
         return;
       }
 
-    nodeManager.updateNode(m.nodeId, m.patch);
-    ack(msg, "ok");
+      nodeManager.updateNode(m.nodeId, m.patch);
+      ack(msg, "ok");
 
-    // broadcast node_change updated
-    NodeChange nc = new NodeChange();
-    nc.op = "updated";
-    nc.node =
-        nodeManager.getAllNodes().stream()
-            .filter(n -> n.id.equals(m.nodeId))
-            .findFirst()
-            .orElse(null);
-    registry.broadcast(nc);
+      // broadcast node_change updated
+      NodeChange nc = new NodeChange();
+      nc.op = "updated";
+      nc.node =
+          nodeManager.getAllNodes().stream()
+              .filter(n -> n.id.equals(m.nodeId))
+              .findFirst()
+              .orElse(null);
+      registry.broadcast(nc);
 
     } catch (Exception e) {
       System.err.println("❌ Error updating node: " + e.getMessage());
@@ -408,7 +408,7 @@ public class ClientHandler implements Runnable {
     String requestId = msg.path("id").asText(null);
 
     try {
-    DeleteNode m = codec.fromJson(msg.toString(), DeleteNode.class);
+      DeleteNode m = codec.fromJson(msg.toString(), DeleteNode.class);
 
       // Validation
       if (m.nodeId == null || m.nodeId.trim().isEmpty()) {
@@ -422,15 +422,15 @@ public class ClientHandler implements Runnable {
       }
 
       nodeManager.deleteNode(m.nodeId);
-    engine.onNodeRemoved(m.nodeId);
-    ack(msg, "ok");
+      engine.onNodeRemoved(m.nodeId);
+      ack(msg, "ok");
 
-    // broadcast node_change deleted
-    NodeChange nc = new NodeChange();
-    nc.op = "deleted";
-    nc.node = new Topology.Node();
-    nc.node.id = m.nodeId;
-    registry.broadcast(nc);
+      // broadcast node_change deleted
+      NodeChange nc = new NodeChange();
+      nc.op = "deleted";
+      nc.node = new Topology.Node();
+      nc.node.id = m.nodeId;
+      registry.broadcast(nc);
 
     } catch (Exception e) {
       System.err.println("❌ Error deleting node: " + e.getMessage());
@@ -463,7 +463,7 @@ public class ClientHandler implements Runnable {
     String requestId = msg.path("id").asText(null);
 
     try {
-    Command c = codec.fromJson(msg.toString(), Command.class);
+      Command c = codec.fromJson(msg.toString(), Command.class);
 
       // Validation
       if (c.nodeId == null || c.target == null || c.action == null) {
@@ -477,8 +477,8 @@ public class ClientHandler implements Runnable {
         return;
       }
 
-    nodeManager.executeCommand(c);
-    ack(msg, "ok");
+      nodeManager.executeCommand(c);
+      ack(msg, "ok");
 
     } catch (Exception e) {
       System.err.println("❌ Error executing command: " + e.getMessage());
@@ -517,8 +517,8 @@ public class ClientHandler implements Runnable {
    * Sends an error message to the client with the specified error code and message.
    *
    * <p>This method constructs and sends an {@link dto.ErrorMsg} to inform the client
-   * about a processing error, validation failure, or other exceptional condition.
-   * The error is logged on the server side for debugging purposes.
+   * about a processing error, validation failure, or other exceptional condition. The error is
+   * logged on the server side for debugging purposes.
    *
    * <p><b>Supported Error Codes:</b>
    * <ul>
@@ -531,11 +531,10 @@ public class ClientHandler implements Runnable {
    *   <li>{@code INVALID_JSON} - Malformed JSON in client request</li>
    * </ul>
    *
-   * @param requestId the request ID (correlation ID) from the original client message;
-   *                  may be {@code null} if the request ID could not be extracted
-   * @param code the error code string identifying the error category
-   * @param message a human-readable error message describing the issue
-   *
+   * @param requestId the request ID (correlation ID) from the original client message; may be
+   *                  {@code null} if the request ID could not be extracted
+   * @param code      the error code string identifying the error category
+   * @param message   a human-readable error message describing the issue
    * @see dto.ErrorMsg
    */
   private void sendError(String requestId, String code, String message) {
