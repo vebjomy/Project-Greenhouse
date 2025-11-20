@@ -42,7 +42,7 @@ public class MainApp extends Application {
 
   private ClientApi api;
   private boolean isConnected = false;
-  private final int SERVER_PORT = 5555;
+  private final int serverPort = 5555;
   private String dynamicServerAddress;
   private String currentUserRole;
 
@@ -167,7 +167,7 @@ public class MainApp extends Application {
     System.out.println("🔧 Server address set to: " + this.dynamicServerAddress);
 
     // Connection Logic
-    api.connect(serverAddress, SERVER_PORT).thenRun(() -> {
+    api.connect(serverAddress, serverPort).thenRun(() -> {
       System.out.println("✅ Connected to server at " + serverAddress);
       isConnected = true;
 
@@ -217,7 +217,7 @@ public class MainApp extends Application {
   }
 
   public int getServerPort() {
-    return SERVER_PORT;
+    return serverPort;
   }
 
   /**
