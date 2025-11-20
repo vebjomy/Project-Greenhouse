@@ -332,7 +332,7 @@ Project-Greenhouse/
 │
 ├── pom.xml                          # Parent POM
 ├── README.md                        # This file
-├── datalog                          # Activity log database 
+├── datalog                          # Activity log database (created at runtime)
 ├──  ├── activity_log_20251120_110856.json
 └── users.json                       # User database (created at runtime)
 ```
