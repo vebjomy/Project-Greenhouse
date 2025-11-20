@@ -24,6 +24,9 @@
 
 Welcome to the **Smart Greenhouse Network System** – a distributed IoT application designed for real-time greenhouse monitoring and control.
 
+<img width="1729" height="1057" alt="GreenHouse" src="https://github.com/user-attachments/assets/a43ebf60-d530-43dc-9536-949f5ae9ffd4" />
+
+
 This project is part of the **IDATA2304** course at **NTNU Ålesund** and demonstrates professional network programming practices using a custom **TCP-based application-layer protocol**.
 
 ### What We Built
