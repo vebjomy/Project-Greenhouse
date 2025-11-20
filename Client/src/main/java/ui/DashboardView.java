@@ -353,9 +353,8 @@ public class DashboardView {
     String command = inputField.getText().trim();
     if (!command.isEmpty()) {
       commandOutputArea.appendText("> " + command + "\n");
-      commandProcessor.execute(command).thenAccept(response -> {
-        Platform.runLater(() -> commandOutputArea.appendText(response + "\n"));
-      });
+      commandProcessor.execute(command).thenAccept(
+          response -> Platform.runLater(() -> commandOutputArea.appendText(response + "\n")));
       inputField.clear();
     }
   }
