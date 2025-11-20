@@ -24,8 +24,6 @@ public final class MessageTypes {
   public static final String CREATE_NODE = "create_node";
   public static final String UPDATE_NODE = "update_node";
   public static final String DELETE_NODE = "delete_node";
-  public static final String ADD_COMPONENT = "add_component";
-  public static final String REMOVE_COMPONENT = "remove_component";
   public static final String SET_SAMPLING = "set_sampling";
 
   public static final String SUBSCRIBE = "subscribe";
@@ -36,7 +34,6 @@ public final class MessageTypes {
   public static final String ACK = "ack";
   public static final String ERROR = "error";
 
-  public static final String GET_LAST_VALUES = "get_last_values";
   public static final String LAST_VALUES = "last_values";
 
   private MessageTypes(){}

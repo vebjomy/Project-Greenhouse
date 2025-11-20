@@ -11,6 +11,4 @@ public class Welcome {
   public String server;
   /** Server version. */
   public String version;
-  /** Message of the day. */
-  public String motd;
 }

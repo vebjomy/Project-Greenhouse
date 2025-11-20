@@ -58,10 +58,25 @@ public class NetworkClient implements AutoCloseable {
           onLine.accept(line);
         }
       }
+
+      // Connection closed by server
+      System.out.println("🔌 [NetworkClient] Connection closed by server");
       if (onError != null) {
         onError.accept(new IOException("Connection closed by server"));
       }
+    } catch (java.net.SocketException e) {
+      System.err.println("❌ [NetworkClient] Socket error: " + e.getMessage());
+      if (onError != null) {
+        onError.accept(e);
+      }
+    } catch (java.io.EOFException e) {
+      System.err.println("❌ [NetworkClient] Unexpected end of stream");
+      if (onError != null) {
+        onError.accept(new IOException("Unexpected connection termination", e));
+      }
     } catch (Throwable t) {
+      System.err.println("❌ [NetworkClient] Read error: " + t.getMessage());
+      t.printStackTrace();
       if (onError != null) {
         onError.accept(t);
       }
@@ -76,10 +91,20 @@ public class NetworkClient implements AutoCloseable {
    */
   public synchronized void sendLine(String jsonLine) throws IOException {
     if (out == null) {
-      throw new IOException("Not connected");
+      throw new IOException("Not connected to server");
     }
+
+    if (socket == null || socket.isClosed()) {
+      throw new IOException("Socket is closed");
+    }
+
+    try {
     out.write(jsonLine);
     out.flush();
+    } catch (IOException e) {
+      System.err.println("❌ [NetworkClient] Send error: " + e.getMessage());
+      throw new IOException("Failed to send message: " + e.getMessage(), e);
+    }
   }
 
   @Override
