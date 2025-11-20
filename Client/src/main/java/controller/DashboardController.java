@@ -1174,7 +1174,7 @@ public class DashboardController {
 
       String currentTime = LocalDateTime.now().format(TIME_FORMATTER);
       HBox entry = view.createLogEntry(currentTime, source, message);
-      logContent.getChildren().add(0, entry);
+      logContent.getChildren().addFirst(entry);
 
       // Limit log size to prevent memory issues
       if (logContent.getChildren().size() > 100) {
