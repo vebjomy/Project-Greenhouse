@@ -1,6 +1,5 @@
 package server;
 
-import java.sql.SQLOutput;
 
 /** Entry point for Greenhouse Server. */
 public class ServerApp {
