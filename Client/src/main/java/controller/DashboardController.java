@@ -442,9 +442,7 @@ public class DashboardController {
         System.err.println("❌ Server error: " + ex.getMessage());
         ex.printStackTrace();
 
-        Platform.runLater(() -> {
-          logActivity("System", "Failed to create node: " + ex.getMessage());
-        });
+        Platform.runLater(() -> logActivity("System", "Failed to create node: " + ex.getMessage()));
         return null;
       });
     });
@@ -547,9 +545,7 @@ public class DashboardController {
         System.err.println("❌ Server error: " + ex.getMessage());
         ex.printStackTrace();
 
-        Platform.runLater(() -> {
-          logActivity("System", "Failed to update node: " + ex.getMessage());
-        });
+        Platform.runLater(() -> logActivity("System", "Failed to update node: " + ex.getMessage()));
         return null;
       });
     });
@@ -640,18 +636,14 @@ public class DashboardController {
     String nodeName = node.getName();
 
     // Send delete request to server
-    api.deleteNode(nodeId).thenRun(() -> {
-      Platform.runLater(() -> {
-        removeNodeCard(nodeId);
-        logActivity("System", String.format(
-            "Node '%s' (ID: %s) deleted from server",
-            nodeName, nodeId
-        ));
-      });
-    }).exceptionally(ex -> {
-      Platform.runLater(() -> {
-        logActivity("System", "Failed to delete node: " + ex.getMessage());
-      });
+    api.deleteNode(nodeId).thenRun(() -> Platform.runLater(() -> {
+      removeNodeCard(nodeId);
+      logActivity("System", String.format(
+          "Node '%s' (ID: %s) deleted from server",
+          nodeName, nodeId
+      ));
+    })).exceptionally(ex -> {
+      Platform.runLater(() -> logActivity("System", "Failed to delete node: " + ex.getMessage()));
       return null;
     });
   }
@@ -945,9 +937,7 @@ public class DashboardController {
         })
         .exceptionally(ex -> {
           System.err.println("❌ Command failed: " + ex.getMessage());
-          Platform.runLater(() -> {
-            logActivity("System", "Failed to send command: " + ex.getMessage());
-          });
+          Platform.runLater(() -> logActivity("System", "Failed to send command: " + ex.getMessage()));
           return null;
         });
   }
@@ -980,9 +970,7 @@ public class DashboardController {
         })
         .exceptionally(ex -> {
           System.err.println("❌ Command failed: " + ex.getMessage());
-          Platform.runLater(() -> {
-            logActivity("System", "Failed to send command: " + ex.getMessage());
-          });
+          Platform.runLater(() -> logActivity("System", "Failed to send command: " + ex.getMessage()));
           return null;
         });
   }
