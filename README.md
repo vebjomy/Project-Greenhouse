@@ -188,7 +188,7 @@ mvn javafx:run
 **Option 2: Using JAR files**
 ```bash
 # Build JARs first
-mvn clean package
+mvn package -Dskiptests
 
 # Terminal 1 - Server
 java -jar Server/target/Server-1.0-SNAPSHOT.jar
